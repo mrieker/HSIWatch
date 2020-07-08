@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.wear.widget.BoxInsetLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_grey"
+    android:padding="@dimen/box_inset_layout_padding"
+    tools:context=".MainActivity"
+    tools:deviceIds="wear">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/backButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="\u25C0BACK"
+            tools:ignore="HardcodedText" />
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_horizontal"
+            android:padding="0dp"
+            app:boxedEdges="all"
+            tools:ignore="MissingPrefix">
+
+            <!-- LEFT COLUMN -->
+
+            <Button
+                android:id="@+id/satsButton"
+                android:layout_width="51dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="3dp"
+                android:layout_marginTop="4dp"
+                android:padding="3dp"
+                android:text="SATS"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
+
+            <Button
+                android:id="@+id/aboutButton"
+                android:layout_width="51dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="3dp"
+                android:layout_marginTop="52dp"
+                android:padding="3dp"
+                android:text="ABOUT"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
+
+            <Button
+                android:id="@+id/upddbButton"
+                android:layout_width="51dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="3dp"
+                android:layout_marginTop="100dp"
+                android:padding="3dp"
+                android:text="UPDDB"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
+
+            <!-- MIDDLE COLUMN -->
+
+            <CheckBox
+                android:id="@+id/hsiModeCkbox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="58dp"
+                android:layout_marginTop="0dp"
+                android:text="HSI"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
+
+            <CheckBox
+                android:id="@+id/ambEnabCkbox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:layout_marginStart="58dp"
+                android:layout_marginTop="24dp"
+                tools:ignore="HardcodedText"
+                android:text="Ambient" />
+
+            <Button
+                android:id="@+id/simButton"
+                android:layout_width="51dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="53dp"
+                android:layout_marginTop="52dp"
+                android:padding="3dp"
+                android:text="SIM"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
+
+            <Button
+                android:id="@+id/commButton"
+                android:layout_width="51dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="53dp"
+                android:layout_marginTop="100dp"
+                android:padding="3dp"
+                android:text="COMM"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
+
+            <!-- RIGHT COLUMN -->
+
+            <Button
+                android:id="@+id/exitButton"
+                android:layout_width="51dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="103dp"
+                android:layout_marginTop="52dp"
+                android:padding="3dp"
+                android:text="EXIT"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
+
+            <Button
+                android:id="@+id/resetButton"
+                android:layout_width="51dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="103dp"
+                android:layout_marginTop="100dp"
+                android:padding="3dp"
+                android:text="RESET"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
+
+        </FrameLayout>
+    </LinearLayout>
+</androidx.wear.widget.BoxInsetLayout>

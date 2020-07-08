@@ -1,0 +1,187 @@
+<HTML>
+    <HEAD>
+        <TITLE> HSIWatch </TITLE>
+    </HEAD>
+    <BODY>
+        <H3> HSIWatch App for Android Watches </H3>
+        <UL>
+            <LI><A HREF="market://details?id=com.outerworldapps.hsiwatch">Download it from Google Play</A>
+            <LI><A HREF="https://play.google.com/store/apps/details?id=com.outerworldapps.hsiwatch">Download it from Google Play</A>
+            <LI><A HREF="https://github.com/mrieker/HSIWatch">Source Code Download</A>
+        </UL>
+        <P><B><FONT COLOR=RED>Always be skeptical regarding any information provided
+            by HSIWatch.  Accept it only if and when it is confirmed by
+            navigation methods such as FAA approved chart visual references and
+            FAA approved electronic navigation systems.
+            EXPECT it to FAIL when someone's HeALTh or PROpeRTy is at RISk.</FONT></B></P>
+        <P>Privacy policy:  The only personal information used by HSIWatch is location, which
+            is used only for updating the display and optionally forwarding it to other
+            devices, all at the user's explicit direction.</P>
+        <P>Contact us at <SCRIPT LANGUAGE=JAVASCRIPT>
+          document.write('i')
+          document.write('n')
+          document.write('f')
+          document.write('o')
+          document.write('@')
+          document.write('o')
+          document.write('u')
+          document.write('t')
+          document.write('e')
+          document.write('r')
+          document.write('w')
+          document.write('o')
+          document.write('r')
+          document.write('l')
+          document.write('d')
+          document.write('a')
+          document.write('p')
+          document.write('p')
+          document.write('s')
+          document.write('.')
+          document.write('c')
+          document.write('o')
+          document.write('m')
+        </SCRIPT></P>
+        <H3> Main Page </H3>
+        <TABLE>
+            <TR>
+                <TD>
+                    <TABLE>
+                        <TR><TD ALIGN=RIGHT>OBS setting &#9654;</TD></TR>
+                        <TR><TD ALIGN=RIGHT>course to waypoint &#9654;</TD></TR>
+                        <TR><TD ALIGN=RIGHT>course from waypoint &#9654;</TD></TR>
+                        <TR><TD>&nbsp;</TD></TR>
+                        <TR><TD ALIGN=RIGHT>menu button &#9654;</TD></TR>
+                        <TR><TD>&nbsp;</TD></TR>
+                        <TR><TD ALIGN=RIGHT>distance to waypoint &#9654;</TD></TR>
+                        <TR><TD ALIGN=RIGHT>time to waypoint &#9654;</TD></TR>
+                        <TR><TD ALIGN=RIGHT>mode select button &#9654;</TD></TR>
+                    </TABLE>
+                </TD>
+                <TD><IMG SRC="main-page.png"></TD>
+                <TD>
+                    <TABLE>
+                        <TR><TD ALIGN=LEFT>&#9664; ground track</TD></TR>
+                        <TR><TD ALIGN=LEFT>&#9664; GPS time</TD></TR>
+                        <TR><TD ALIGN=LEFT>&#9664; ground speed</TD></TR>
+                        <TR><TD>&nbsp;</TD></TR>
+                        <TR><TD>&nbsp;</TD></TR>
+                        <TR><TD>&nbsp;</TD></TR>
+                        <TR><TD>&nbsp;</TD></TR>
+                        <TR><TD ALIGN=LEFT>&#9664; waypoint ident</TD></TR>
+                        <TR><TD ALIGN=LEFT>&nbsp;</TD></TR>
+                    </TABLE>
+                </TD>
+            </TR>
+        </TABLE>
+        <TABLE>
+            <TR>
+                <TD VALIGN=TOP>
+                    <UL>
+                        <LI><B>OBS setting</B> - where the yellow triangle is,
+                            indicating selected course or radial.
+                            <UL>
+                                <LI>drag finger around number dial to change OBS
+                                    when in GCT,VOR,ADF modes
+                                <LI>LOC,LOCBC,ILS modes lock the OBS in place
+                            </UL>
+                        <LI><B>course to/from waypoint</B> - indicates the
+                            OBS setting needed to center the needle
+                        <LI><B>menu button</B> - opens the menu page (see below)
+                        <LI><B>distance to waypoint</B> - indicates nautical
+                            miles to the selected waypoint.  <I>italics</I>
+                            indicate slant-range distance (when elevation
+                            of waypoint is known), normal text indicates
+                            over-the-ground distance.
+                        <LI><B>time to waypoint</B> - distance / ground speed,
+                            ie, time to waypoint if headed directly to waypoint.
+                            --:--:-- indicates time in excess of 100 hours.
+                        <LI><B>mode select</B> - selects one of the navigation modes<BR>
+                            Valid for all waypoints:
+                            <UL>
+                                <LI><B>OFF</B> - stops GPS reception
+                                <LI><B>GCT</B> - track great-circle course to waypoint
+                                    <UL>
+                                        <LI>start of course is what current position was when waypoint
+                                            was entered or app was started (whichever was later)
+                                        <LI>end of course is the entered waypoint
+                                        <LI>OBS initially set to great-circle course from starting position to entered waypoint
+                                        <LI>OBS automatically updates as flight progresses along course to track great-circle course
+                                        <LI>needle indicates off-course (crosstrack) distance in degrees similar to VOR
+                                        <LI>to re-center needle, either:
+                                            <UL>
+                                                <LI>manually rotate OBS dial
+                                                <LI>tap on waypoint id which opens keyboard,
+                                                    then tap enter to reset course from current position to the same waypoint
+                                            </UL>
+                                    </UL>
+                                <LI><B>VOR</B> - standard HSI/OBS dial nav to/from waypoint.
+                                    treats all waypoints as if they were a VOR,
+                                    even localizers.
+                                <LI><B>ADF</B> - ADF-style needle points to waypoint.
+                                    treats all waypoints as if they were an NDB.
+                            </UL>
+                            Valid only for localizer waypoints:
+                            <UL>
+                                <LI><B>LOC</B> - standard HSI/OBS dial nav on localizer course line
+                                <LI><B>LOCBC</B> - standard HSI/OBS dial nav on localizer back-course line
+                            </UL>
+                            Valid only for localizer waypoints with glideslope:
+                            <UL>
+                                <LI><B>ILS</B> - standard HSI/OBS dial nav on localizer course line
+                                                including glide slope
+                                    <UL>
+                                        <LI><FONT COLOR=RED><B>WARNING</B> Altitude is notoriuosly inaccurate in these
+                                            devices so be doubly cautious when using the glide slope indication
+                                            provided by this app.</FONT>
+                                    </UL>
+                            </UL>
+                    </UL>
+                </TD>
+                <TD VALIGN=TOP>
+                    <UL>
+                        <LI><B>ground track</B> - course line currently following
+                            over the ground, same as red airplane icon.
+                            ---&#176; indicates ground speed too low to determine track.
+                        <LI><B>GPS time</B> -
+                            increments as GPS reports current position
+                        <LI><B>ground speed</B> - indicates ground speed in knots
+                            as seen by GPS
+                        <LI><B>waypoint ident</B> - tap to enter waypoint.
+                            accepts airport ICAO id (eg, KBOS or 2B2), VOR
+                            or ADF id (eg, BOS), fix id (eg, BOSOX).
+                            airport FAA ID ok (eg, BVY) if not same as VOR.
+                            also accepts localizer IDs (eg, IBVY or I-BVY).
+                            will display message
+                            indicating name of waypoint for verification
+                            of selected waypoint.
+                    </UL>
+                </TD>
+            </TR>
+        </TABLE>
+        <H3> Menu Page </H3>
+        <TABLE>
+            <TR>
+                <TD><IMG SRC="menu-page.png"></TD>
+                <TD>
+                    <UL>
+                        <LI><B>BACK</B> - goes back to main page
+                        <LI><B>ABOUT</B> - display version and database expiration information
+                        <LI><B>UPDDB</B> - download database update (requires Internet access)
+                        <LI><B>HSI</B> - select HSI mode for nav dial (airplane always at top); else OBS with yellow triangle always at top
+                        <LI><B>Ambient</B> - slow to 20 seconds per GPS sample in ambient mode; else maintain 1 second per sample
+                        <LI><B>SIM</B> - access simulator parameters
+                        <LI><B>COMM</B> - access bluetooth and UDP parameters
+                        <LI><B>EXIT</B> - exit the app
+                        <LI><B>RESET</B> - reset settings to factory defaults and purge database
+                    </UL>
+                </TD>
+            </TR>
+        </TABLE>
+        <H3> Simulator </H3>
+        <P>Generates GPS positions for a given track to use for testing.  Blocks real GPS reception while active.</P>
+        <H3> COMM </H3>
+        <P>Transmits GPS positions (either real or simluated) on Bluetooth and/or UDP (Internet)
+            to such as a tablet or phone based EFB app.</P>
+    </BODY>
+</HTML>

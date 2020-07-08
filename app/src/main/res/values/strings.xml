@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">HSIWatch</string>
+    <string name="crash_toast_text">Sorry the app is crashing.  Please restart it.</string>
+    <!--
+    This string is used for square devices and overridden by hello_world in
+    values-round/strings.xml for round devices.
+    -->
+    <string name="hello_world">Hello Square World!</string>
+    <string name="title_activity_menu">MenuActivity</string>
+
+</resources>

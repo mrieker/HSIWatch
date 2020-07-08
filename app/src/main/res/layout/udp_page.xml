@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.wear.widget.BoxInsetLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_grey"
+    android:padding="@dimen/box_inset_layout_padding"
+    tools:context=".MainActivity"
+    tools:deviceIds="wear">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/udpBack"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="\u25C0BACK"
+            tools:ignore="HardcodedText" />
+
+        <ScrollView
+            android:id="@+id/udpScroll"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="@dimen/inner_frame_layout_padding"
+            app:boxedEdges="all"
+            tools:ignore="MissingPrefix">
+
+        </ScrollView>
+    </LinearLayout>
+
+</androidx.wear.widget.BoxInsetLayout>
