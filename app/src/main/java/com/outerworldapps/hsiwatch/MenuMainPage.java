@@ -40,6 +40,7 @@ public class MenuMainPage {
     public  Button upddbButton;
     public  CheckBox ambEnabCkBox;
     public  CheckBox hsiModeCkBox;
+    public  CheckBox voiceEnCkBox;
     private CommMainPage commMainPage;
     private int numResetClicks;
     private long lastExitClick;
@@ -137,6 +138,20 @@ public class MenuMainPage {
                 SharedPreferences prefs = mainActivity.getPreferences (Context.MODE_PRIVATE);
                 SharedPreferences.Editor editr = prefs.edit ();
                 editr.putBoolean ("hsiMode", checked);
+                editr.apply ();
+            }
+        });
+
+        voiceEnCkBox = menuPageView.findViewById (R.id.voiceEnCkbox);
+        voiceEnCkBox.setChecked (prefs.getBoolean ("voiceEnable", false));
+        voiceEnCkBox.setOnClickListener (new View.OnClickListener () {
+            @Override
+            public void onClick (View v)
+            {
+                boolean checked = voiceEnCkBox.isChecked ();
+                SharedPreferences prefs = mainActivity.getPreferences (Context.MODE_PRIVATE);
+                SharedPreferences.Editor editr = prefs.edit ();
+                editr.putBoolean ("voiceEnable", checked);
                 editr.apply ();
             }
         });

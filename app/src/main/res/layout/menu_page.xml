@@ -77,6 +77,16 @@
                 tools:ignore="HardcodedText" />
 
             <CheckBox
+                android:id="@+id/voiceEnCkbox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="110dp"
+                android:layout_marginTop="0dp"
+                android:text="Voice"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
+
+            <CheckBox
                 android:id="@+id/ambEnabCkbox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

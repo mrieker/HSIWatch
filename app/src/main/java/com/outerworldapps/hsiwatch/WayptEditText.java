@@ -80,7 +80,7 @@ public class WayptEditText extends MyEditText implements MyEditText.Listener, Vi
     @Override  // Listener
     public boolean onEnterKey (TextView v)
     {
-        String idstr = v.getText ().toString ().trim ().toUpperCase (Locale.US);
+        String idstr = v.getText ().toString ().replace (" ", "").toUpperCase (Locale.US);
         if (! idstr.equals ("")) {
 
             // access latest database

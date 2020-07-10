@@ -169,6 +169,7 @@
                         <LI><B>ABOUT</B> - display version and database expiration information
                         <LI><B>UPDDB</B> - download database update (requires Internet access)
                         <LI><B>HSI</B> - select HSI mode for nav dial (airplane always at top); else OBS with yellow triangle always at top
+                        <LI><B>Voice</B> - enable voice recognition for waypoint input on main page
                         <LI><B>Ambient</B> - slow to 20 seconds per GPS sample in ambient mode; else maintain 1 second per sample
                         <LI><B>SIM</B> - access simulator parameters
                         <LI><B>COMM</B> - access bluetooth and UDP parameters
@@ -178,6 +179,45 @@
                 </TD>
             </TR>
         </TABLE>
+        <H3> Voice Recognition </H3>
+        <P>Voice can be used to input waypoints on the main page.  It must be enabled by checking the <B>Voice</B>
+            checkbox on the menu page.  It recognizes the usual aviation prowords (alpha, bravo, etc) and the
+            decimal digits (see table below).</P>
+        <P>NOTE:  Some watches may not have voice input capability.</P>
+        <P>NOTE:  This feature may require internet access to function.  Usually displays a message indicating unable
+            to connect to Google or something similar.  Swipe the voice input panel away then uncheck the <B>Voice</B>
+            checkbox then use keyboard input instead.</P>
+        <OL>
+            <LI>make sure the <B>Voice</B> checkbox on menu page is checked
+            <LI>tap on the waypoint id entry box on main page, speeh entry page should show
+            <LI>tap microphone icon on speech page
+            <LI>say prowords for the desired waypoint
+                <UL>
+                    <LI>do not pause between words, it will think you have finished
+                    <LI>say "bravo victor yankee", not "bee vee wye" or "beverly"
+                    <LI>say "one bravo two", not "one bee two" or "katama"
+                    <LI>say "kilo mike hotel tango" (for the airport), not "k m h t" or "manchester nowhere near the sea"
+                    <LI>say "mike hotel tango" for the VOR
+                    <LI>say "bravo one niner", not "bee nineteen" or "biddefid"
+                </UL>
+            <LI>click checkmark icon
+        </OL>
+        <P>List of recognized prowords (other words are ignored):</P>
+        <UL><LI>
+            <TABLE>
+                <TR><TH>0</TH><TD>zero</TD><TH>A</TH><TD>alpha</TD><TH>K</TH><TD>kilo</TD><TH>U</TH><TD>uniform</TD></TR>
+                <TR><TH>1</TH><TD>one won</TD><TH>B</TH><TD>bravo</TD><TH>L</TH><TD>lima</TD><TH>V</TH><TD>victor</TD></TR>
+                <TR><TH>2</TH><TD>to too two</TD><TH>C</TH><TD>charlie</TD><TH>M</TH><TD>mike</TD><TH>W</TH><TD>whiskey</TD></TR>
+                <TR><TH>3</TH><TD>three tree</TD><TH>D</TH><TD>delta</TD><TH>N</TH><TD>november</TD><TH>X</TH><TD>x-ray xray</TD></TR>
+                <TR><TH>4</TH><TD>for four</TD><TH>E</TH><TD>echo</TD><TH>O</TH><TD>oscar</TD><TH>Y</TH><TD>yankee</TD></TR>
+                <TR><TH>5</TH><TD>fife five</TD><TH>F</TH><TD>fox foxtrot</TD><TH>P</TH><TD>papa</TD><TH>Z</TH><TD>zulu</TD></TR>
+                <TR><TH>6</TH><TD>six</TD><TH>G</TH><TD>golf</TD><TH>Q</TH><TD>quebec</TD></TR>
+                <TR><TH>7</TH><TD>seven</TD><TH>H</TH><TD>hotel</TD><TH>R</TH><TD>romeo</TD></TR>
+                <TR><TH>8</TH><TD>ate eight</TD><TH>I</TH><TD>india</TD><TH>S</TH><TD>ciara sierra</TD></TR>
+                <TR><TH>9</TH><TD>nine niner</TD><TH>J</TH><TD>juliet</TD><TH>T</TH><TD>tango</TD></TR>
+            </TABLE>
+            <LI><B>off</B> clear waypoint and turn GPS off
+        </UL>
         <H3> Simulator </H3>
         <P>Generates GPS positions for a given track to use for testing.  Blocks real GPS reception while active.</P>
         <H3> COMM </H3>

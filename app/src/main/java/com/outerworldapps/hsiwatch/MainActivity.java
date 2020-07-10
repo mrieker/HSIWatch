@@ -21,20 +21,27 @@
 package com.outerworldapps.hsiwatch;
 
 import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.hardware.GeomagneticField;
 import android.os.Bundle;
 import android.os.Handler;
+import android.speech.RecognizerIntent;
 import android.support.wearable.activity.WearableActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
 import java.util.Stack;
 
 import androidx.annotation.NonNull;
@@ -274,6 +281,7 @@ public class MainActivity extends WearableActivity {
     /**
      * Finish initializing everything.
      */
+    @SuppressLint("ClickableViewAccessibility")
     public void finishInitializing ()
     {
         // the OBS dial and needles
@@ -354,6 +362,21 @@ public class MainActivity extends WearableActivity {
                 return downloadThread.getSqlDB ();
             }
         };
+        identEntry.setOnTouchListener (new View.OnTouchListener () {
+            @Override
+            public boolean onTouch (View v, MotionEvent event)
+            {
+                // if database not downloaded, don't bother opening keyboard
+                if (identEntry.onTouch (v, event)) return true;
+
+                // if voice not enabled, open keyboard
+                if (! menuMainPage.voiceEnCkBox.isChecked ()) return false;
+
+                // if voice input activity successfully started, don't open keyboard
+                // if voice input activity failed to start, open keyboard
+                return displaySpeechRecognizer ();
+            }
+        });
 
         // maybe load up waypoint from preferences
         String navWayptId = prefs.getString ("navWayptId", "");
@@ -545,6 +568,144 @@ public class MainActivity extends WearableActivity {
     }
 
     /**
+     * Voice recognition
+     */
+    private final static int SPEECH_REQUEST_CODE = 0;
+
+    private final static HashMap<String,Character> letters = createLetters ();
+    private static HashMap<String,Character> createLetters ()
+    {
+        HashMap<String,Character> hm = new HashMap<> ();
+        hm.put ("0", '0');
+        hm.put ("1", '1');
+        hm.put ("2", '2');
+        hm.put ("3", '3');
+        hm.put ("4", '4');
+        hm.put ("5", '5');
+        hm.put ("6", '6');
+        hm.put ("7", '7');
+        hm.put ("8", '8');
+        hm.put ("9", '9');
+        hm.put ("alpha", 'A');
+        hm.put ("ate", '8');
+        hm.put ("bravo", 'B');
+        hm.put ("charlie", 'C');
+        hm.put ("ciara", 'S');
+        hm.put ("delta", 'D');
+        hm.put ("echo", 'E');
+        hm.put ("eight", '8');
+        hm.put ("fife", '5');
+        hm.put ("five", '5');
+        hm.put ("for", '4');
+        hm.put ("four", '4');
+        hm.put ("fox", 'F');
+        hm.put ("foxtrot", 'F');
+        hm.put ("golf", 'G');
+        hm.put ("hotel", 'H');
+        hm.put ("india", 'I');
+        hm.put ("juliet", 'J');
+        hm.put ("kilo", 'K');
+        hm.put ("lima", 'L');
+        hm.put ("mike", 'M');
+        hm.put ("nine", '9');
+        hm.put ("niner", '9');
+        hm.put ("november", 'N');
+        hm.put ("off", '@');
+        hm.put ("one", '1');
+        hm.put ("oscar", 'O');
+        hm.put ("papa", 'P');
+        hm.put ("quebec", 'Q');
+        hm.put ("romeo", 'R');
+        hm.put ("seven", '7');
+        hm.put ("sierra", 'S');
+        hm.put ("six", '6');
+        hm.put ("tango", 'T');
+        hm.put ("three", '3');
+        hm.put ("tree", '3');
+        hm.put ("to", '2');
+        hm.put ("too", '2');
+        hm.put ("two", '2');
+        hm.put ("uniform", 'U');
+        hm.put ("victor", 'V');
+        hm.put ("whiskey", 'W');
+        hm.put ("won", '1');
+        hm.put ("x-ray", 'X');
+        hm.put ("xray", 'X');
+        hm.put ("yankee", 'Y');
+        hm.put ("zero", '0');
+        hm.put ("zulu", 'Z');
+        return hm;
+    }
+
+    // https://developer.android.com/training/wearables/apps/voice#java
+    private boolean displaySpeechRecognizer ()
+    {
+        Intent intent = new Intent (RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra (RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        //intent.putExtra (RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
+
+        try {
+            startActivityForResult (intent, SPEECH_REQUEST_CODE);
+        } catch (ActivityNotFoundException anfe) {
+            Log.w (TAG, "error starting ACTION_RECOGNIZE_SPEECH", anfe);
+            showToast ("device does not support voice input");
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    protected void onActivityResult (int requestCode, int resultCode, Intent data)
+    {
+        Log.d (TAG, "speech requestCode=" + requestCode + " resultCode=" + resultCode);
+
+        if ((requestCode == SPEECH_REQUEST_CODE) && (resultCode == RESULT_OK)) {
+
+            // translate prowords into string of letters and numbers for waypoint ident
+            StringBuilder sb = new StringBuilder ();
+            List<String> results = data.getStringArrayListExtra (RecognizerIntent.EXTRA_RESULTS);
+            boolean turnedOff = false;
+            for (String result : results) {
+                Log.d (TAG, "speech result='" + result + "'");
+                for (String word : result.replace ("/", " ").split (" ")) {
+                    Character ch = letters.get (word.toLowerCase (Locale.US));
+                    if (ch != null) {
+                        //noinspection SwitchStatementWithTooFewBranches
+                        switch (ch) {
+                            case '@': {
+                                turnedOff = true;
+                                break;
+                            }
+                            default: {
+                                sb.append (ch);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // if turned off, clear input box and set waypoint to null
+            if (turnedOff) {
+                identEntry.setText ("");
+                identEntry.wcl.wayptChanged (null);
+            } else if (sb.length () > 0) {
+
+                // pretend like those letters and numbers were typed in waypoint ident box
+                identEntry.setText (sb);
+                if (identEntry.onEnterKey (identEntry)) {
+
+                    // failed to look it up in database, restore text box and re-open speech input
+                    identEntry.setText ((navWaypt == null) ? "" : navWaypt.ident);
+                    displaySpeechRecognizer ();
+                }
+            }
+        }
+
+        super.onActivityResult (requestCode, resultCode, data);
+    }
+
+    /**
      * Display toast message.
      */
     public void showToast (String msg)
@@ -606,15 +767,4 @@ public class MainActivity extends WearableActivity {
             }
         }
     }
-
-    // https://stackoverflow.com/questions/4605527/converting-pixels-to-dp
-    /*
-    public int dpToPixels (final float dps)
-    {
-        DisplayMetrics metrics = new DisplayMetrics ();
-        getWindowManager ().getDefaultDisplay ().getMetrics (metrics);
-        final float scale = metrics.density;
-        return Math.round (dps * scale);
-    }
-    */
 }
