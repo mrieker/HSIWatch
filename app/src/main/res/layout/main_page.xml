@@ -16,36 +16,6 @@
 
         <!-- UPPER RIGHT -->
 
-        <TextView
-            android:id="@+id/magCourse"
-            android:layout_width="42px"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="173px"
-            android:layout_marginTop="78px"
-            android:ems="5"
-            android:textColor="#FF0000"
-            android:textSize="19px" />
-
-        <TextView
-            android:id="@+id/gpsTime"
-            android:layout_width="66px"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="173px"
-            android:layout_marginTop="103px"
-            android:ems="8"
-            android:textColor="#FF0000"
-            android:textSize="17px" />
-
-        <TextView
-            android:id="@+id/gndSpeed"
-            android:layout_width="66px"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="173px"
-            android:layout_marginTop="124px"
-            android:ems="4"
-            android:textColor="#FF0000"
-            android:textSize="18px" />
-
         <!-- UPPER LEFT -->
 
         <!-- LOWER LEFT -->

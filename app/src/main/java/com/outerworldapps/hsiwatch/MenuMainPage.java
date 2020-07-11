@@ -233,6 +233,7 @@ public class MenuMainPage {
 
     public void show ()
     {
+        upddbButton.setTextColor (mainActivity.downloadThread.buttonColor ());
         mainActivity.showMainPage (menuPageView);
     }
 

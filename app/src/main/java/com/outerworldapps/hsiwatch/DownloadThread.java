@@ -23,6 +23,7 @@ package com.outerworldapps.hsiwatch;
 import android.annotation.SuppressLint;
 import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -39,6 +40,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -50,19 +52,21 @@ import java.util.zip.GZIPInputStream;
 public class DownloadThread implements DatabaseErrorHandler, Runnable {
     private final static String baseurl = "https://www.outerworldapps.com/WairToNow";
 
+    private final static int NWARNDAYS = 6;
     private final static int throtkbps = 1024;  // throttle download to 1MByte per second
 
-    private boolean threadrunning;
-    private long lastdownloadmsgat;
-    private MainActivity mainActivity;
-    private SQLiteDatabase sqldb;
-    private String dbdir;
-    public  String dbexp;   // yyyy-mm-dd
-    private String dbpath;
+    private boolean threadrunning;      // gui thread only
+    private long lastdownloadmsgat;     // gui thread only
+    private long latestdb;              // gui thread only
+    private final MainActivity mainActivity;
+    private SQLiteDatabase sqldb;       // gui thread only
+    private final String dbdir;
+    public  String dbexp;               // gui thread only; yyyy-mm-dd
+    private String dbpath;              // gui thread only
 
-    public DownloadThread (MainActivity mainActivity)
+    public DownloadThread (MainActivity ma)
     {
-        this.mainActivity = mainActivity;
+        mainActivity = ma;
         dbdir = mainActivity.getNoBackupFilesDir ().getAbsolutePath ();
         dbexp = "(none)";
     }
@@ -90,7 +94,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
 
             // find latest database we have, if any
             dbpath = null;
-            long latestdb = 0;
+            latestdb = 0;
             SimpleDateFormat sdf = new SimpleDateFormat ("yyyyMMdd", Locale.US);
             sdf.setTimeZone (TimeZone.getTimeZone ("UTC"));
             for (File oldfile : new File (dbdir).listFiles ()) {
@@ -109,15 +113,25 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
                 }
             }
 
-            // start downloading either first time or update in background
-            if (dbpath == null) triggerDatabaseDownload ();
+            // if first time, start downloading
+            if (dbpath == null) upddb ();
 
-            // in any case, go with what we got if anything
-            if (dbpath != null) {
-                openDatabase ();
-            }
+            // otherwise, go with what we got
+            else openDatabase ();
         }
         return sqldb;
+    }
+
+    /**
+     * Get color for UPDDB button based on database expiration date.
+     * Called in GUI thread only.
+     */
+    public int buttonColor ()
+    {
+        long now = System.currentTimeMillis ();
+        if (now > latestdb) return Color.RED;
+        if (latestdb - now < NWARNDAYS * 24L * 60L * 60L * 1000L) return Color.YELLOW;
+        return Color.GREEN;
     }
 
     /**
@@ -125,19 +139,6 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
      * Called in GUI thread only.
      */
     public void upddb ()
-    {
-        triggerDatabaseDownload ();
-    }
-
-    /**
-     * Trigger downloading database when current is non-existant or is about to expire
-     *  Input:
-     *   when = when to start downloading (minute aligned so show next update time works)
-     *  Output:
-     *   sqldb = set to latest database when download complete
-     * Called in GUI thread only.
-     */
-    private void triggerDatabaseDownload ()
     {
         if (! threadrunning) {
             threadrunning = true;
@@ -152,7 +153,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
                 mainActivity.showToast ("updating database");
             }
             lastdownloadmsgat = System.currentTimeMillis ();
-            new Thread (DownloadThread.this).start ();
+            new Thread (this).start ();
         }
     }
 
@@ -275,6 +276,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
         }
     }
 
+    // GUI thread only
     private void threadFinished ()
     {
         threadrunning = false;
@@ -460,8 +462,9 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
      *  Input:
      *   dbpath = database file to open
      *  Output:
-     *   dbexp = database expiration
+     *   dbexp = latestdb = database expiration
      *   sqldb = database handle
+     * Called in GUI thread only
      */
     private void openDatabase ()
     {
@@ -469,16 +472,45 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
             sqldb.close ();
             sqldb = null;
         }
+
         int i = dbpath.indexOf ("/wayptabbs_");
         if ((i < 0) || ! dbpath.substring (i + 19).equals (".db")) {
             throw new IllegalArgumentException ("bad dbpath " + dbpath);
         }
+
+        SimpleDateFormat sdf = new SimpleDateFormat ("yyyyMMdd", Locale.US);
+        sdf.setTimeZone (TimeZone.getTimeZone ("UTC"));
+        try {
+            latestdb = sdf.parse (dbpath.substring (i + 11, i + 19)).getTime ();
+        } catch (ParseException pe) {
+            throw new IllegalArgumentException ("bad dbpath " + dbpath, pe);
+        }
+
         dbexp = dbpath.substring (i + 11, i + 15) + "-" +
                 dbpath.substring (i + 15, i + 17) + "-" +
                 dbpath.substring (i + 17, i + 19);
         sqldb = SQLiteDatabase.openDatabase (dbpath, null,
                     SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS,
                     this);
+
+        int bc = buttonColor ();
+        if ((mainActivity.menuMainPage != null) && (mainActivity.menuMainPage.upddbButton != null)) {
+            mainActivity.menuMainPage.upddbButton.setTextColor (bc);
+        }
+
+        // we have a database, maybe warn about expiration
+        switch (bc) {
+            case Color.RED: {
+                mainActivity.showToastLong ("database expired " + dbexp);
+                mainActivity.showToastLong ("use MENU\u25B7UPDDB to update");
+                break;
+            }
+            case Color.YELLOW: {
+                mainActivity.showToastLong ("database will expire " + dbexp);
+                mainActivity.showToastLong ("use MENU\u25B7UPDDB to update");
+                break;
+            }
+        }
     }
 
     @Override  // DatabaseErrorHandler
