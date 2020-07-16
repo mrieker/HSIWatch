@@ -125,12 +125,23 @@ public class MainActivity extends WearableActivity {
         // scale correspondingly to fit the actual screen size
         DisplayMetrics metrics = new DisplayMetrics ();
         getWindowManager ().getDefaultDisplay ().getMetrics (metrics);
-        float xscale = metrics.widthPixels  / 320.0F;
-        float yscale = metrics.heightPixels / 320.0F;
+        int widthPixels  = metrics.widthPixels;
+        int heightPixels = metrics.heightPixels;
+        // some watches have a little bit chopped off the bottom
+        // .. and so heightPixels is a little smaller than widthPixels
+        // so pretend height is the same as width
+        // .. the gray ring and some of the bottom number
+        //    gets chopped off the bottom
+        if (heightPixels < widthPixels) {
+            //noinspection SuspiciousNameCombination
+            heightPixels = widthPixels;
+        }
+        float xscale = widthPixels  / 320.0F;
+        float yscale = heightPixels / 320.0F;
         currentMainPage.setScaleX (xscale);
         currentMainPage.setScaleY (yscale);
-        currentMainPage.setTranslationX ((metrics.widthPixels  - 320.0F) * xscale * 0.5F);
-        currentMainPage.setTranslationY ((metrics.heightPixels - 320.0F) * yscale * 0.5F);
+        currentMainPage.setTranslationX ((widthPixels  - 320.0F) * xscale * 0.5F);
+        currentMainPage.setTranslationY ((heightPixels - 320.0F) * yscale * 0.5F);
 
         menuMainPage = new MenuMainPage (this);
 
@@ -559,7 +570,7 @@ public class MainActivity extends WearableActivity {
             rotateLayout.setRotation (dialRotation);
 
             // update DME distance and time
-            double dmenm = Lib.LatLonDist (curLoc.latitude, curLoc.longitude, navWaypt.lat, navWaypt.lon);
+            double dmenm = Lib.LatLonDist (curLoc.latitude, curLoc.longitude, navWaypt.dme_lat, navWaypt.dme_lon);
             int dmeTimeSec = (int) Math.round (dmenm * Lib.MPerNM / curLoc.speed);
             boolean slant = ! Double.isNaN (navWaypt.elev);
             if (slant) dmenm = Math.hypot (dmenm, curLoc.altitude / Lib.MPerNM - navWaypt.elev / Lib.FtPerNM);

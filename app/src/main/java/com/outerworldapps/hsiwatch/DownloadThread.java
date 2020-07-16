@@ -50,9 +50,9 @@ import java.util.zip.GZIPInputStream;
  * Thread what downloads latest database.
  */
 public class DownloadThread implements DatabaseErrorHandler, Runnable {
-    private final static String baseurl = "https://www.outerworldapps.com/WairToNow";
+    public final static String baseurl = "https://www.outerworldapps.com/WairToNow";
 
-    private final static int NWARNDAYS = 6;
+    private final static int NWARNDAYS = 3;
     private final static int throtkbps = 1024;  // throttle download to 1MByte per second
 
     private boolean threadrunning;      // gui thread only

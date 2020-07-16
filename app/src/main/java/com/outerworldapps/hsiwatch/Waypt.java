@@ -34,6 +34,8 @@ public abstract class Waypt {
                     NavDialView.Mode.VOR,
                     NavDialView.Mode.ADF };
 
+    public double dme_lat;
+    public double dme_lon;
     public double elev;     // feet (or NaN)
     public double lat;      // degrees
     public double lon;      // degrees
@@ -49,6 +51,7 @@ public abstract class Waypt {
         if (waypt == null) waypt = FixWaypt.find (sqldb, ident);
         if (waypt == null) waypt = LocWaypt.find (sqldb, ident);
         if (waypt == null) waypt = NavWaypt.find (sqldb, ident);
+        if (waypt == null) waypt = RwyWaypt.find (sqldb, ident);
         if (waypt == null) waypt = AptWaypt.find (sqldb, ident, false);
         return waypt;
     }
@@ -227,12 +230,12 @@ public abstract class Waypt {
                     where, new String[] { ident }, null, null, null, null)) {
                 if (cursor.moveToFirst ()) {
                     AptWaypt waypt = new AptWaypt ();
-                    waypt.ident  = cursor.getString (0);
-                    waypt.lat    = cursor.getDouble (1);
-                    waypt.lon    = cursor.getDouble (2);
-                    waypt.name   = cursor.getString (3) + "\n" + cursor.getString (4);
-                    waypt.elev   = cursor.getDouble (5);
-                    waypt.magvar = Double.NaN;
+                    waypt.ident   = cursor.getString (0);
+                    waypt.dme_lon = waypt.lat = cursor.getDouble (1);
+                    waypt.dme_lon = waypt.lon = cursor.getDouble (2);
+                    waypt.name    = cursor.getString (3) + "\n" + cursor.getString (4);
+                    waypt.elev    = cursor.getDouble (5);
+                    waypt.magvar  = Double.NaN;
                     waypt.validModes = valgen;
                     return waypt;
                 }
@@ -254,12 +257,12 @@ public abstract class Waypt {
                     "fix_name=?", new String[] { ident }, null, null, null, null)) {
                 if (cursor.moveToFirst ()) {
                     FixWaypt waypt = new FixWaypt ();
-                    waypt.ident  = ident;
-                    waypt.lat    = cursor.getDouble (0);
-                    waypt.lon    = cursor.getDouble (1);
-                    waypt.name   = cursor.getString (2);
-                    waypt.elev   = Double.NaN;
-                    waypt.magvar = Double.NaN;
+                    waypt.ident   = ident;
+                    waypt.dme_lat = waypt.lat = cursor.getDouble (0);
+                    waypt.dme_lon = waypt.lon = cursor.getDouble (1);
+                    waypt.name    = cursor.getString (2);
+                    waypt.elev    = Double.NaN;
+                    waypt.magvar  = Double.NaN;
                     waypt.validModes = valgen;
                     return waypt;
                 }
@@ -281,7 +284,7 @@ public abstract class Waypt {
                     NavDialView.Mode.LOC,
                     NavDialView.Mode.LOCBC };
 
-        private final static NavDialView.Mode[] valwgs = {
+        protected final static NavDialView.Mode[] valwgs = {
                     NavDialView.Mode.OFF,
                     NavDialView.Mode.GCT,
                     NavDialView.Mode.VOR,
@@ -333,8 +336,6 @@ public abstract class Waypt {
         public double gs_lat;
         public double gs_lon;
         public double thdg;
-        public double dme_lat;
-        public double dme_lon;
 
         // get mode associated with the waypoint type
         // should match what autoTune() does
@@ -415,13 +416,13 @@ public abstract class Waypt {
                     "nav_faaid=?", new String[] { ident }, null, null, null, null)) {
                 if (cursor.moveToFirst ()) {
                     NavWaypt waypt = new NavWaypt ();
-                    waypt.ident  = ident;
-                    waypt.lat    = cursor.getDouble (0);
-                    waypt.lon    = cursor.getDouble (1);
-                    waypt.name   = cursor.getString (2);
-                    waypt.magvar = cursor.getInt (3);
-                    waypt.type   = cursor.getString (4);
-                    waypt.elev   = cursor.getDouble (5);
+                    waypt.ident   = ident;
+                    waypt.dme_lat = waypt.lat = cursor.getDouble (0);
+                    waypt.dme_lon = waypt.lon = cursor.getDouble (1);
+                    waypt.name    = cursor.getString (2);
+                    waypt.magvar  = cursor.getInt (3);
+                    waypt.type    = cursor.getString (4);
+                    waypt.elev    = cursor.getDouble (5);
                     waypt.validModes = valgen;
                     return waypt;
                 }
@@ -454,6 +455,73 @@ public abstract class Waypt {
                 mainActivity.setNavMode (NavDialView.Mode.VOR);
                 ndv.setObs (mc);
             }
+        }
+    }
+
+    /*************\
+     *  Runways  *
+    \*************/
+
+    public static class RwyWaypt extends LocWaypt {
+        private final static String[] rwycols = new String[] {
+                "apt_faaid", "apt_name", "rwy_tdze", "rwy_beglat", "rwy_beglon",
+                "rwy_endlat", "rwy_endlon", "rwy_number", "apt_elev" };
+
+        public static Waypt find (SQLiteDatabase sqldb, String ident)
+        {
+            // accept <aptid>.<rwyno>
+            int i = ident.indexOf ('.');
+            if (i >= 0) {
+                String aptid = ident.substring (0, i);
+                String rwyno = ident.substring (++i);
+                return find (sqldb, aptid, rwyno);
+            }
+
+            // also try without the . (assumes <aptid> is 3 or 4 chars)
+            i = ident.length ();
+            if (i < 4) return null;
+            Waypt w = find (sqldb, ident.substring (0, 3), ident.substring (3));
+            if (w != null) return w;
+            if (i < 5) return null;
+            return find (sqldb, ident.substring (0, 4), ident.substring (4));
+        }
+
+        private static Waypt find (SQLiteDatabase sqldb, String aptid, String rwyno)
+        {
+            try (Cursor cursor = sqldb.query ("runways,airports", rwycols,
+                    "(apt_icaoid=? OR apt_faaid=?) AND rwy_faaid=apt_faaid AND (rwy_number=? OR rwy_number=?)",
+                    new String[] { aptid, aptid, rwyno, '0' + rwyno }, null, null, null, null)) {
+                if (cursor.moveToFirst ()) {
+                    double tdze    = cursor.isNull (2) ? cursor.getDouble (8) : cursor.getDouble (2);
+                    double beglat  = cursor.getDouble (3);
+                    double beglon  = cursor.getDouble (4);
+                    double endlat  = cursor.getDouble (5);
+                    double endlon  = cursor.getDouble (6);
+                    rwyno          = cursor.getString (7);
+                    double rwytc   = Lib.LatLonTC (beglat, beglon, endlat, endlon);
+                    RwyWaypt waypt = new RwyWaypt ();
+                    // use faaid for airport cuz it's shorter than icaoid
+                    waypt.ident    = cursor.getString (0) + "." + rwyno;
+                    // loc antenna 1000ft past far end numbers
+                    waypt.lat      = Lib.LatHdgDist2Lat (endlat, rwytc, 1000.0 / Lib.FtPerNM);
+                    waypt.lon      = Lib.LatLonHdgDist2Lon (endlat, endlon, rwytc, 1000.0 / Lib.FtPerNM);
+                    // gs antenna 1000ft past near end numbers
+                    waypt.gs_elev  = tdze;
+                    waypt.gs_tilt  = 3.25;
+                    waypt.gs_lat   = Lib.LatHdgDist2Lat (beglat, rwytc, 1000.0 / Lib.FtPerNM);
+                    waypt.gs_lon   = Lib.LatLonHdgDist2Lon (beglat, endlon, rwytc, 1000.0 / Lib.FtPerNM);
+                    waypt.thdg     = rwytc;
+                    waypt.elev     = tdze;
+                    waypt.name     = cursor.getString (1) + "\nRunway " + rwyno;
+                    // dme antenna right at near end numbers
+                    waypt.dme_lat  = beglat;
+                    waypt.dme_lon  = beglon;
+                    waypt.magvar   = Double.NaN;
+                    waypt.validModes = valwgs;
+                    return waypt;
+                }
+            }
+            return null;
         }
     }
 }

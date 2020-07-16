@@ -181,7 +181,7 @@ public class AcraApplication extends Application {
         Log.i (MainActivity.TAG, "sending ACRA report " + file.getPath ());
         long len = file.length ();
         try {
-            URL url = new URL ("https://www.outerworldapps.com/WairToNow/acraupload.php");
+            URL url = new URL (DownloadThread.baseurl + "/acraupload.php");
             HttpURLConnection httpCon = (HttpURLConnection)url.openConnection ();
             try {
                 httpCon.setRequestMethod ("POST");

@@ -148,13 +148,18 @@
                         <LI><B>ground speed</B> - indicates ground speed in knots
                             as seen by GPS
                         <LI><B>waypoint ident</B> - tap to enter waypoint.
-                            accepts airport ICAO id (eg, KBOS or 2B2), VOR
-                            or ADF id (eg, BOS), fix id (eg, BOSOX).
-                            airport FAA ID ok (eg, BVY) if not same as VOR.
-                            also accepts localizer IDs (eg, IBVY or I-BVY).
-                            will display message
-                            indicating name of waypoint for verification
-                            of selected waypoint.
+                            <UL>
+                                <LI>case-insensitive, and spaces are ignored
+                                <LI>accepts airport ICAO id (eg, KBOS or 2B2), VOR or ADF id (eg, BOS), fix id (eg, BOSOX).
+                                    airport FAA ID accepted (eg, BVY) if not same as VOR.
+                                <LI>accepts localizer IDs (eg, IBVY or I-BVY).
+                                <LI>accepts aptid.rwyno (BOS.4R, BOS.04R, KBVY.27, 2B2.10)
+                                    for runway provided the runway lat/lon data is in the FAA database.
+                                    the . is optional and the leading 0 for runway numbers is optional, ie,
+                                    7B3.02, 7B3.2, 7B302, 7B32 are all the same.  in any case, you are
+                                    presented with a dial of a generic ILS lined up on the runway.
+                            </UL>
+                            When selected, will display message indicating name of waypoint for verification.
                     </UL>
                 </TD>
             </TR>

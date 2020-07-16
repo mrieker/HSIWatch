@@ -14,20 +14,14 @@
         android:layout_height="320px"
         tools:ignore="PxUsage">
 
-        <!-- UPPER RIGHT -->
-
-        <!-- UPPER LEFT -->
-
-        <!-- LOWER LEFT -->
-
-        <!-- DRAW HSI DIAL AND NEEDLES ON TOP OF EVERYTHING EXCEPT INPUTS -->
+        <!-- DRAW HSI DIAL AND NEEDLES AND TEXT FIRST -->
 
         <com.outerworldapps.hsiwatch.NavDialView
             android:id="@+id/navDialView"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
-        <!-- MIDDLE LEFT -->
+        <!-- MENU BUTTON AND OVERSIZE AREA -->
 
         <com.outerworldapps.hsiwatch.MyMenuButton
             android:id="@+id/menuButtonView"
@@ -46,7 +40,7 @@
             android:layout_marginTop="125px"
             android:background="#00000000" />
 
-        <!-- LOWER LEFT -->
+        <!-- NAV MODE BUTTON AND OVERSIZE AREA -->
 
         <com.outerworldapps.hsiwatch.NavModeButton
             android:id="@+id/navModeButton"
@@ -63,17 +57,16 @@
             android:layout_marginTop="200px"
             android:background="#00000000" />
 
-        <!-- LOWER RIGHT -->
+        <!-- WAYPOINT ENTRY -->
 
         <com.outerworldapps.hsiwatch.WayptEditText
             android:id="@+id/identEntry"
-            android:layout_width="74px"
+            android:layout_width="82px"
             android:layout_height="wrap_content"
             android:layout_marginStart="164px"
             android:layout_marginTop="167px"
             android:autofillHints=""
             android:cursorVisible="false"
-            android:ems="5"
             android:hint="wptid"
             android:imeOptions="flagNoPersonalizedLearning|actionDone"
             android:inputType="textShortMessage|textNoSuggestions"
