@@ -132,13 +132,13 @@
                 tools:ignore="HardcodedText" />
 
             <Button
-                android:id="@+id/resetButton"
+                android:id="@+id/moreButton"
                 android:layout_width="51dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="103dp"
                 android:layout_marginTop="100dp"
                 android:padding="3dp"
-                android:text="RESET"
+                android:text="MORE\u25B6"
                 android:textSize="12sp"
                 tools:ignore="HardcodedText" />
 

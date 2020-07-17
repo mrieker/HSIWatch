@@ -231,7 +231,7 @@ public abstract class Waypt {
                 if (cursor.moveToFirst ()) {
                     AptWaypt waypt = new AptWaypt ();
                     waypt.ident   = cursor.getString (0);
-                    waypt.dme_lon = waypt.lat = cursor.getDouble (1);
+                    waypt.dme_lat = waypt.lat = cursor.getDouble (1);
                     waypt.dme_lon = waypt.lon = cursor.getDouble (2);
                     waypt.name    = cursor.getString (3) + "\n" + cursor.getString (4);
                     waypt.elev    = cursor.getDouble (5);
@@ -509,7 +509,7 @@ public abstract class Waypt {
                     waypt.gs_elev  = tdze;
                     waypt.gs_tilt  = 3.25;
                     waypt.gs_lat   = Lib.LatHdgDist2Lat (beglat, rwytc, 1000.0 / Lib.FtPerNM);
-                    waypt.gs_lon   = Lib.LatLonHdgDist2Lon (beglat, endlon, rwytc, 1000.0 / Lib.FtPerNM);
+                    waypt.gs_lon   = Lib.LatLonHdgDist2Lon (beglat, beglon, rwytc, 1000.0 / Lib.FtPerNM);
                     waypt.thdg     = rwytc;
                     waypt.elev     = tdze;
                     waypt.name     = cursor.getString (1) + "\nRunway " + rwyno;

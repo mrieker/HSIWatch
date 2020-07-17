@@ -164,21 +164,41 @@
                 </TD>
             </TR>
         </TABLE>
-        <H3> Menu Page </H3>
+        <H3> Menu Pages </H3>
         <TABLE>
             <TR>
-                <TD><IMG SRC="menu-page.png"></TD>
+                <TD><IMG SRC="menu-page.png" WIDTH=320 HEIGHT=320></TD>
                 <TD>
                     <UL>
                         <LI><B>BACK</B> - goes back to main page
                         <LI><B>ABOUT</B> - display version and database expiration information
                         <LI><B>UPDDB</B> - download database update (requires Internet access)
+                            <UL>
+                                <LI><FONT COLOR=GREEN>GREEN</FONT> - database is up to date and will remain so for a few days
+                                <LI><FONT COLOR=YELLOW>YELLOW</FONT> - database is up to date but will expire soon
+                                <LI><FONT COLOR=RED>RED</FONT> - database is expired
+                            </UL>
                         <LI><B>HSI</B> - select HSI mode for nav dial (airplane always at top); else OBS with yellow triangle always at top
                         <LI><B>Voice</B> - enable voice recognition for waypoint input on main page
                         <LI><B>Ambient</B> - slow to 20 seconds per GPS sample in ambient mode; else maintain 1 second per sample
                         <LI><B>SIM</B> - access simulator parameters
                         <LI><B>COMM</B> - access bluetooth and UDP parameters
                         <LI><B>EXIT</B> - exit the app
+                        <LI><B>MORE&#9654;</B> - goes to next menu page
+                    </UL>
+                </TD>
+            </TR>
+            <TR>
+                <TD><IMG SRC="menu2-page.png" WIDTH=320 HEIGHT=320></TD>
+                <TD>
+                    <UL>
+                        <LI><B>BACK</B> - goes back a page
+                        <LI><B>Fill Chin</B> - has nav dial fill chin on devices with a chin
+                            (only present on devices with a chin)
+                            <TABLE>
+                                <TR><TD>Filled Chin</TD><TD>Empty Chin</TD></TR>
+                                <TR><TD><IMG SRC="filled-chin.png" WIDTH=107 HEIGHT=107></TD><TD><IMG SRC="empty-chin.png" WIDTH=107 HEIGHT=107></TD></TR>
+                            </TABLE>
                         <LI><B>RESET</B> - reset settings to factory defaults and purge database
                     </UL>
                 </TD>

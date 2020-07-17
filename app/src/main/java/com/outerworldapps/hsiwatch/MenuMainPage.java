@@ -39,6 +39,7 @@ import java.util.Map;
 public class MenuMainPage {
     public  Button upddbButton;
     public  CheckBox ambEnabCkBox;
+    public  CheckBox fillChinCkBox;
     public  CheckBox hsiModeCkBox;
     public  CheckBox voiceEnCkBox;
     private CommMainPage commMainPage;
@@ -49,6 +50,7 @@ public class MenuMainPage {
     private SatsMainPage satsMainPage;
     public  SimMainPage simMainPage;
     private View menuPageView;
+    private View menu2PageView;
 
     @SuppressLint("InflateParams")
     public MenuMainPage (MainActivity ma)
@@ -59,13 +61,7 @@ public class MenuMainPage {
         menuPageView = layoutInflater.inflate (R.layout.menu_page, null);
 
         Button backButton = menuPageView.findViewById (R.id.backButton);
-        backButton.setOnClickListener (new View.OnClickListener () {
-            @Override
-            public void onClick (View v)
-            {
-                mainActivity.onBackPressed ();
-            }
-        });
+        backButton.setOnClickListener (mainActivity.backButtonListener);
 
         // LEFT COLUMN
 
@@ -204,7 +200,52 @@ public class MenuMainPage {
             }
         });
 
-        Button resetButton = menuPageView.findViewById (R.id.resetButton);
+        Button moreButton = menuPageView.findViewById (R.id.moreButton);
+        moreButton.setOnClickListener (new View.OnClickListener () {
+            @Override
+            public void onClick (View v)
+            {
+                mainActivity.showMainPage (menu2PageView);
+            }
+        });
+
+        // PAGE 2
+
+        menu2PageView = layoutInflater.inflate (R.layout.menu2_page, null);
+
+        Button back2Button = menu2PageView.findViewById (R.id.back2Button);
+        back2Button.setOnClickListener (mainActivity.backButtonListener);
+
+        fillChinCkBox = menu2PageView.findViewById (R.id.fillChinCkBox);
+        boolean hasChin = (mainActivity.heightPixels < mainActivity.widthPixels);
+        fillChinCkBox.setVisibility (hasChin ? View.VISIBLE : View.INVISIBLE);
+        if (hasChin) {
+            boolean fillChin;
+            if (prefs.contains ("fillChin")) {
+                fillChin = prefs.getBoolean ("fillChin", false);
+            } else {
+                fillChin = mainActivity.hadPreviouslyAgreed;
+                SharedPreferences.Editor editr = prefs.edit ();
+                editr.putBoolean ("fillChin", fillChin);
+                editr.apply ();
+                if (! fillChin) {
+                    mainActivity.showToastLong ("To fill chin, click MENU\u25B7MORE\u25B7Fill Chin");
+                }
+            }
+            fillChinCkBox.setChecked (fillChin);
+            fillChinCkBox.setOnClickListener (new View.OnClickListener () {
+                @Override
+                public void onClick (View v)
+                {
+                    SharedPreferences.Editor editr = prefs.edit ();
+                    editr.putBoolean ("fillChin", fillChinCkBox.isChecked ());
+                    editr.apply ();
+                    mainActivity.setNavMainPageScale ();
+                }
+            });
+        }
+
+        Button resetButton = menu2PageView.findViewById (R.id.resetButton);
         resetButton.setOnClickListener (new View.OnClickListener () {
             @SuppressLint("ApplySharedPref")
             @Override

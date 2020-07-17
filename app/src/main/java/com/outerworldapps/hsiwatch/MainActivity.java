@@ -56,6 +56,7 @@ public class MainActivity extends WearableActivity {
 
     private boolean autoTunePending;
     private boolean gpsEnabled;
+    public  boolean hadPreviouslyAgreed;
     public  double startlat;                // GPS received lat,lon when waypoint was selected
     public  double startlon;
     public  DownloadThread downloadThread;
@@ -63,6 +64,8 @@ public class MainActivity extends WearableActivity {
     private GpsReceiver gpsReceiver;
     public  GpsTransmitter gpsTransmitter;
     public  Handler myHandler;
+    public  int widthPixels;
+    public  int heightPixels;
     public  InternalGps internalGps;
     private long gpslastheardat;
     private long lastBackPressed;
@@ -72,6 +75,7 @@ public class MainActivity extends WearableActivity {
     private RotateLayout rotateLayout;
     private Stack<View> mainPageStack;
     private View currentMainPage;
+    private View navMainPage;
     public  Waypt navWaypt;
     private WayptEditText identEntry;
 
@@ -82,9 +86,12 @@ public class MainActivity extends WearableActivity {
 
         AcraApplication.sendReports (this);
 
+        myHandler = new Handler ();
+
         // make sure they have agreed to little agreement
         final SharedPreferences prefs = getPreferences (MODE_PRIVATE);
         long hasAgreed = prefs.getLong ("hasAgreed", 0);
+        hadPreviouslyAgreed = hasAgreed > 0;
         if ((System.currentTimeMillis () - hasAgreed) / 86400000L < agreeDays) {
             hasAgreed ();
         } else {
@@ -115,37 +122,19 @@ public class MainActivity extends WearableActivity {
     @SuppressLint("InflateParams")
     private void hasAgreed ()
     {
+        DisplayMetrics metrics = new DisplayMetrics ();
+        getWindowManager ().getDefaultDisplay ().getMetrics (metrics);
+        widthPixels  = metrics.widthPixels;
+        heightPixels = metrics.heightPixels;
+
         mainPageStack = new Stack<> ();
 
         LayoutInflater layoutInflater = getLayoutInflater ();
-        currentMainPage = layoutInflater.inflate (R.layout.main_page, null);
+        currentMainPage = navMainPage = layoutInflater.inflate (R.layout.main_page, null);
         setContentView (currentMainPage);
 
-        // main_page.xml is based on 320x320 screen
-        // scale correspondingly to fit the actual screen size
-        DisplayMetrics metrics = new DisplayMetrics ();
-        getWindowManager ().getDefaultDisplay ().getMetrics (metrics);
-        int widthPixels  = metrics.widthPixels;
-        int heightPixels = metrics.heightPixels;
-        // some watches have a little bit chopped off the bottom
-        // .. and so heightPixels is a little smaller than widthPixels
-        // so pretend height is the same as width
-        // .. the gray ring and some of the bottom number
-        //    gets chopped off the bottom
-        if (heightPixels < widthPixels) {
-            //noinspection SuspiciousNameCombination
-            heightPixels = widthPixels;
-        }
-        float xscale = widthPixels  / 320.0F;
-        float yscale = heightPixels / 320.0F;
-        currentMainPage.setScaleX (xscale);
-        currentMainPage.setScaleY (yscale);
-        currentMainPage.setTranslationX ((widthPixels  - 320.0F) * xscale * 0.5F);
-        currentMainPage.setTranslationY ((heightPixels - 320.0F) * yscale * 0.5F);
-
         menuMainPage = new MenuMainPage (this);
-
-        myHandler = new Handler ();
+        setNavMainPageScale ();
 
         gpsReceiver = internalGps = new InternalGps (this);
 
@@ -160,6 +149,25 @@ public class MainActivity extends WearableActivity {
 
         // finish up initializing
         finishInitializing ();
+    }
+
+    // scale nav main page so nav dial fits screen
+    // main_page.xml is based on 320x320 screen
+    // scale correspondingly to fit the actual screen size
+    // maybe fill chin area, chopping off little bit of gray ring and numbers
+    public void setNavMainPageScale ()
+    {
+        int wp = widthPixels;
+        int hp = heightPixels;
+        float scale = Math.min (wp, hp) / 320.0F;
+        if (menuMainPage.fillChinCkBox.isChecked ()) {
+            hp = wp;
+            scale = wp / 320.0F;
+        }
+        navMainPage.setScaleX (scale);
+        navMainPage.setScaleY (scale);
+        navMainPage.setTranslationX ((wp - 320.0F) * scale * 0.5F);
+        navMainPage.setTranslationY ((hp - 320.0F) * scale * 0.5F);
     }
 
     @Override
@@ -272,6 +280,14 @@ public class MainActivity extends WearableActivity {
     /**
      * Pop to previous page when back button pressed.
      */
+    public final View.OnClickListener backButtonListener = new View.OnClickListener () {
+        @Override
+        public void onClick (View v)
+        {
+            onBackPressed ();
+        }
+    };
+
     @Override
     public void onBackPressed ()
     {

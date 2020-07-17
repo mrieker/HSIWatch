@@ -83,13 +83,7 @@ public class CommMainPage implements GpsTransmitter {
             LayoutInflater layoutInflater = mainActivity.getLayoutInflater ();
             udpPageView = layoutInflater.inflate (R.layout.udp_page, null);
             Button udpBack = udpPageView.findViewById (R.id.udpBack);
-            udpBack.setOnClickListener (new View.OnClickListener () {
-                @Override
-                public void onClick (View v)
-                {
-                    mainActivity.onBackPressed ();
-                }
-            });
+            udpBack.setOnClickListener (mainActivity.backButtonListener);
             ScrollView simScroll = udpPageView.findViewById (R.id.udpScroll);
             simScroll.addView (Initialize ());
         }

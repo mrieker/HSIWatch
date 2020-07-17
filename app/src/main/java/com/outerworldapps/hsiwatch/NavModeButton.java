@@ -127,13 +127,7 @@ public class NavModeButton extends View implements View.OnClickListener {
             LayoutInflater layoutInflater = mainActivity.getLayoutInflater ();
             modePageView = layoutInflater.inflate (R.layout.mode_page, null);
             Button modeBack = modePageView.findViewById (R.id.modeBack);
-            modeBack.setOnClickListener (new View.OnClickListener () {
-                @Override
-                public void onClick (View v)
-                {
-                    mainActivity.onBackPressed ();
-                }
-            });
+            modeBack.setOnClickListener (mainActivity.backButtonListener);
             modeGroup = modePageView.findViewById (R.id.modeGroup);
 
             // set up what to do when a radio button gets clicked
