@@ -1,6 +1,6 @@
 <HTML>
     <HEAD>
-        <TITLE> HSIWatch </TITLE>
+        <TITLE> HSIWatch App for Android Watches </TITLE>
     </HEAD>
     <BODY>
         <H3> HSIWatch App for Android Watches </H3>
@@ -171,7 +171,8 @@
                 <TD>
                     <UL>
                         <LI><B>BACK</B> - goes back to main page
-                        <LI><B>ABOUT</B> - display version and database expiration information
+                        <LI><B>SATS</B> - show GPS satellite status (also has a magnetic compass)
+                        <LI><B>MAP</B> - display moving map page
                         <LI><B>UPDDB</B> - download database update (requires Internet access)
                             <UL>
                                 <LI><FONT COLOR=GREEN>GREEN</FONT> - database is up to date and will remain so for a few days
@@ -181,7 +182,11 @@
                         <LI><B>HSI</B> - select HSI mode for nav dial (airplane always at top); else OBS with yellow triangle always at top
                         <LI><B>Voice</B> - enable voice recognition for waypoint input on main page
                         <LI><B>Ambient</B> - slow to 20 seconds per GPS sample in ambient mode; else maintain 1 second per sample
-                        <LI><B>SIM</B> - access simulator parameters
+                        <LI><B>Simplify</B> - simplify main navigation screen allowing text to be enlarged
+                            <TABLE>
+                                <TR><TD>Normal</TD><TD>Simplified</TD></TR>
+                                <TR><TD><IMG SRC="main-page.png" WIDTH=107 HEIGHT=107></TD><TD><IMG SRC="simplified.png" WIDTH=107 HEIGHT=107></TD></TR>
+                            </TABLE>
                         <LI><B>COMM</B> - access bluetooth and UDP parameters
                         <LI><B>EXIT</B> - exit the app
                         <LI><B>MORE&#9654;</B> - goes to next menu page
@@ -199,11 +204,28 @@
                                 <TR><TD>Filled Chin</TD><TD>Empty Chin</TD></TR>
                                 <TR><TD><IMG SRC="filled-chin.png" WIDTH=107 HEIGHT=107></TD><TD><IMG SRC="empty-chin.png" WIDTH=107 HEIGHT=107></TD></TR>
                             </TABLE>
+                        <LI><B>ABOUT</B> - display version and database expiration information
+                        <LI><B>SIM</B> - display simulator parameter page
+                        <LI><B>EXIT</B> - close app
                         <LI><B>RESET</B> - reset settings to factory defaults and purge database
                     </UL>
                 </TD>
             </TR>
         </TABLE>
+        <H3> Moving Map Page </H3>
+        <TABLE>
+            <TR><TD></TD><TD ALIGN=CENTER>zoom out</TD></TR>
+            <TR><TD>b<BR>a<BR>c<BR>k</TD><TD><IMG SRC="map-page.png"></TD>
+                <TD><UL>
+                    <LI><FONT COLOR=GREEN>GREEN</FONT> - airports (up to 20 with longest runways)
+                    <LI><FONT COLOR=CYAN>CYAN</FONT> - VORs (if not 20 airports)
+                    <LI><FONT COLOR=YELLOW>YELLOW</FONT> - range ring at half radius
+                    <LI><FONT COLOR=MAGENTA>MAGENTA</FONT> - course line and destination waypoint
+                </UL></TD>
+            </TR>
+            <TR><TD></TD><TD ALIGN=CENTER>zoom in</TD></TR>
+        </TABLE>
+        <P>The moving map page can be displayed by clicking the <B>MENU</B> then <B>MAP</B> buttons.</P>
         <H3> Voice Recognition </H3>
         <P>Voice can be used to input waypoints on the main page.  It must be enabled by checking the <B>Voice</B>
             checkbox on the menu page.  It recognizes the usual aviation prowords (alpha, bravo, etc) and the
@@ -214,7 +236,7 @@
             checkbox then use keyboard input instead.</P>
         <OL>
             <LI>make sure the <B>Voice</B> checkbox on menu page is checked
-            <LI>tap on the waypoint id entry box on main page, speeh entry page should show
+            <LI>tap on the waypoint id entry box on main page, speech entry page should show
             <LI>tap microphone icon on speech page
             <LI>say prowords for the desired waypoint
                 <UL>
@@ -247,6 +269,13 @@
         <P>Generates GPS positions for a given track to use for testing.  Blocks real GPS reception while active.</P>
         <H3> COMM </H3>
         <P>Transmits GPS positions (either real or simluated) on Bluetooth and/or UDP (Internet)
-            to such as a tablet or phone based EFB app.</P>
+            to such as a tablet or phone based EFB app.  Uses NMEA GPGGA,GPRMC messages to send
+            GPS position reports.</P>
+        <UL>
+            <LI><B>UDP</B> - fill in IP address of EFB device and the port number the EFB app is listening on
+            <LI><B>Bluetooth</B> - normally the 00001101 UUID prefix works, but if it fails try something
+                    else like 00001102.  Make sure the EFB app is connecting to the same UUID and that the
+                    EFB device is paired to the watch.
+        </UL>
     </BODY>
 </HTML>

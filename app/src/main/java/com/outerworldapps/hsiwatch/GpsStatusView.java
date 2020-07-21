@@ -1,4 +1,4 @@
-//    Copyright (C) 2015, Mike Rieker, Beverly, MA USA
+//    Copyright (C) 2020, Mike Rieker, Beverly, MA USA
 //    www.outerworldapps.com
 //
 //    This program is free software; you can redistribute it and/or modify

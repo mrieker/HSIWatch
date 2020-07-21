@@ -15,14 +15,14 @@
         android:orientation="vertical">
 
         <Button
-            android:id="@+id/udpBack"
+            android:id="@+id/commBack"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="\u25C0BACK"
             tools:ignore="HardcodedText" />
 
         <ScrollView
-            android:id="@+id/udpScroll"
+            android:id="@+id/commScroll"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:padding="@dimen/inner_frame_layout_padding"

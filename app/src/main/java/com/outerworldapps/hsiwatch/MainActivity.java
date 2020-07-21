@@ -25,6 +25,9 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.hardware.GeomagneticField;
 import android.os.Bundle;
 import android.os.Handler;
@@ -54,8 +57,11 @@ public class MainActivity extends WearableActivity {
     private final static long gpstimeout_amb = 60000;
     private final static long gpstimeout_nor = 5000;
 
+    public final static int airplaneHeight = 313 - 69;
+
     private boolean autoTunePending;
     private boolean gpsEnabled;
+    public  boolean ambient;
     public  boolean hadPreviouslyAgreed;
     public  double startlat;                // GPS received lat,lon when waypoint was selected
     public  double startlon;
@@ -70,8 +76,11 @@ public class MainActivity extends WearableActivity {
     private long gpslastheardat;
     private long lastBackPressed;
     public  MenuMainPage menuMainPage;
+    public  MyMenuButton myMenuButton;
     public  NavDialView navDialView;
     public  NavModeButton navModeButton;
+    public  Paint airplanePaint;
+    public  Path airplanePath;
     private RotateLayout rotateLayout;
     private Stack<View> mainPageStack;
     private View currentMainPage;
@@ -164,10 +173,20 @@ public class MainActivity extends WearableActivity {
             hp = wp;
             scale = wp / 320.0F;
         }
+        float xt = (wp - 320.0F) * scale * 0.5F;
+        float yt = (hp - 320.0F) * scale * 0.5F;
+
         navMainPage.setScaleX (scale);
         navMainPage.setScaleY (scale);
-        navMainPage.setTranslationX ((wp - 320.0F) * scale * 0.5F);
-        navMainPage.setTranslationY ((hp - 320.0F) * scale * 0.5F);
+        navMainPage.setTranslationX (xt);
+        navMainPage.setTranslationY (yt);
+
+        if (menuMainPage.mapPageView != null) {
+            menuMainPage.mapPageView.setScaleX (scale);
+            menuMainPage.mapPageView.setScaleY (scale);
+            menuMainPage.mapPageView.setTranslationX (xt);
+            menuMainPage.mapPageView.setTranslationY (yt);
+        }
     }
 
     @Override
@@ -241,12 +260,15 @@ public class MainActivity extends WearableActivity {
     {
         super.onEnterAmbient (ambientDetails);
 
+        ambient = true;
         if ((menuMainPage != null) && (menuMainPage.ambEnabCkBox != null) &&
                 menuMainPage.ambEnabCkBox.isChecked ()) {
+            airplanePaint.setColor (Color.GRAY);
             gpsReceiver.enterAmbient ();
             identEntry.setEnabled (false);
-            navDialView.setAmbient (true);
-            navModeButton.setAmbient (true);
+            navDialView.setAmbient ();
+            menuMainPage.setAmbient ();
+            navModeButton.setAmbient (false);
         }
     }
 
@@ -266,10 +288,13 @@ public class MainActivity extends WearableActivity {
     @Override
     public void onExitAmbient ()
     {
+        ambient = false;
         if ((menuMainPage != null) && (menuMainPage.ambEnabCkBox != null) &&
                 menuMainPage.ambEnabCkBox.isChecked ()) {
+            airplanePaint.setColor (Color.RED);
             identEntry.setEnabled (true);
-            navDialView.setAmbient (false);
+            navDialView.setAmbient ();
+            menuMainPage.setAmbient ();
             navModeButton.setAmbient (false);
             gpsReceiver.exitAmbient ();
         }
@@ -330,8 +355,7 @@ public class MainActivity extends WearableActivity {
                     double newobstru = navDialView.getObs () - curLoc.magvar;
                     if (Lib.GCXTKCourse (curLoc.latitude, curLoc.longitude, navWaypt.lat, navWaypt.lon,
                             startlat, startlon, newobstru, newll)) {
-                        startlat = newll.lat;
-                        startlon = newll.lon;
+                        setStartLatLon (newll.lat, newll.lon);
                     }
                 }
 
@@ -348,6 +372,34 @@ public class MainActivity extends WearableActivity {
         Button navModeButtox = findViewById (R.id.navModeButtox);
         navModeButtox.setOnClickListener (navModeButton);
 
+        // airplane icon pointing up with center at (0,0)
+        airplanePath = new Path ();
+        int acy = 181;
+        airplanePath.moveTo (0, 313 - acy);
+        airplanePath.lineTo ( -44, 326 - acy);
+        airplanePath.lineTo ( -42, 301 - acy);
+        airplanePath.lineTo ( -15, 281 - acy);
+        airplanePath.lineTo ( -18, 216 - acy);
+        airplanePath.lineTo (-138, 255 - acy);
+        airplanePath.lineTo (-138, 219 - acy);
+        airplanePath.lineTo (-17, 150 - acy);
+        airplanePath.lineTo ( -17,  69 - acy);
+        airplanePath.cubicTo (0, 39 - acy,
+                0, 39 - acy,
+                +17, 69 - acy);
+        airplanePath.lineTo ( +17, 150 - acy);
+        airplanePath.lineTo (+138, 219 - acy);
+        airplanePath.lineTo (+138, 255 - acy);
+        airplanePath.lineTo ( +18, 216 - acy);
+        airplanePath.lineTo ( +15, 281 - acy);
+        airplanePath.lineTo ( +42, 301 - acy);
+        airplanePath.lineTo ( +44, 326 - acy);
+        airplanePath.lineTo (0, 313 - acy);
+
+        airplanePaint = new Paint ();
+        airplanePaint.setColor (Color.RED);
+        airplanePaint.setStyle (Paint.Style.FILL);
+
         // open menu page button
         View.OnClickListener mbcl = new View.OnClickListener () {
             @Override
@@ -356,8 +408,8 @@ public class MainActivity extends WearableActivity {
                 menuMainPage.show ();
             }
         };
-        MyMenuButton mbv = findViewById (R.id.menuButtonView);
-        mbv.setOnClickListener (mbcl);
+        myMenuButton = findViewById (R.id.menuButtonView);
+        myMenuButton.setOnClickListener (mbcl);
         Button mbx = findViewById (R.id.menuButtonViex);
         mbx.setOnClickListener (mbcl);
 
@@ -405,6 +457,9 @@ public class MainActivity extends WearableActivity {
             }
         });
 
+        // maybe use simplified display mode
+        updateSimplify ();
+
         // maybe load up waypoint from preferences
         String navWayptId = prefs.getString ("navWayptId", "");
         if ((navWayptId != null) && ! navWayptId.equals ("")) {
@@ -414,6 +469,25 @@ public class MainActivity extends WearableActivity {
                 setNavWaypt (Waypt.find (sqldb, navWayptId));
             }
         }
+        //noinspection ConstantConditions
+        startlat = Double.parseDouble (prefs.getString ("startlat", "0"));
+        //noinspection ConstantConditions
+        startlon = Double.parseDouble (prefs.getString ("startlon", "0"));
+    }
+
+    // move the menu and navmode buttons
+    // the waypoint entry box is ok to leave as is
+    // everything on the navdial scales on its own
+    public void updateSimplify ()
+    {
+        SharedPreferences prefs = getPreferences (MODE_PRIVATE);
+        boolean simplify = prefs.getBoolean ("simplify", false);
+
+        identEntry.setScaleX (simplify ? 1.25F : 1.0F);
+        identEntry.setScaleY (simplify ? 1.25F : 1.0F);
+        identEntry.setTranslationX (simplify ? 10 : 0);
+        myMenuButton.setTranslationX (simplify ? -20 : 0);
+        navModeButton.setTranslationY (simplify ? 20 : 0);
     }
 
     /**
@@ -427,6 +501,9 @@ public class MainActivity extends WearableActivity {
             autoTunePending = false;
             setNavMode (NavDialView.Mode.OFF);
             navDialView.drawRedRing (false);
+            if (menuMainPage.mapDialView != null) {
+                menuMainPage.mapDialView.drawRedRing (false);
+            }
             navDialView.setObs (0.0);
         } else {
 
@@ -462,12 +539,25 @@ public class MainActivity extends WearableActivity {
         // set the nav dial initial settings for that waypoint
         if (autoTunePending) {
             autoTunePending = false;
-            startlat = curLoc.latitude;
-            startlon = curLoc.longitude;
+            setStartLatLon (curLoc.latitude, curLoc.longitude);
             navWaypt.autoTune (this);
         }
 
         updateNavDial ();
+    }
+
+    /**
+     * Set current course line starting point
+     */
+    private void setStartLatLon (double lat, double lon)
+    {
+        startlat = lat;
+        startlon = lon;
+        SharedPreferences prefs = getPreferences (MODE_PRIVATE);
+        SharedPreferences.Editor editr = prefs.edit ();
+        editr.putString ("startlat", Double.toString (startlat));
+        editr.putString ("startlon", Double.toString (startlon));
+        editr.apply ();
     }
 
     /**
@@ -565,6 +655,9 @@ public class MainActivity extends WearableActivity {
             }
         }
         navDialView.drawRedRing (flashon);
+        if (menuMainPage.mapDialView != null) {
+            menuMainPage.mapDialView.drawRedRing (flashon);
+        }
 
         // update nav dial contents
         if (gpsEnabled && (navWaypt != null) && (curLoc != null)) {
@@ -591,6 +684,10 @@ public class MainActivity extends WearableActivity {
             boolean slant = ! Double.isNaN (navWaypt.elev);
             if (slant) dmenm = Math.hypot (dmenm, curLoc.altitude / Lib.MPerNM - navWaypt.elev / Lib.FtPerNM);
             navDialView.setDme (dmenm, dmeTimeSec, slant);
+
+            if (menuMainPage.mapDialView != null) {
+                menuMainPage.mapDialView.setLocation (curLoc);
+            }
         }
     }
 

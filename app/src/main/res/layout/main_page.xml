@@ -34,9 +34,9 @@
 
         <Button
             android:id="@+id/menuButtonViex"
-            android:layout_width="70px"
+            android:layout_width="66dp"
             android:layout_height="70px"
-            android:layout_marginStart="45px"
+            android:layout_marginStart="15px"
             android:layout_marginTop="125px"
             android:background="#00000000" />
 

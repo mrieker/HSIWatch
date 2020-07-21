@@ -68,7 +68,7 @@ public class CommMainPage implements GpsTransmitter {
     private SimpleDateFormat sdfdmy;
     private UUID btServerUUID;
     private TextView conCountView;
-    public  View udpPageView;
+    public  View commPageView;
 
     public CommMainPage (MainActivity ma)
     {
@@ -79,15 +79,15 @@ public class CommMainPage implements GpsTransmitter {
     @SuppressLint("InflateParams")
     public void show ()
     {
-        if (udpPageView == null) {
+        if (commPageView == null) {
             LayoutInflater layoutInflater = mainActivity.getLayoutInflater ();
-            udpPageView = layoutInflater.inflate (R.layout.udp_page, null);
-            Button udpBack = udpPageView.findViewById (R.id.udpBack);
+            commPageView = layoutInflater.inflate (R.layout.comm_page, null);
+            Button udpBack = commPageView.findViewById (R.id.commBack);
             udpBack.setOnClickListener (mainActivity.backButtonListener);
-            ScrollView simScroll = udpPageView.findViewById (R.id.udpScroll);
-            simScroll.addView (Initialize ());
+            ScrollView commScroll = commPageView.findViewById (R.id.commScroll);
+            commScroll.addView (Initialize ());
         }
-        mainActivity.showMainPage (udpPageView);
+        mainActivity.showMainPage (commPageView);
     }
 
     @SuppressLint("SetTextI18n")

@@ -42,6 +42,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.zip.GZIPInputStream;
@@ -54,6 +55,9 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
 
     private final static int NWARNDAYS = 3;
     private final static int throtkbps = 1024;  // throttle download to 1MByte per second
+
+    @SuppressWarnings("deprecation")
+    private final static long oldversiontime = new Date (2020-1900, 7-1, 14).getTime ();
 
     private boolean threadrunning;      // gui thread only
     private long lastdownloadmsgat;     // gui thread only
@@ -100,6 +104,12 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
             for (File oldfile : new File (dbdir).listFiles ()) {
                 String oldname = oldfile.getName ();
                 if (oldname.startsWith ("wayptabbs_") && oldname.endsWith (".db")) {
+                    if (oldfile.lastModified () < oldversiontime) {
+                        // delete database that doesn't have runways table
+                        //noinspection ResultOfMethodCallIgnored
+                        oldfile.delete ();
+                        continue;
+                    }
                     try {
                         String expstr = oldname.substring (10, oldname.length () - 3);
                         long dbexp = sdf.parse (expstr).getTime ();

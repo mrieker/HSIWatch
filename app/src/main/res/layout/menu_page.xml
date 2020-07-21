@@ -43,13 +43,13 @@
                 tools:ignore="HardcodedText" />
 
             <Button
-                android:id="@+id/aboutButton"
+                android:id="@+id/mapButton"
                 android:layout_width="51dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="3dp"
                 android:layout_marginTop="52dp"
                 android:padding="3dp"
-                android:text="ABOUT"
+                android:text="MAP"
                 android:textSize="12sp"
                 tools:ignore="HardcodedText" />
 
@@ -96,14 +96,13 @@
                 tools:ignore="HardcodedText"
                 android:text="Ambient" />
 
-            <Button
-                android:id="@+id/simButton"
-                android:layout_width="51dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="53dp"
-                android:layout_marginTop="52dp"
-                android:padding="3dp"
-                android:text="SIM"
+            <CheckBox
+                android:id="@+id/simplifyCkBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="58dp"
+                android:layout_marginTop="48dp"
+                android:text="Simplify"
                 android:textSize="12sp"
                 tools:ignore="HardcodedText" />
 
@@ -119,17 +118,6 @@
                 tools:ignore="HardcodedText" />
 
             <!-- RIGHT COLUMN -->
-
-            <Button
-                android:id="@+id/exitButton"
-                android:layout_width="51dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="103dp"
-                android:layout_marginTop="52dp"
-                android:padding="3dp"
-                android:text="EXIT"
-                android:textSize="12sp"
-                tools:ignore="HardcodedText" />
 
             <Button
                 android:id="@+id/moreButton"

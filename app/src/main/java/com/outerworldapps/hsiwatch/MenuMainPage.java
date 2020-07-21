@@ -41,14 +41,17 @@ public class MenuMainPage {
     public  CheckBox ambEnabCkBox;
     public  CheckBox fillChinCkBox;
     public  CheckBox hsiModeCkBox;
+    public  CheckBox simplifyCkBox;
     public  CheckBox voiceEnCkBox;
     private CommMainPage commMainPage;
     private int numResetClicks;
     private long lastExitClick;
     private long lastResetClick;
     private MainActivity mainActivity;
+    public  MapDialView mapDialView;
     private SatsMainPage satsMainPage;
     public  SimMainPage simMainPage;
+    public  View mapPageView;
     private View menuPageView;
     private View menu2PageView;
 
@@ -75,38 +78,38 @@ public class MenuMainPage {
             }
         });
 
-        Button aboutButton = menuPageView.findViewById (R.id.aboutButton);
-        aboutButton.setOnClickListener (new View.OnClickListener () {
-            private View aboutPageView;
-
+        Button mapButton = menuPageView.findViewById (R.id.mapButton);
+        mapButton.setOnClickListener (new View.OnClickListener () {
             @Override
             public void onClick (View v)
             {
-                if (aboutPageView == null) {
-                    aboutPageView = layoutInflater.inflate (R.layout.about_page, null);
-                    Button aboutBack = aboutPageView.findViewById (R.id.aboutBack);
-                    aboutBack.setOnClickListener (new View.OnClickListener () {
+                if (mapPageView == null) {
+                    mapPageView = layoutInflater.inflate (R.layout.map_page, null);
+                    mapDialView = mapPageView.findViewById (R.id.mapDialView);
+                    // back button on the left side
+                    Button mapBackButton = mapPageView.findViewById (R.id.mapBackButton);
+                    mapBackButton.setOnClickListener (mainActivity.backButtonListener);
+                    // top button zooms out
+                    Button mapTopButton = mapPageView.findViewById (R.id.mapTopButton);
+                    mapTopButton.setOnClickListener (new View.OnClickListener () {
                         @Override
                         public void onClick (View v)
                         {
-                            mainActivity.onBackPressed ();
+                            mapDialView.incRadius (1);
+                        }
+                    });
+                    // bottom button zooms in
+                    Button mapBotButton = mapPageView.findViewById (R.id.mapBotButton);
+                    mapBotButton.setOnClickListener (new View.OnClickListener () {
+                        @Override
+                        public void onClick (View v)
+                        {
+                            mapDialView.incRadius (-1);
                         }
                     });
                 }
-
-                TextView textView = aboutPageView.findViewById (R.id.aboutText);
-                StringBuilder sb = new StringBuilder ();
-                sb.append ("\u00A9 outerworldapps.com\nversion: ");
-                sb.append (getVersionName ());
-                sb.append (" - ");
-                sb.append (getGitHash ());
-                if (getGitDirtyFlag ()) sb.append ('+');
-                sb.append ("\ndb exp: ");
-                sb.append (mainActivity.downloadThread.dbexp);
-                sb.append ("\n\nhelp available at https://www.outerworldapps.com/HSIWatch");
-                textView.setText (sb);
-
-                mainActivity.showMainPage (aboutPageView);
+                mainActivity.setNavMainPageScale ();
+                mainActivity.showMainPage (mapPageView);
             }
         });
 
@@ -165,19 +168,22 @@ public class MenuMainPage {
             }
         });
 
-        simMainPage = new SimMainPage (mainActivity);
-        Button simButton = menuPageView.findViewById (R.id.simButton);
-        simButton.setOnClickListener (new View.OnClickListener () {
+        simplifyCkBox = menuPageView.findViewById (R.id.simplifyCkBox);
+        simplifyCkBox.setChecked (prefs.getBoolean ("simplify", false));
+        simplifyCkBox.setOnClickListener (new View.OnClickListener () {
             @Override
             public void onClick (View v)
             {
-                simMainPage.show ();
+                SharedPreferences.Editor editr = prefs.edit ();
+                editr.putBoolean ("simplify", simplifyCkBox.isChecked ());
+                editr.apply ();
+                mainActivity.updateSimplify ();
             }
         });
 
         commMainPage = new CommMainPage (mainActivity);
-        Button udpButton = menuPageView.findViewById (R.id.commButton);
-        udpButton.setOnClickListener (new View.OnClickListener () {
+        Button commButton = menuPageView.findViewById (R.id.commButton);
+        commButton.setOnClickListener (new View.OnClickListener () {
             @Override
             public void onClick (View v)
             {
@@ -186,19 +192,6 @@ public class MenuMainPage {
         });
 
         // RIGHT COLUMN
-
-        Button exitButton = menuPageView.findViewById (R.id.exitButton);
-        exitButton.setOnClickListener (new View.OnClickListener () {
-            @Override
-            public void onClick (View v)
-            {
-                long now = System.currentTimeMillis ();
-                long sinceLastClick = now - lastExitClick;
-                if (sinceLastClick < 3000) System.exit (0);
-                lastExitClick = now;
-                mainActivity.showToast ("close app\nonce more in 3 seconds");
-            }
-        });
 
         Button moreButton = menuPageView.findViewById (R.id.moreButton);
         moreButton.setOnClickListener (new View.OnClickListener () {
@@ -215,6 +208,41 @@ public class MenuMainPage {
 
         Button back2Button = menu2PageView.findViewById (R.id.back2Button);
         back2Button.setOnClickListener (mainActivity.backButtonListener);
+
+        Button aboutButton = menu2PageView.findViewById (R.id.aboutButton);
+        aboutButton.setOnClickListener (new View.OnClickListener () {
+            private View aboutPageView;
+
+            @Override
+            public void onClick (View v)
+            {
+                if (aboutPageView == null) {
+                    aboutPageView = layoutInflater.inflate (R.layout.about_page, null);
+                    Button aboutBack = aboutPageView.findViewById (R.id.aboutBack);
+                    aboutBack.setOnClickListener (new View.OnClickListener () {
+                        @Override
+                        public void onClick (View v)
+                        {
+                            mainActivity.onBackPressed ();
+                        }
+                    });
+                }
+
+                TextView textView = aboutPageView.findViewById (R.id.aboutText);
+                StringBuilder sb = new StringBuilder ();
+                sb.append ("\u00A9 outerworldapps.com\nversion: ");
+                sb.append (getVersionName ());
+                sb.append (" - ");
+                sb.append (getGitHash ());
+                if (getGitDirtyFlag ()) sb.append ('+');
+                sb.append ("\ndb exp: ");
+                sb.append (mainActivity.downloadThread.dbexp);
+                sb.append ("\n\nhelp available at https://www.outerworldapps.com/HSIWatch");
+                textView.setText (sb);
+
+                mainActivity.showMainPage (aboutPageView);
+            }
+        });
 
         fillChinCkBox = menu2PageView.findViewById (R.id.fillChinCkBox);
         boolean hasChin = (mainActivity.heightPixels < mainActivity.widthPixels);
@@ -244,6 +272,29 @@ public class MenuMainPage {
                 }
             });
         }
+
+        simMainPage = new SimMainPage (mainActivity);
+        Button simButton = menu2PageView.findViewById (R.id.simButton);
+        simButton.setOnClickListener (new View.OnClickListener () {
+            @Override
+            public void onClick (View v)
+            {
+                simMainPage.show ();
+            }
+        });
+
+        Button exitButton = menu2PageView.findViewById (R.id.exitButton);
+        exitButton.setOnClickListener (new View.OnClickListener () {
+            @Override
+            public void onClick (View v)
+            {
+                long now = System.currentTimeMillis ();
+                long sinceLastClick = now - lastExitClick;
+                if (sinceLastClick < 3000) System.exit (0);
+                lastExitClick = now;
+                mainActivity.showToast ("close app\nonce more in 3 seconds");
+            }
+        });
 
         Button resetButton = menu2PageView.findViewById (R.id.resetButton);
         resetButton.setOnClickListener (new View.OnClickListener () {
@@ -276,6 +327,19 @@ public class MenuMainPage {
     {
         upddbButton.setTextColor (mainActivity.downloadThread.buttonColor ());
         mainActivity.showMainPage (menuPageView);
+    }
+
+    // entering or exiting ambient mode
+    // redraw in grayscale or color
+    public void setAmbient ()
+    {
+        if (mapDialView != null) {
+            mapDialView.setAmbient ();
+            for (int id : new int[] { R.id.mapBackOutline, R.id.mapBotOutline, R.id.mapTopOutline }) {
+                View outline = mapPageView.findViewById (id);
+                outline.invalidate ();
+            }
+        }
     }
 
     private String getVersionName ()

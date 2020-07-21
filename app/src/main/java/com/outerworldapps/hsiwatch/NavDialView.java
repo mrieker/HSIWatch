@@ -48,8 +48,6 @@ public class NavDialView extends View {
     public  final static double LOCDEFLECT =  3;  // degrees each side for ILS/LOC mode deflection
     public  final static double GSDEFLECT  =  1;  // degrees each side for GS deflection
 
-    private final static int airplaneHeight = 313 - 69;
-
     private boolean ambient;
     private boolean redRing;
     public  boolean revRotate;
@@ -69,10 +67,10 @@ public class NavDialView extends View {
     private int lastGpsKts;
     private int lastObsInt;
     private int lastToWaypt;
+    private MainActivity mainActivity;
     private Mode mode;
     public  OBSChangedListener obsChangedListener;
     private Paint adfNeedlePaint;
-    private Paint airplanePaint;
     private Paint dialBackPaint;
     private Paint dialFatPaint;
     private Paint dialMidPaint;
@@ -90,7 +88,6 @@ public class NavDialView extends View {
     private Paint outerRingPaint;
     private Paint vorNeedlePaint;
     private Path adfNeedlePath;
-    private Path airplanePath;
     private Path frArrowPath;
     private Path obsArrowPath;
     private Path toArrowPath;
@@ -117,6 +114,11 @@ public class NavDialView extends View {
 
     private void constructor ()
     {
+        Context ctx = getContext ();
+        if (ctx instanceof MainActivity) {
+            mainActivity = (MainActivity) ctx;
+        }
+
         strbuf = new char[8];
 
         adfNeedlePaint = new Paint ();
@@ -207,9 +209,9 @@ public class NavDialView extends View {
         adfNeedlePath.lineTo (  0, -604);
 
         frArrowPath = new Path ();
-        frArrowPath.moveTo (372,  92);
-        frArrowPath.lineTo (445, 188);
-        frArrowPath.lineTo (518,  92);
+        frArrowPath.moveTo (372+36,  80);
+        frArrowPath.lineTo (445+36, 176);
+        frArrowPath.lineTo (518+36,  80);
 
         obsArrowPath = new Path ();
         obsArrowPath.moveTo (-71, -518);
@@ -217,37 +219,9 @@ public class NavDialView extends View {
         obsArrowPath.lineTo ( 71, -518);
 
         toArrowPath = new Path ();
-        toArrowPath.moveTo (372,  -92);
-        toArrowPath.lineTo (445, -188);
-        toArrowPath.lineTo (518,  -92);
-
-        // airplane icon pointing up with center at (0,0)
-        airplanePath = new Path ();
-        int acy = 181;
-        airplanePath.moveTo (0, 313 - acy);
-        airplanePath.lineTo ( -44, 326 - acy);
-        airplanePath.lineTo ( -42, 301 - acy);
-        airplanePath.lineTo ( -15, 281 - acy);
-        airplanePath.lineTo ( -18, 216 - acy);
-        airplanePath.lineTo (-138, 255 - acy);
-        airplanePath.lineTo (-138, 219 - acy);
-        airplanePath.lineTo (-17, 150 - acy);
-        airplanePath.lineTo ( -17,  69 - acy);
-        airplanePath.cubicTo (0, 39 - acy,
-                0, 39 - acy,
-                +17, 69 - acy);
-        airplanePath.lineTo ( +17, 150 - acy);
-        airplanePath.lineTo (+138, 219 - acy);
-        airplanePath.lineTo (+138, 255 - acy);
-        airplanePath.lineTo ( +18, 216 - acy);
-        airplanePath.lineTo ( +15, 281 - acy);
-        airplanePath.lineTo ( +42, 301 - acy);
-        airplanePath.lineTo ( +44, 326 - acy);
-        airplanePath.lineTo (0, 313 - acy);
-
-        airplanePaint = new Paint ();
-        airplanePaint.setColor (Color.RED);
-        airplanePaint.setStyle (Paint.Style.FILL);
+        toArrowPath.moveTo (372+36,  -80);
+        toArrowPath.lineTo (445+36, -176);
+        toArrowPath.lineTo (518+36,  -80);
 
         mode = Mode.OFF;
 
@@ -268,18 +242,17 @@ public class NavDialView extends View {
         gpsHmsStr  = "";
         gpsKtsStr  = "";
 
-        setAmbient (false);
+        setAmbient ();
     }
 
     /**
      * Use grayscale for ambient mode.
      */
-    public void setAmbient (boolean ambient)
+    public void setAmbient ()
     {
-        this.ambient = ambient;
+        ambient = (mainActivity != null) && mainActivity.ambient;
         if (ambient) {
             adfNeedlePaint.setColor (Color.WHITE);
-            airplanePaint.setColor (Color.GRAY);
             dirArrowPaint.setColor (Color.GRAY);
             dmeDistPaint.setColor (Color.LTGRAY);
             dmeTimePaint.setColor (Color.LTGRAY);
@@ -291,7 +264,6 @@ public class NavDialView extends View {
             dialBackPaint.setColor (Color.BLACK);
         } else {
             adfNeedlePaint.setColor (Color.GREEN);
-            airplanePaint.setColor (Color.RED);
             dirArrowPaint.setColor (Color.GREEN);
             dmeDistPaint.setColor (0xFFFFAA00);
             dmeTimePaint.setColor (0xFFFFAA00);
@@ -597,12 +569,17 @@ public class NavDialView extends View {
 
         canvas.save ();
 
+        // simplify mode
+        boolean simplify = (mainActivity != null) && mainActivity.menuMainPage.simplifyCkBox.isChecked ();
+
         // set up translation/scaling so that outer ring is radius 1000 centered at 0,0
         canvas.translate (lastWidth / 2, lastHeight / 2);
         canvas.scale (lastScale, lastScale);
 
         // draw outer ring
         canvas.drawCircle (0, 0, 1000, outerRingPaint);
+
+        if (simplify) canvas.scale (1.25F, 1.25F);
 
         // draw OBS arrow triangle
         if (mode != Mode.OFF) {
@@ -661,7 +638,7 @@ public class NavDialView extends View {
         }
 
         // cover up end of VOR-style needle in case it goes under dial
-        canvas.drawCircle (0, 0, 718, dialBackPaint);
+        if (! simplify) canvas.drawCircle (0, 0, 718, dialBackPaint);
 
         if (mode != Mode.OFF) {
 
@@ -675,6 +652,8 @@ public class NavDialView extends View {
             canvas.drawText (gpsHmsStr, 55, -250, gpsMinPaint);
             canvas.drawText (gpsKtsStr, 55, -110, gpsMinPaint);
 
+            if (simplify) canvas.scale (1.0F/1.25F, 1.0F/1.25F);
+
             // draw OBS dial
             canvas.rotate ((float) - obsSetting);
             for (int deg = 0; deg < 360; deg += 5) {
@@ -682,20 +661,20 @@ public class NavDialView extends View {
                     case 0: {
                         // number and a thick line
                         canvas.drawText (Integer.toString (deg), 0, -823, dialTextPaint);
-                        canvas.drawLine (0, -647, 0, -788, dialFatPaint);
+                        if (! simplify) canvas.drawLine (0, -647, 0, -788, dialFatPaint);
                         break;
                     }
                     case 2:
                     case 4: {
                         // a medium line
-                        canvas.drawLine (0, -647, 0, -788, dialMidPaint);
+                        if (! simplify) canvas.drawLine (0, -647, 0, -788, dialMidPaint);
                         break;
                     }
                     case 1:
                     case 3:
                     case 5: {
                         // a small thin line
-                        canvas.drawLine (0, -647, 0, -718, dialThinPaint);
+                        if (! simplify) canvas.drawLine (0, -647, 0, -718, dialThinPaint);
                         break;
                     }
                 }
@@ -706,9 +685,9 @@ public class NavDialView extends View {
             if (showarpln) {
                 canvas.rotate ((float) (heading + obsSetting));
                 canvas.translate (0, -805);
-                float scale = 180.0F / airplaneHeight;
+                float scale = 180.0F / MainActivity.airplaneHeight;
                 canvas.scale (scale, scale);
-                canvas.drawPath (airplanePath, airplanePaint);
+                canvas.drawPath (mainActivity.airplanePath, mainActivity.airplanePaint);
             }
         }
 

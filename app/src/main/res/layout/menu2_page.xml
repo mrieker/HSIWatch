@@ -31,6 +31,17 @@
 
             <!-- LEFT COLUMN -->
 
+            <Button
+                android:id="@+id/aboutButton"
+                android:layout_width="51dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="3dp"
+                android:layout_marginTop="52dp"
+                android:padding="3dp"
+                android:text="ABOUT"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
+
             <!-- MIDDLE COLUMN -->
 
             <CheckBox
@@ -43,7 +54,29 @@
                 android:textSize="12sp"
                 tools:ignore="HardcodedText" />
 
+            <Button
+                android:id="@+id/simButton"
+                android:layout_width="51dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="53dp"
+                android:layout_marginTop="52dp"
+                android:padding="3dp"
+                android:text="SIM"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
+
             <!-- RIGHT COLUMN -->
+
+            <Button
+                android:id="@+id/exitButton"
+                android:layout_width="51dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="103dp"
+                android:layout_marginTop="52dp"
+                android:padding="3dp"
+                android:text="EXIT"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
 
             <Button
                 android:id="@+id/resetButton"
