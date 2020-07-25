@@ -21,6 +21,49 @@
             android:text="\u25C0BACK"
             tools:ignore="HardcodedText" />
 
+        <!-- WAYPOINT ENTRY -->
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.outerworldapps.hsiwatch.WayptEditText
+                android:id="@+id/identEntry"
+                android:layout_width="170dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:autofillHints=""
+                android:cursorVisible="false"
+                android:hint="wptid"
+                android:imeOptions="flagNoPersonalizedLearning|actionDone"
+                android:inputType="textShortMessage|textNoSuggestions"
+                android:textAlignment="center"
+                android:textColor="#FFFFFF"
+                tools:ignore="HardcodedText,LabelFor" />
+
+            <Button
+                android:id="@+id/voiceButton"
+                android:layout_width="70dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0"
+                android:text="voice"
+                tools:ignore="HardcodedText" />
+
+            <Space
+                android:layout_width="20dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/identDescr"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="center" />
+
+        <!-- MODE SELECTION -->
+
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"

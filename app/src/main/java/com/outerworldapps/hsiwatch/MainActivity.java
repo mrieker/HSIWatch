@@ -21,7 +21,6 @@
 package com.outerworldapps.hsiwatch;
 
 import android.annotation.SuppressLint;
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
@@ -31,20 +30,15 @@ import android.graphics.Path;
 import android.hardware.GeomagneticField;
 import android.os.Bundle;
 import android.os.Handler;
-import android.speech.RecognizerIntent;
 import android.support.wearable.activity.WearableActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
 import java.util.Stack;
 
 import androidx.annotation.NonNull;
@@ -63,6 +57,7 @@ public class MainActivity extends WearableActivity {
     private boolean gpsEnabled;
     public  boolean ambient;
     public  boolean hadPreviouslyAgreed;
+    public  boolean isScreenRound;
     public  double startlat;                // GPS received lat,lon when waypoint was selected
     public  double startlon;
     public  DownloadThread downloadThread;
@@ -75,18 +70,19 @@ public class MainActivity extends WearableActivity {
     public  InternalGps internalGps;
     private long gpslastheardat;
     private long lastBackPressed;
+    public  MapDialView mapDialView;
+    private MapZoomButton mapBotButton;
+    private MapZoomButton mapTopButton;
     public  MenuMainPage menuMainPage;
-    public  MyMenuButton myMenuButton;
     public  NavDialView navDialView;
     public  NavModeButton navModeButton;
     public  Paint airplanePaint;
     public  Path airplanePath;
-    private RotateLayout rotateLayout;
     private Stack<View> mainPageStack;
     private View currentMainPage;
+    public  View mapPageView;
     private View navMainPage;
     public  Waypt navWaypt;
-    private WayptEditText identEntry;
 
     @Override
     protected void onCreate (Bundle savedInstanceState)
@@ -94,6 +90,8 @@ public class MainActivity extends WearableActivity {
         super.onCreate (savedInstanceState);
 
         AcraApplication.sendReports (this);
+
+        isScreenRound = getResources ().getConfiguration ().isScreenRound ();
 
         myHandler = new Handler ();
 
@@ -142,6 +140,31 @@ public class MainActivity extends WearableActivity {
         currentMainPage = navMainPage = layoutInflater.inflate (R.layout.main_page, null);
         setContentView (currentMainPage);
 
+        mapPageView = layoutInflater.inflate (R.layout.map_page, null);
+        mapDialView = mapPageView.findViewById (R.id.mapDialView);
+
+        // top button zooms out
+        mapTopButton = mapPageView.findViewById (R.id.mapZoomOutButton);
+        mapTopButton.setChar ('+');
+        mapTopButton.setOnClickListener (new View.OnClickListener () {
+            @Override
+            public void onClick (View v)
+            {
+                mapDialView.incRadius (1);
+            }
+        });
+
+        // bottom button zooms in
+        mapBotButton = mapPageView.findViewById (R.id.mapZoomInButton);
+        mapBotButton.setChar ('-');
+        mapBotButton.setOnClickListener (new View.OnClickListener () {
+            @Override
+            public void onClick (View v)
+            {
+                mapDialView.incRadius (-1);
+            }
+        });
+
         menuMainPage = new MenuMainPage (this);
         setNavMainPageScale ();
 
@@ -181,12 +204,10 @@ public class MainActivity extends WearableActivity {
         navMainPage.setTranslationX (xt);
         navMainPage.setTranslationY (yt);
 
-        if (menuMainPage.mapPageView != null) {
-            menuMainPage.mapPageView.setScaleX (scale);
-            menuMainPage.mapPageView.setScaleY (scale);
-            menuMainPage.mapPageView.setTranslationX (xt);
-            menuMainPage.mapPageView.setTranslationY (yt);
-        }
+        mapPageView.setScaleX (scale);
+        mapPageView.setScaleY (scale);
+        mapPageView.setTranslationX (xt);
+        mapPageView.setTranslationY (yt);
     }
 
     @Override
@@ -228,31 +249,6 @@ public class MainActivity extends WearableActivity {
     }
 
     /**
-     * Moved to foreground.  If waypoint tuned in and not turned off, start the GPS.
-    @Override
-    public void onResume ()
-    {
-        super.onResume ();
-        Log.d (TAG, "onResume*:" + (++ logseq));
-        if ((navWaypt != null) && (navDialView.getMode () != NavDialView.Mode.OFF)) {
-            activateGPS ();
-        }
-    }
-     */
-
-    /**
-     * Moved to background.  Stop the GPS.
-    @Override
-    public void onPause ()
-    {
-        deactivategpsat = 0;
-        deactivateGPS ();
-        Log.d (TAG, "onPause*:" + (++ logseq));
-        super.onPause ();
-    }
-     */
-
-    /**
      * Going into ambient mode.
      */
     @Override
@@ -265,22 +261,12 @@ public class MainActivity extends WearableActivity {
                 menuMainPage.ambEnabCkBox.isChecked ()) {
             airplanePaint.setColor (Color.GRAY);
             gpsReceiver.enterAmbient ();
-            identEntry.setEnabled (false);
             navDialView.setAmbient ();
-            menuMainPage.setAmbient ();
-            navModeButton.setAmbient (false);
+            mapDialView.setAmbient ();
+            mapBotButton.setAmbient ();
+            mapTopButton.setAmbient ();
         }
     }
-
-    /**
-     * Update during ambient mode once a minute.
-    @Override
-    public void onUpdateAmbient ()
-    {
-        super.onUpdateAmbient ();
-        updateNavDial ();
-    }
-     */
 
     /**
      * Leaving ambient mode.
@@ -292,10 +278,10 @@ public class MainActivity extends WearableActivity {
         if ((menuMainPage != null) && (menuMainPage.ambEnabCkBox != null) &&
                 menuMainPage.ambEnabCkBox.isChecked ()) {
             airplanePaint.setColor (Color.RED);
-            identEntry.setEnabled (true);
             navDialView.setAmbient ();
-            menuMainPage.setAmbient ();
-            navModeButton.setAmbient (false);
+            mapDialView.setAmbient ();
+            mapBotButton.setAmbient ();
+            mapTopButton.setAmbient ();
             gpsReceiver.exitAmbient ();
         }
 
@@ -312,6 +298,12 @@ public class MainActivity extends WearableActivity {
             onBackPressed ();
         }
     };
+
+    public View peekBackView ()
+    {
+        if (mainPageStack.isEmpty ()) return null;
+        return mainPageStack.peek ();
+    }
 
     @Override
     public void onBackPressed ()
@@ -353,8 +345,10 @@ public class MainActivity extends WearableActivity {
                     // ...and updateNavDial() will put OBS dial back when it
                     //    updates on-course OBS for GCT mode
                     double newobstru = navDialView.getObs () - curLoc.magvar;
-                    if (Lib.GCXTKCourse (curLoc.latitude, curLoc.longitude, navWaypt.lat, navWaypt.lon,
-                            startlat, startlon, newobstru, newll)) {
+                    if (! Double.isNaN (Lib.GCXTKCourse (
+                            curLoc.latitude, curLoc.longitude,
+                            navWaypt.lat, navWaypt.lon,
+                            startlat, startlon, newobstru, newll))) {
                         setStartLatLon (newll.lat, newll.lon);
                     }
                 }
@@ -364,13 +358,8 @@ public class MainActivity extends WearableActivity {
             }
         };
 
-        // background and foreground item rotation
-        rotateLayout = findViewById (R.id.rotateLayout);
-
-        // OFF->GCT->VOR->ADF->LOC->LOCBC->ILS mode button
-        navModeButton = findViewById (R.id.navModeButton);
-        Button navModeButtox = findViewById (R.id.navModeButtox);
-        navModeButtox.setOnClickListener (navModeButton);
+        // waypoint entry and nav mode selection page
+        navModeButton = new NavModeButton (this);
 
         // airplane icon pointing up with center at (0,0)
         airplanePath = new Path ();
@@ -400,70 +389,11 @@ public class MainActivity extends WearableActivity {
         airplanePaint.setColor (Color.RED);
         airplanePaint.setStyle (Paint.Style.FILL);
 
-        // open menu page button
-        View.OnClickListener mbcl = new View.OnClickListener () {
-            @Override
-            public void onClick (View v)
-            {
-                menuMainPage.show ();
-            }
-        };
-        myMenuButton = findViewById (R.id.menuButtonView);
-        myMenuButton.setOnClickListener (mbcl);
-        Button mbx = findViewById (R.id.menuButtonViex);
-        mbx.setOnClickListener (mbcl);
-
-        // waypoint entry text box
-        SharedPreferences prefs = getPreferences (MODE_PRIVATE);
-        identEntry = findViewById (R.id.identEntry);
-        identEntry.wcl = new WayptEditText.WayptChangeListener () {
-            @Override
-            public void wayptChanged (Waypt waypt)
-            {
-                // set it as current waypoint
-                SharedPreferences prefs = getPreferences (MODE_PRIVATE);
-                SharedPreferences.Editor editr = prefs.edit ();
-                String ident = (waypt == null) ? "" : waypt.ident;
-                editr.putString ("navWayptId", ident);
-                editr.apply ();
-                setNavWaypt (waypt);
-            }
-
-            @Override
-            public void showToast (String msg)
-            {
-                MainActivity.this.showToast (msg);
-            }
-
-            @Override
-            public SQLiteDatabase getSqlDB ()
-            {
-                return downloadThread.getSqlDB ();
-            }
-        };
-        identEntry.setOnTouchListener (new View.OnTouchListener () {
-            @Override
-            public boolean onTouch (View v, MotionEvent event)
-            {
-                // if database not downloaded, don't bother opening keyboard
-                if (identEntry.onTouch (v, event)) return true;
-
-                // if voice not enabled, open keyboard
-                if (! menuMainPage.voiceEnCkBox.isChecked ()) return false;
-
-                // if voice input activity successfully started, don't open keyboard
-                // if voice input activity failed to start, open keyboard
-                return displaySpeechRecognizer ();
-            }
-        });
-
-        // maybe use simplified display mode
-        updateSimplify ();
-
         // maybe load up waypoint from preferences
+        SharedPreferences prefs = getPreferences (MODE_PRIVATE);
         String navWayptId = prefs.getString ("navWayptId", "");
         if ((navWayptId != null) && ! navWayptId.equals ("")) {
-            identEntry.setText (navWayptId);
+            navModeButton.identEntry.setText (navWayptId);
             SQLiteDatabase sqldb = downloadThread.getSqlDB ();
             if (sqldb != null) {
                 setNavWaypt (Waypt.find (sqldb, navWayptId));
@@ -475,37 +405,36 @@ public class MainActivity extends WearableActivity {
         startlon = Double.parseDouble (prefs.getString ("startlon", "0"));
     }
 
-    // move the menu and navmode buttons
-    // the waypoint entry box is ok to leave as is
-    // everything on the navdial scales on its own
-    public void updateSimplify ()
+    /**
+     * Voice recognition result, pass to waypoint entry screen.
+     */
+    @Override
+    public void onActivityResult (int requestCode, int resultCode, Intent data)
     {
-        SharedPreferences prefs = getPreferences (MODE_PRIVATE);
-        boolean simplify = prefs.getBoolean ("simplify", false);
-
-        identEntry.setScaleX (simplify ? 1.25F : 1.0F);
-        identEntry.setScaleY (simplify ? 1.25F : 1.0F);
-        identEntry.setTranslationX (simplify ? 10 : 0);
-        myMenuButton.setTranslationX (simplify ? -20 : 0);
-        navModeButton.setTranslationY (simplify ? 20 : 0);
+        navModeButton.onActivityResult (requestCode, resultCode, data);
+        super.onActivityResult (requestCode, resultCode, data);
     }
 
     /**
      * Set the waypoint we are headed to
      * Turn GPS on, set nav dial
      */
-    private void setNavWaypt (Waypt waypt)
+    public void setNavWaypt (Waypt waypt)
     {
         navWaypt = waypt;
         if (navWaypt == null) {
             autoTunePending = false;
             setNavMode (NavDialView.Mode.OFF);
             navDialView.drawRedRing (false);
-            if (menuMainPage.mapDialView != null) {
-                menuMainPage.mapDialView.drawRedRing (false);
-            }
+            mapDialView.drawRedRing (false);
             navDialView.setObs (0.0);
+            navDialView.setIdent ("");
+            navModeButton.identEntry.setText ("");
+            navModeButton.identDescr.setText ("");
         } else {
+            navDialView.setIdent (waypt.ident);
+            navModeButton.identEntry.setText (navWaypt.ident);
+            navModeButton.identDescr.setText (navWaypt.name);
 
             // set initial OBS when we get GPS location
             autoTunePending = true;
@@ -567,7 +496,7 @@ public class MainActivity extends WearableActivity {
     public void setNavMode (NavDialView.Mode newmode)
     {
         navDialView.setMode (newmode);
-        navModeButton.setMode (newmode);
+        navModeButton.setMode ();
         if (newmode == NavDialView.Mode.OFF) {
             deactivateGPS ();
         } else {
@@ -655,9 +584,7 @@ public class MainActivity extends WearableActivity {
             }
         }
         navDialView.drawRedRing (flashon);
-        if (menuMainPage.mapDialView != null) {
-            menuMainPage.mapDialView.drawRedRing (flashon);
-        }
+        mapDialView.drawRedRing (flashon);
 
         // update nav dial contents
         if (gpsEnabled && (navWaypt != null) && (curLoc != null)) {
@@ -676,7 +603,7 @@ public class MainActivity extends WearableActivity {
             // otherwise, yellow triangle (OBS setting) stays at top
             boolean hsiEnable = menuMainPage.hsiModeCkBox.isChecked ();
             float dialRotation = hsiEnable ? (float) - navDialView.getHeading () : 0;
-            rotateLayout.setRotation (dialRotation);
+            navDialView.setHSIRotation (dialRotation);
 
             // update DME distance and time
             double dmenm = Lib.LatLonDist (curLoc.latitude, curLoc.longitude, navWaypt.dme_lat, navWaypt.dme_lon);
@@ -685,154 +612,18 @@ public class MainActivity extends WearableActivity {
             if (slant) dmenm = Math.hypot (dmenm, curLoc.altitude / Lib.MPerNM - navWaypt.elev / Lib.FtPerNM);
             navDialView.setDme (dmenm, dmeTimeSec, slant);
 
-            if (menuMainPage.mapDialView != null) {
-                menuMainPage.mapDialView.setLocation (curLoc);
-            }
+            // update moving map location
+            mapDialView.setLocation (curLoc);
         }
-    }
-
-    /**
-     * Voice recognition
-     */
-    private final static int SPEECH_REQUEST_CODE = 0;
-
-    private final static HashMap<String,Character> letters = createLetters ();
-    private static HashMap<String,Character> createLetters ()
-    {
-        HashMap<String,Character> hm = new HashMap<> ();
-        hm.put ("0", '0');
-        hm.put ("1", '1');
-        hm.put ("2", '2');
-        hm.put ("3", '3');
-        hm.put ("4", '4');
-        hm.put ("5", '5');
-        hm.put ("6", '6');
-        hm.put ("7", '7');
-        hm.put ("8", '8');
-        hm.put ("9", '9');
-        hm.put ("alpha", 'A');
-        hm.put ("ate", '8');
-        hm.put ("bravo", 'B');
-        hm.put ("charlie", 'C');
-        hm.put ("ciara", 'S');
-        hm.put ("delta", 'D');
-        hm.put ("echo", 'E');
-        hm.put ("eight", '8');
-        hm.put ("fife", '5');
-        hm.put ("five", '5');
-        hm.put ("for", '4');
-        hm.put ("four", '4');
-        hm.put ("fox", 'F');
-        hm.put ("foxtrot", 'F');
-        hm.put ("golf", 'G');
-        hm.put ("hotel", 'H');
-        hm.put ("india", 'I');
-        hm.put ("juliet", 'J');
-        hm.put ("kilo", 'K');
-        hm.put ("lima", 'L');
-        hm.put ("mike", 'M');
-        hm.put ("nine", '9');
-        hm.put ("niner", '9');
-        hm.put ("november", 'N');
-        hm.put ("off", '@');
-        hm.put ("one", '1');
-        hm.put ("oscar", 'O');
-        hm.put ("papa", 'P');
-        hm.put ("quebec", 'Q');
-        hm.put ("romeo", 'R');
-        hm.put ("seven", '7');
-        hm.put ("sierra", 'S');
-        hm.put ("six", '6');
-        hm.put ("tango", 'T');
-        hm.put ("three", '3');
-        hm.put ("tree", '3');
-        hm.put ("to", '2');
-        hm.put ("too", '2');
-        hm.put ("two", '2');
-        hm.put ("uniform", 'U');
-        hm.put ("victor", 'V');
-        hm.put ("whiskey", 'W');
-        hm.put ("won", '1');
-        hm.put ("x-ray", 'X');
-        hm.put ("xray", 'X');
-        hm.put ("yankee", 'Y');
-        hm.put ("zero", '0');
-        hm.put ("zulu", 'Z');
-        return hm;
-    }
-
-    // https://developer.android.com/training/wearables/apps/voice#java
-    private boolean displaySpeechRecognizer ()
-    {
-        Intent intent = new Intent (RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra (RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        //intent.putExtra (RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
-
-        try {
-            startActivityForResult (intent, SPEECH_REQUEST_CODE);
-        } catch (ActivityNotFoundException anfe) {
-            Log.w (TAG, "error starting ACTION_RECOGNIZE_SPEECH", anfe);
-            showToast ("device does not support voice input");
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    protected void onActivityResult (int requestCode, int resultCode, Intent data)
-    {
-        Log.d (TAG, "speech requestCode=" + requestCode + " resultCode=" + resultCode);
-
-        if ((requestCode == SPEECH_REQUEST_CODE) && (resultCode == RESULT_OK)) {
-
-            // translate prowords into string of letters and numbers for waypoint ident
-            StringBuilder sb = new StringBuilder ();
-            List<String> results = data.getStringArrayListExtra (RecognizerIntent.EXTRA_RESULTS);
-            boolean turnedOff = false;
-            for (String result : results) {
-                Log.d (TAG, "speech result='" + result + "'");
-                for (String word : result.replace ("/", " ").split (" ")) {
-                    Character ch = letters.get (word.toLowerCase (Locale.US));
-                    if (ch != null) {
-                        //noinspection SwitchStatementWithTooFewBranches
-                        switch (ch) {
-                            case '@': {
-                                turnedOff = true;
-                                break;
-                            }
-                            default: {
-                                sb.append (ch);
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // if turned off, clear input box and set waypoint to null
-            if (turnedOff) {
-                identEntry.setText ("");
-                identEntry.wcl.wayptChanged (null);
-            } else if (sb.length () > 0) {
-
-                // pretend like those letters and numbers were typed in waypoint ident box
-                identEntry.setText (sb);
-                if (identEntry.onEnterKey (identEntry)) {
-
-                    // failed to look it up in database, restore text box and re-open speech input
-                    identEntry.setText ((navWaypt == null) ? "" : navWaypt.ident);
-                    displaySpeechRecognizer ();
-                }
-            }
-        }
-
-        super.onActivityResult (requestCode, resultCode, data);
     }
 
     /**
      * Display toast message.
+     *  Input:
+     *   msg = String: display message
+     *       Runnable: call msg.run()
      */
-    public void showToast (String msg)
+    public void showToast (Object msg)
     {
         Log.i (TAG, "showToast: " + msg);
         MyToast myToast = new MyToast ();
@@ -841,7 +632,7 @@ public class MainActivity extends WearableActivity {
         queueMyToast (myToast);
     }
 
-    public void showToastLong (String msg)
+    public void showToastLong (Object msg)
     {
         Log.i (TAG, "showToastLong: " + msg);
         MyToast myToast = new MyToast ();
@@ -866,12 +657,16 @@ public class MainActivity extends WearableActivity {
 
     private class MyToast implements Runnable {
         public int length;
-        public String msg;
+        public Object msg;
 
         public void show ()
         {
             myToastShowing = this;
-            Toast.makeText (MainActivity.this, msg, length).show ();
+            if (msg instanceof Runnable) {
+                ((Runnable) msg).run ();
+            } else {
+                Toast.makeText (MainActivity.this, msg.toString (), length).show ();
+            }
             int delay = 0;
             switch (length) {
                 case Toast.LENGTH_SHORT: delay = 3000; break;

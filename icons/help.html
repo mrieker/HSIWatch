@@ -42,6 +42,7 @@
           document.write('o')
           document.write('m')
         </SCRIPT></P>
+        <HR>
         <H3> Main Page </H3>
         <TABLE>
             <TR>
@@ -51,11 +52,11 @@
                         <TR><TD ALIGN=RIGHT>course to waypoint &#9654;</TD></TR>
                         <TR><TD ALIGN=RIGHT>course from waypoint &#9654;</TD></TR>
                         <TR><TD>&nbsp;</TD></TR>
-                        <TR><TD ALIGN=RIGHT>menu button &#9654;</TD></TR>
+                        <TR><TD>&nbsp;</TD></TR>
                         <TR><TD>&nbsp;</TD></TR>
                         <TR><TD ALIGN=RIGHT>distance to waypoint &#9654;</TD></TR>
                         <TR><TD ALIGN=RIGHT>time to waypoint &#9654;</TD></TR>
-                        <TR><TD ALIGN=RIGHT>mode select button &#9654;</TD></TR>
+                        <TR><TD>&nbsp;</TD></TR>
                     </TABLE>
                 </TD>
                 <TD><IMG SRC="main-page.png"></TD>
@@ -66,10 +67,10 @@
                         <TR><TD ALIGN=LEFT>&#9664; ground speed</TD></TR>
                         <TR><TD>&nbsp;</TD></TR>
                         <TR><TD>&nbsp;</TD></TR>
-                        <TR><TD>&nbsp;</TD></TR>
-                        <TR><TD>&nbsp;</TD></TR>
                         <TR><TD ALIGN=LEFT>&#9664; waypoint ident</TD></TR>
-                        <TR><TD ALIGN=LEFT>&nbsp;</TD></TR>
+                        <TR><TD ALIGN=LEFT>&#9664; navigation mode</TD></TR>
+                        <TR><TD>&nbsp;</TD></TR>
+                        <TR><TD>&nbsp;</TD></TR>
                     </TABLE>
                 </TD>
             </TR>
@@ -87,7 +88,6 @@
                             </UL>
                         <LI><B>course to/from waypoint</B> - indicates the
                             OBS setting needed to center the needle
-                        <LI><B>menu button</B> - opens the menu page (see below)
                         <LI><B>distance to waypoint</B> - indicates nautical
                             miles to the selected waypoint.  <I>italics</I>
                             indicate slant-range distance (when elevation
@@ -96,7 +96,32 @@
                         <LI><B>time to waypoint</B> - distance / ground speed,
                             ie, time to waypoint if headed directly to waypoint.
                             --:--:-- indicates time in excess of 100 hours.
-                        <LI><B>mode select</B> - selects one of the navigation modes<BR>
+                    </UL>
+                </TD>
+                <TD VALIGN=TOP>
+                    <UL>
+                        <LI><B>ground track</B> - course line currently following
+                            over the ground, same as red airplane icon.
+                            ---&#176; indicates ground speed too low to determine track.
+                        <LI><B>GPS time</B> -
+                            increments as GPS reports current position
+                        <LI><B>ground speed</B> - indicates ground speed in knots
+                            as seen by GPS
+                        <LI><B>waypoint ident</B> - waypoint being navigated to
+                            <UL>
+                                <LI>case-insensitive, and spaces are ignored
+                                <LI>accepts airport ICAO id (eg, KBOS or 2B2), VOR or ADF id (eg, BOS), fix id (eg, BOSOX).
+                                    airport FAA ID accepted (eg, BVY) if not same as VOR.
+                                <LI>accepts localizer IDs (eg, IBVY or I-BVY).
+                                <LI>accepts aptid.rwyno (BOS.4R, BOS.04R, KBVY.27, 2B2.10)
+                                    for runway provided the runway lat/lon data is in the FAA database.
+                                    the . is optional and the leading 0 for runway numbers is optional, ie,
+                                    7B3.02, 7B3.2, 7B302, 7B32 are all the same.  in any case, you are
+                                    presented with a dial of a generic ILS lined up on the runway.
+                            </UL>
+                            <P>To select a waypoint, swipe downward on the main nav page to
+                                open the waypoint entry page.</P>
+                        <LI><B>navigation mode</B> - indicates current navigation mode<BR>
                             Valid for all waypoints:
                             <UL>
                                 <LI><B>OFF</B> - stops GPS reception
@@ -138,32 +163,25 @@
                             </UL>
                     </UL>
                 </TD>
-                <TD VALIGN=TOP>
+            </TR>
+        </TABLE>
+        <P>To access the other screens, touch near the center of the screen, and a menu will
+            appear:</P>
+        <TABLE>
+            <TR>
+                <TD><IMG SRC="dialflickmenu.png" WIDTH=320 HEIGHT=320></TD>
+                <TD>
+                    Swipe in the direction of the double arrows to select the function wanted:
                     <UL>
-                        <LI><B>ground track</B> - course line currently following
-                            over the ground, same as red airplane icon.
-                            ---&#176; indicates ground speed too low to determine track.
-                        <LI><B>GPS time</B> -
-                            increments as GPS reports current position
-                        <LI><B>ground speed</B> - indicates ground speed in knots
-                            as seen by GPS
-                        <LI><B>waypoint ident</B> - tap to enter waypoint.
-                            <UL>
-                                <LI>case-insensitive, and spaces are ignored
-                                <LI>accepts airport ICAO id (eg, KBOS or 2B2), VOR or ADF id (eg, BOS), fix id (eg, BOSOX).
-                                    airport FAA ID accepted (eg, BVY) if not same as VOR.
-                                <LI>accepts localizer IDs (eg, IBVY or I-BVY).
-                                <LI>accepts aptid.rwyno (BOS.4R, BOS.04R, KBVY.27, 2B2.10)
-                                    for runway provided the runway lat/lon data is in the FAA database.
-                                    the . is optional and the leading 0 for runway numbers is optional, ie,
-                                    7B3.02, 7B3.2, 7B302, 7B32 are all the same.  in any case, you are
-                                    presented with a dial of a generic ILS lined up on the runway.
-                            </UL>
-                            When selected, will display message indicating name of waypoint for verification.
+                        <LI><B>exit</B> - close the app (must be swiped twice)
+                        <LI><B>map</B> - open the moving map page
+                        <LI><B>menu</B> - access the menu pages
+                        <LI><B>waypt</B> - enter waypoint being navigated to
                     </UL>
                 </TD>
             </TR>
         </TABLE>
+        <HR>
         <H3> Menu Pages </H3>
         <TABLE>
             <TR>
@@ -172,7 +190,6 @@
                     <UL>
                         <LI><B>BACK</B> - goes back to main page
                         <LI><B>SATS</B> - show GPS satellite status (also has a magnetic compass)
-                        <LI><B>MAP</B> - display moving map page
                         <LI><B>UPDDB</B> - download database update (requires Internet access)
                             <UL>
                                 <LI><FONT COLOR=GREEN>GREEN</FONT> - database is up to date and will remain so for a few days
@@ -180,7 +197,6 @@
                                 <LI><FONT COLOR=RED>RED</FONT> - database is expired
                             </UL>
                         <LI><B>HSI</B> - select HSI mode for nav dial (airplane always at top); else OBS with yellow triangle always at top
-                        <LI><B>Voice</B> - enable voice recognition for waypoint input on main page
                         <LI><B>Ambient</B> - slow to 20 seconds per GPS sample in ambient mode; else maintain 1 second per sample
                         <LI><B>Simplify</B> - simplify main navigation screen allowing text to be enlarged
                             <TABLE>
@@ -188,7 +204,6 @@
                                 <TR><TD><IMG SRC="main-page.png" WIDTH=107 HEIGHT=107></TD><TD><IMG SRC="simplified.png" WIDTH=107 HEIGHT=107></TD></TR>
                             </TABLE>
                         <LI><B>COMM</B> - access bluetooth and UDP parameters
-                        <LI><B>EXIT</B> - exit the app
                         <LI><B>MORE&#9654;</B> - goes to next menu page
                     </UL>
                 </TD>
@@ -212,31 +227,52 @@
                 </TD>
             </TR>
         </TABLE>
+        <HR>
         <H3> Moving Map Page </H3>
         <TABLE>
-            <TR><TD></TD><TD ALIGN=CENTER>zoom out</TD></TR>
-            <TR><TD>b<BR>a<BR>c<BR>k</TD><TD><IMG SRC="map-page.png"></TD>
+            <TR><TD ALIGN=CENTER>zoom out</TD></TR>
+            <TR><TD><IMG SRC="map-page.png"></TD>
                 <TD><UL>
                     <LI><FONT COLOR=GREEN>GREEN</FONT> - airports (up to 20 with longest runways)
                     <LI><FONT COLOR=CYAN>CYAN</FONT> - VORs (if not 20 airports)
                     <LI><FONT COLOR=YELLOW>YELLOW</FONT> - range ring at half radius
-                    <LI><FONT COLOR=MAGENTA>MAGENTA</FONT> - course line and destination waypoint
+                    <LI><FONT COLOR=MAGENTA>MAGENTA</FONT> - course line and destination waypoint<BR>
+                        course line shown is always great circle regardless of nav mode selected on main page
                 </UL></TD>
             </TR>
-            <TR><TD></TD><TD ALIGN=CENTER>zoom in</TD></TR>
+            <TR><TD ALIGN=CENTER>zoom in</TD></TR>
         </TABLE>
-        <P>The moving map page can be displayed by clicking the <B>MENU</B> then <B>MAP</B> buttons.</P>
+        <P>The moving map page can be accessed by swiping right-to-left on the main
+            navigation page.</P>
+        <P>To access the other screens from the map page, touch near the center of the screen, and a menu will appear:</P>
+        <TABLE>
+            <TR>
+                <TD><IMG SRC="map-menu.png" WIDTH=320 HEIGHT=320></TD>
+                <TD>
+                    Swipe in the direction of the double arrows to select the function wanted:
+                    <UL>
+                        <LI><B>back</B> - go back to nav dial page
+                        <LI><B>menu</B> - access the menu pages
+                        <LI><B>near</B> - access nearest airport selection page
+                    </UL>
+                </TD>
+            </TR>
+        </TABLE>
+        <HR>
         <H3> Voice Recognition </H3>
-        <P>Voice can be used to input waypoints on the main page.  It must be enabled by checking the <B>Voice</B>
-            checkbox on the menu page.  It recognizes the usual aviation prowords (alpha, bravo, etc) and the
+        <P>Voice can be used to input the waypoint identifier being navigated to on the 
+            waypoint input page.
+            It can be selected by clicking the <B>VOICE</B>
+            button on the waypoint input page.  It recognizes the usual aviation prowords
+            (alpha, bravo, etc) and the
             decimal digits (see table below).</P>
         <P>NOTE:  Some watches may not have voice input capability.</P>
         <P>NOTE:  This feature may require internet access to function.  Usually displays a message indicating unable
             to connect to Google or something similar.  Swipe the voice input panel away then uncheck the <B>Voice</B>
             checkbox then use keyboard input instead.</P>
         <OL>
-            <LI>make sure the <B>Voice</B> checkbox on menu page is checked
-            <LI>tap on the waypoint id entry box on main page, speech entry page should show
+            <LI>open the waypoint input page by swiping downward on the main navigation page
+            <LI>tap the <B>VOICE</B> button, speech entry page should show
             <LI>tap microphone icon on speech page
             <LI>say prowords for the desired waypoint
                 <UL>
@@ -265,6 +301,7 @@
             </TABLE>
             <LI><B>off</B> clear waypoint and turn GPS off
         </UL>
+        <HR>
         <H3> Simulator </H3>
         <P>Generates GPS positions for a given track to use for testing.  Blocks real GPS reception while active.</P>
         <H3> COMM </H3>
@@ -277,5 +314,6 @@
                     else like 00001102.  Make sure the EFB app is connecting to the same UUID and that the
                     EFB device is paired to the watch.
         </UL>
+        <HR>
     </BODY>
 </HTML>

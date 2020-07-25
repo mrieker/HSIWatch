@@ -11,56 +11,27 @@
 
     <com.outerworldapps.hsiwatch.MapDialView
         android:id="@+id/mapDialView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_width="320px"
+        android:layout_height="320px" />
 
-
-    <com.outerworldapps.hsiwatch.MapTriangle
-        android:id="@+id/mapTopOutline"
-        android:layout_width="16px"
+    <com.outerworldapps.hsiwatch.MapZoomButton
+        android:id="@+id/mapZoomOutButton"
+        android:layout_width="40px"
         android:layout_height="40px"
-        android:layout_marginStart="152px"
-        android:layout_marginTop="-1px"
-        android:rotation="90" />
+        android:layout_marginStart="140px"
+        android:layout_marginTop="10px"
+        android:text="+"
+        android:textAlignment="center"
+        android:textColor="#FFFFFF00" />
 
-    <com.outerworldapps.hsiwatch.MapTriangle
-        android:id="@+id/mapBotOutline"
-        android:layout_width="16px"
+    <com.outerworldapps.hsiwatch.MapZoomButton
+        android:id="@+id/mapZoomInButton"
+        android:layout_width="40px"
         android:layout_height="40px"
-        android:layout_marginStart="152px"
-        android:layout_marginTop="281px"
-        android:rotation="270" />
-
-    <com.outerworldapps.hsiwatch.MapTriangle
-        android:id="@+id/mapBackOutline"
-        android:layout_width="16px"
-        android:layout_height="40px"
-        android:layout_marginStart="12px"
-        android:layout_marginTop="140px" />
-
-
-    <Button
-        android:id="@+id/mapTopButton"
-        android:layout_width="100px"
-        android:layout_height="100px"
-        android:layout_marginStart="110px"
-        android:layout_marginTop="0px"
-        android:background="#00000000" />
-
-    <Button
-        android:id="@+id/mapBotButton"
-        android:layout_width="100px"
-        android:layout_height="100px"
-        android:layout_marginStart="110px"
-        android:layout_marginTop="220px"
-        android:background="#00000000" />
-
-    <Button
-        android:id="@+id/mapBackButton"
-        android:layout_width="100px"
-        android:layout_height="100px"
-        android:layout_marginStart="0px"
-        android:layout_marginTop="110px"
-        android:background="#00000000" />
+        android:layout_marginStart="140px"
+        android:layout_marginTop="270px"
+        android:text="-"
+        android:textAlignment="center"
+        android:textColor="#FFFFFF00" />
 
 </androidx.wear.widget.BoxInsetLayout>

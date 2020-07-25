@@ -100,9 +100,6 @@ public class WayptEditText extends MyEditText implements MyEditText.Listener, Vi
                 return true;  // remain in text box
             }
 
-            // display message so user can verify it is correct waypoint
-            wcl.showToast (waypt.name);
-
             // tell mainActivity it is changed
             setText (waypt.ident);
             wcl.wayptChanged (waypt);

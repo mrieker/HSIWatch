@@ -20,6 +20,7 @@
 
 package com.outerworldapps.hsiwatch;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -27,16 +28,23 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 
 /**
  * Moving Map
  */
-public class MapDialView extends View {
+public class MapDialView extends DialFlickView {
 
+    private final static int MAXNEARAPTS = 20;
     private final static int MAXWAYPTS = 20;
     private final static int RUNWAYFT = 1000;
 
@@ -48,13 +56,34 @@ public class MapDialView extends View {
     private static class MapWpt implements Comparable<MapWpt> {
         public double lat;
         public double lon;
+        public double dist;
+        public double mhdg;
         public String id;
+        public String name; // airport name string (or null)
         public int idh;     // id string height pixels
         public int idw;     // id string width pixels
         public int xpx;     // last drawn x pixel
         public int ypx;     // last drawn y pixel
         public int rft;     // runway length feet
         public boolean nav;
+
+        public String rbString ()
+        {
+            StringBuilder sb = new StringBuilder ();
+            sb.append (id);
+            sb.append (' ');
+            int hdg = ((int) Math.round (mhdg) + 359) % 360 + 1;
+            sb.append (hdg / 100);
+            sb.append (hdg / 10 % 10);
+            sb.append (hdg % 10);
+            sb.append ("\u00B0 ");
+            sb.append (Math.round (dist));
+            if (name != null) {
+                sb.append (": ");
+                sb.append (name);
+            }
+            return sb.toString ();
+        }
 
         // sort by descending runway length
         public int compareTo (MapWpt o)
@@ -87,7 +116,9 @@ public class MapDialView extends View {
     private Paint outerRingPaint;
     private Paint rangeRingPaint;
     private Paint wayptPaint;
+    private RadioGroup nearRadioGroup;
     private UpdateThread updateThread;
+    private View nearPageView;
 
     public MapDialView (Context ctx, AttributeSet attrs)
     {
@@ -107,6 +138,10 @@ public class MapDialView extends View {
         if (ctx instanceof MainActivity) {
             mainActivity = (MainActivity) ctx;
         }
+
+        goDownString = "menu";
+        goLeftString = "back";
+        goUpString   = "near";
 
         drawnwpts = new MapWpt[MAXWAYPTS];
         drawnwpts[0] = new MapWpt ();
@@ -149,6 +184,114 @@ public class MapDialView extends View {
         setAmbient ();
     }
 
+    @Override
+    public boolean onTouchOutside (MotionEvent event)
+    {
+        return true;
+    }
+
+    // go DOWN: open menu
+    @Override
+    public View getDownView ()
+    {
+        return mainActivity.menuMainPage.getView ();
+    }
+
+    // go LEFT: go back (to nav dial)
+    @Override
+    public View getLeftView ()
+    {
+        return null;
+    }
+
+    @Override
+    public View getRightView ()
+    {
+        return null;
+    }
+
+    // go UP: open nearby airport selection page
+    @SuppressLint("InflateParams")
+    @Override
+    public View getUpView ()
+    {
+        // inflate layout if not already
+        if (nearPageView == null) {
+            LayoutInflater layoutInflater = mainActivity.getLayoutInflater ();
+            nearPageView = layoutInflater.inflate (R.layout.near_page, null);
+            Button nearBackButton = nearPageView.findViewById (R.id.nearBackButton);
+            nearBackButton.setOnClickListener (mainActivity.backButtonListener);
+            nearRadioGroup = nearPageView.findViewById (R.id.nearGroup);
+        }
+
+        // set up what to do when one of the buttons is clicked
+        View.OnClickListener radioButtonListener = new OnClickListener () {
+            @Override
+            public void onClick (View v)
+            {
+                // doesn't seem to automatically uncheck the old one
+                // so go through them all and set
+                for (int i = nearRadioGroup.getChildCount (); -- i >= 0;) {
+                    View rb = nearRadioGroup.getChildAt (i);
+                    if (rb instanceof RadioButton) {
+                        ((RadioButton) rb).setChecked (rb == v);
+                    }
+                }
+
+                // select the given waypoint as current
+                MapWpt mapwpt = (MapWpt) v.getTag ();
+                Waypt waypt = Waypt.find (mainActivity.downloadThread.getSqlDB (), mapwpt.id);
+                if (waypt != null) {
+                    if (mapwpt.name == null) {
+                        mapwpt.name = waypt.name;
+                        ((RadioButton) v).setText (mapwpt.rbString ());
+                    }
+                }
+                mainActivity.setNavWaypt (waypt);
+            }
+        };
+
+        // get list of nearby airports sorted by distance
+        double curlat = mainActivity.curLoc.latitude;
+        double curlon = mainActivity.curLoc.longitude;
+        MapWpt[] bydist = new MapWpt[waypoints.length];
+        int j = 0;
+        for (int i = 0; i < bydist.length; i ++) {
+            MapWpt mapwpt = waypoints[i];
+            if (mapwpt.nav) continue;
+            mapwpt.dist = Lib.LatLonDist (curlat, curlon, mapwpt.lat, mapwpt.lon);
+            bydist[j++] = mapwpt;
+        }
+        Arrays.sort (bydist, 0, j, new Comparator<MapWpt> () {
+            @Override
+            public int compare (MapWpt o1, MapWpt o2)
+            {
+                if (o1.dist < o2.dist) return -1;
+                if (o1.dist > o2.dist) return 1;
+                return o1.id.compareTo (o2.id);
+            }
+        });
+
+        // create radio buttons for nearby airports, closest at top
+        // mark current destination as checked if in list
+        double magvar = mainActivity.curLoc.magvar;
+        nearRadioGroup.removeAllViews ();
+        if (j > MAXNEARAPTS) j = MAXNEARAPTS;
+        for (int i = 0; i < j; i ++) {
+            MapWpt mapwpt = bydist[i];
+            mapwpt.mhdg = Lib.LatLonTC (curlat, curlon, mapwpt.lat, mapwpt.lon) + magvar;
+            RadioButton rb = new RadioButton (mainActivity);
+            rb.setChecked ((mainActivity.navWaypt != null) && mapwpt.id.equals (mainActivity.navWaypt.ident));
+            rb.setOnClickListener (radioButtonListener);
+            rb.setTag (mapwpt);
+            rb.setText (mapwpt.rbString ());
+            nearRadioGroup.addView (rb);
+        }
+
+        // display back button and radio buttons
+        return nearPageView;
+    }
+
     public void incRadius (int inc)
     {
         inc += radiusIndex;
@@ -166,7 +309,7 @@ public class MapDialView extends View {
     {
         ambient = (mainActivity != null) && mainActivity.ambient;
         if (ambient) {
-            coursePaint.setColor (Color.LTGRAY);
+            coursePaint.setColor (Color.WHITE);
             dirArrowPaint.setColor (Color.GRAY);
             outerRingPaint.setColor (redRing ? Color.LTGRAY : Color.GRAY);
             rangeRingPaint.setColor (Color.GRAY);
@@ -423,6 +566,8 @@ public class MapDialView extends View {
         }
 
         canvas.restore ();
+
+        super.onDraw (canvas);
     }
 
     // calculate pixel for the given lat,lon

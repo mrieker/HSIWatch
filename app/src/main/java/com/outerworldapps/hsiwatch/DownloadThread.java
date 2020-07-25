@@ -261,7 +261,14 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
                         threadFinished ();
                         if (sqldb == null) {
                             mainActivity.showToast ("database downloaded");
-                            mainActivity.showToast ("enter waypoint in wptid box");
+                            mainActivity.showToast (new Runnable () {
+                                @Override
+                                public void run ()
+                                {
+                                    // if first time user, switch the 'swipe up/swipe down' message
+                                    mainActivity.navDialView.invalidate ();
+                                }
+                            });
                         } else {
                             mainActivity.showToast ("database updated");
                         }

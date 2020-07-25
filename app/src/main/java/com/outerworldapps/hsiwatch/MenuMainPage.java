@@ -42,16 +42,13 @@ public class MenuMainPage {
     public  CheckBox fillChinCkBox;
     public  CheckBox hsiModeCkBox;
     public  CheckBox simplifyCkBox;
-    public  CheckBox voiceEnCkBox;
     private CommMainPage commMainPage;
     private int numResetClicks;
     private long lastExitClick;
     private long lastResetClick;
     private MainActivity mainActivity;
-    public  MapDialView mapDialView;
     private SatsMainPage satsMainPage;
     public  SimMainPage simMainPage;
-    public  View mapPageView;
     private View menuPageView;
     private View menu2PageView;
 
@@ -75,41 +72,6 @@ public class MenuMainPage {
             public void onClick (View v)
             {
                 satsMainPage.show ();
-            }
-        });
-
-        Button mapButton = menuPageView.findViewById (R.id.mapButton);
-        mapButton.setOnClickListener (new View.OnClickListener () {
-            @Override
-            public void onClick (View v)
-            {
-                if (mapPageView == null) {
-                    mapPageView = layoutInflater.inflate (R.layout.map_page, null);
-                    mapDialView = mapPageView.findViewById (R.id.mapDialView);
-                    // back button on the left side
-                    Button mapBackButton = mapPageView.findViewById (R.id.mapBackButton);
-                    mapBackButton.setOnClickListener (mainActivity.backButtonListener);
-                    // top button zooms out
-                    Button mapTopButton = mapPageView.findViewById (R.id.mapTopButton);
-                    mapTopButton.setOnClickListener (new View.OnClickListener () {
-                        @Override
-                        public void onClick (View v)
-                        {
-                            mapDialView.incRadius (1);
-                        }
-                    });
-                    // bottom button zooms in
-                    Button mapBotButton = mapPageView.findViewById (R.id.mapBotButton);
-                    mapBotButton.setOnClickListener (new View.OnClickListener () {
-                        @Override
-                        public void onClick (View v)
-                        {
-                            mapDialView.incRadius (-1);
-                        }
-                    });
-                }
-                mainActivity.setNavMainPageScale ();
-                mainActivity.showMainPage (mapPageView);
             }
         });
 
@@ -141,20 +103,6 @@ public class MenuMainPage {
             }
         });
 
-        voiceEnCkBox = menuPageView.findViewById (R.id.voiceEnCkbox);
-        voiceEnCkBox.setChecked (prefs.getBoolean ("voiceEnable", false));
-        voiceEnCkBox.setOnClickListener (new View.OnClickListener () {
-            @Override
-            public void onClick (View v)
-            {
-                boolean checked = voiceEnCkBox.isChecked ();
-                SharedPreferences prefs = mainActivity.getPreferences (Context.MODE_PRIVATE);
-                SharedPreferences.Editor editr = prefs.edit ();
-                editr.putBoolean ("voiceEnable", checked);
-                editr.apply ();
-            }
-        });
-
         ambEnabCkBox = menuPageView.findViewById (R.id.ambEnabCkbox);
         ambEnabCkBox.setChecked (prefs.getBoolean ("ambModeEnab", true));
         ambEnabCkBox.setOnClickListener (new View.OnClickListener () {
@@ -177,7 +125,6 @@ public class MenuMainPage {
                 SharedPreferences.Editor editr = prefs.edit ();
                 editr.putBoolean ("simplify", simplifyCkBox.isChecked ());
                 editr.apply ();
-                mainActivity.updateSimplify ();
             }
         });
 
@@ -323,23 +270,10 @@ public class MenuMainPage {
         });
     }
 
-    public void show ()
+    public View getView ()
     {
         upddbButton.setTextColor (mainActivity.downloadThread.buttonColor ());
-        mainActivity.showMainPage (menuPageView);
-    }
-
-    // entering or exiting ambient mode
-    // redraw in grayscale or color
-    public void setAmbient ()
-    {
-        if (mapDialView != null) {
-            mapDialView.setAmbient ();
-            for (int id : new int[] { R.id.mapBackOutline, R.id.mapBotOutline, R.id.mapTopOutline }) {
-                View outline = mapPageView.findViewById (id);
-                outline.invalidate ();
-            }
-        }
+        return menuPageView;
     }
 
     private String getVersionName ()

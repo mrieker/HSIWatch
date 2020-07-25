@@ -30,44 +30,6 @@ public class Lib {
     public static final int    MPerNM    = 1852;    // metres per naut mile
 
     /**
-     * Create a quoted string suitable for QuotedCSVSplit().
-     */
-    @SuppressWarnings("unused")
-    public static String QuotedString (String unquoted)
-    {
-        int len = unquoted.length ();
-        StringBuilder sb = new StringBuilder (len + 2);
-        sb.append ('"');
-        for (int i = 0; i < len; i ++) {
-            char c = unquoted.charAt (i);
-            switch (c) {
-                case '\\': {
-                    sb.append ("\\\\");
-                    break;
-                }
-                case '\n': {
-                    sb.append ("\\n");
-                    break;
-                }
-                case 0: {
-                    sb.append ("\\z");
-                    break;
-                }
-                case '"': {
-                    sb.append ("\\\"");
-                    break;
-                }
-                default: {
-                    sb.append (c);
-                    break;
-                }
-            }
-        }
-        sb.append ('"');
-        return sb.toString ();
-    }
-
-    /**
      * Normalize a longitude in range -180.0..+179.999999999
      */
     public static double NormalLon (double lon)
@@ -88,10 +50,10 @@ public class Lib {
     public static double LatLonDist_rad (double srcLat, double srcLon, double dstLat, double dstLon)
     {
         // http://en.wikipedia.org/wiki/Great-circle_distance
-        double sLat = srcLat / 180 * Math.PI;
-        double sLon = srcLon / 180 * Math.PI;
-        double fLat = dstLat / 180 * Math.PI;
-        double fLon = dstLon / 180 * Math.PI;
+        double sLat = Math.toRadians (srcLat);
+        double sLon = Math.toRadians (srcLon);
+        double fLat = Math.toRadians (dstLat);
+        double fLon = Math.toRadians (dstLon);
         double dLon = fLon - sLon;
         double t1   = Sq (Math.cos (fLat) * Math.sin (dLon));
         double t2   = Sq (Math.cos (sLat) * Math.sin (fLat) - Math.sin (sLat) * Math.cos (fLat) * Math.cos (dLon));
@@ -113,13 +75,13 @@ public class Lib {
     public static double LatLonTC_rad (double srcLat, double srcLon, double dstLat, double dstLon)
     {
         // http://en.wikipedia.org/wiki/Great-circle_navigation
-        double sLat = srcLat / 180 * Math.PI;
-        double sLon = srcLon / 180 * Math.PI;
-        double fLat = dstLat / 180 * Math.PI;
-        double fLon = dstLon / 180 * Math.PI;
+        double sLat = Math.toRadians (srcLat);
+        double sLon = Math.toRadians (srcLon);
+        double fLat = Math.toRadians (dstLat);
+        double fLon = Math.toRadians (dstLon);
         double dLon = fLon - sLon;
         double t1 = Math.cos (sLat) * Math.tan (fLat);
-        double t2 = Math.sin(sLat) * Math.cos(dLon);
+        double t2 = Math.sin (sLat) * Math.cos (dLon);
         return Math.atan2 (Math.sin (dLon), t1 - t2);
     }
 
@@ -161,33 +123,39 @@ public class Lib {
     public static double GCOnCourseHdg (double beglatdeg, double beglondeg, double endlatdeg, double endlondeg, double curlatdeg, double curlondeg)
     {
         // convert arguments to radians
+        // rotate to make endlon = 0
         double beglatrad = Math.toRadians (beglatdeg);
-        double beglonrad = Math.toRadians (beglondeg);
+        double beglonrad = Math.toRadians (beglondeg - endlondeg);
         double endlatrad = Math.toRadians (endlatdeg);
-        double endlonrad = Math.toRadians (endlondeg);
+        //// double endlonrad = Math.toRadians (endlondeg - endlondeg);
         double curlatrad = Math.toRadians (curlatdeg);
-        double curlonrad = Math.toRadians (curlondeg);
+        double curlonrad = Math.toRadians (curlondeg - endlondeg);
+
+        double beglatcos = Math.cos (beglatrad);
+        double endlatcos = Math.cos (endlatrad);
+        double curlatcos = Math.cos (curlatrad);
 
         // find points on normalized sphere
         // +X axis goes through lat=0,lon=0
         // +Y axis goes through lat=0,lon=90
         // +Z axis goes through north pole
-        double begX = Math.cos (beglonrad) * Math.cos (beglatrad);
-        double begY = Math.sin (beglonrad) * Math.cos (beglatrad);
+        double begX = Math.cos (beglonrad) * beglatcos;
+        double begY = Math.sin (beglonrad) * beglatcos;
         double begZ = Math.sin (beglatrad);
-        double endX = Math.cos (endlonrad) * Math.cos (endlatrad);
-        double endY = Math.sin (endlonrad) * Math.cos (endlatrad);
+        //noinspection UnnecessaryLocalVariable
+        double endX = endlatcos;  //// Math.cos (endlonrad) * endlatcos;
+        //// double endY = Math.sin (endlonrad) * endlatcos;
         double endZ = Math.sin (endlatrad);
-        double curX = Math.cos (curlonrad) * Math.cos (curlatrad);
-        double curY = Math.sin (curlonrad) * Math.cos (curlatrad);
+        double curX = Math.cos (curlonrad) * curlatcos;
+        double curY = Math.sin (curlonrad) * curlatcos;
         double curZ = Math.sin (curlatrad);
 
         // compute normal to plane containing course, ie, containing beg, end, origin = beg cross end
         // note that the plane crosses through the center of earth, ie, (0,0,0)
         // equation of plane containing course: norX * x + norY * Y + norZ * z = 0
-        double courseNormalX = begY * endZ - begZ * endY;
+        double courseNormalX = begY * endZ; //// begY * endZ - begZ * endY;
         double courseNormalY = begZ * endX - begX * endZ;
-        double courseNormalZ = begX * endY - begY * endX;
+        double courseNormalZ = - begY * endX; //// begX * endY - begY * endX;
 
         // compute normal to plane containing that normal, cur and origin = cur cross courseNormal
         double currentNormalX = curY * courseNormalZ - curZ * courseNormalY;
@@ -201,24 +169,26 @@ public class Lib {
         double intersectX = courseNormalY * currentNormalZ - courseNormalZ * currentNormalY;
         double intersectY = courseNormalZ * currentNormalX - courseNormalX * currentNormalZ;
         double intersectZ = courseNormalX * currentNormalY - courseNormalY * currentNormalX;
+        double intersectM = Math.sqrt (intersectX * intersectX + intersectY * intersectY + intersectZ * intersectZ);
 
-        // find lat/lon of the intersection point
-        double intersectLat = Math.toDegrees (Math.atan2 (intersectZ, Math.sqrt (intersectX * intersectX + intersectY * intersectY)));
-        double intersectLon = Math.toDegrees (Math.atan2 (intersectY, intersectX));
+        // normal to plane from intersection to north pole (0,0,1)
+        //noinspection UnnecessaryLocalVariable,SuspiciousNameCombination
+        double norintnplX =   intersectY;
+        double norintnplY = - intersectX;
 
-        // find distance from intersection point to start and end points
-        double distInt2End = LatLonDist_rad (intersectLat, intersectLon, endlatdeg, endlondeg);
-        double distInt2Beg = LatLonDist_rad (intersectLat, intersectLon, beglatdeg, beglondeg);
+        // dot product of course normal with normal to northpole gives cos of the heading at intersectXYZ to endXYZ
+        double costheta = (courseNormalX * norintnplX + courseNormalY * norintnplY) * intersectM;
 
-        // if closer to start point, return true course from intersection point to end point
-        if (distInt2End > distInt2Beg) {
-            return LatLonTC (intersectLat, intersectLon, endlatdeg, endlondeg);
-        }
+        // cross of course normal with normal to northpole gives vector pointing directly to (or away from) intersection point
+        // its magnitude is the sin of the heading
+        double towardintX = - courseNormalZ * norintnplY;
+        double towardintY =   courseNormalZ * norintnplX;
+        double towardintZ = courseNormalX * norintnplY - courseNormalY * norintnplX;
 
-        // but/and if closer to endpoint, return reciprocal of tc from intersection to start point
-        double tc = LatLonTC (intersectLat, intersectLon, beglatdeg, beglondeg) + 180.0;
-        if (tc >= 180.0) tc -= 360.0;
-        return tc;
+        // dot that with vector to intersection is the sin of the heading
+        double sintheta = towardintX * intersectX + towardintY * intersectY + towardintZ * intersectZ;
+
+        return Math.toDegrees (Math.atan2 (sintheta, costheta));
     }
 
     /**
@@ -226,55 +196,113 @@ public class Lib {
      * find a new point to dst point that gives the given new
      * on-course heading at given cur point
      *  Input:
-     *   cur{lat,lon}deg = point somewhere along the route, doesn't have to be exactly on the route
-     *   dst{lat,lon}deg = endpoint of old and new routes (doesn't change)
-     *   old{lat,lon}deg = old starting point
-     *   newhdgdeg = new route's on-course true heading at same cur point along new route
+     *   cur{lat,lon} = point somewhere along the route, doesn't have to be exactly on the route
+     *   dst{lat,lon} = endpoint of old and new routes (doesn't change)
+     *   old{lat,lon} = old starting point
+     *   target_curhdg = new route's on-course true heading at same cur point along new route
      *  Output:
-     *   newll.{lat,lon} = new starting point
+     *   returns Double.NaN if divergent
+     *     else actual heading very close to target_curhdg
+     *          newll.{lat,lon} = new starting point
      */
-    public static boolean GCXTKCourse (double curlatdeg, double curlondeg, double dstlatdeg, double dstlondeg,
-                                       double oldlatdeg, double oldlondeg, double newhdgdeg, LatLon newll)
+    public static double GCXTKCourse (double curlat, double curlon, double dstlat, double dstlon,
+                                      double oldlat, double oldlon, double target_curhdg, LatLon newll)
     {
-        double distnm = LatLonDist (dstlatdeg, dstlondeg, oldlatdeg, oldlondeg);
+        double distnm = LatLonDist (dstlat, dstlon, oldlat, oldlon);
 
-        double lastdiff = 99999.0;
+        // step 360 deg around dst point and find which courses bracket target_curhdg
+        // the one slightly higher than target_curhdg goes in first_...
+        // the one slightly lower than target_curhdg goes in last_...
+        double first_curhdg = Double.NaN;
+        double first_dsthdg = Double.NaN;
+        double last_curhdg  = Double.NaN;
+        double last_dsthdg  = Double.NaN;
 
-        for (int i = 100; -- i >= 0;) {
+        boolean first = true;
+        for (double dsthdg = -180.0; dsthdg < 180.0; dsthdg += 60.0) {
+            double srclat = LatHdgDist2Lat (dstlat, dsthdg, distnm);
+            double srclon = LatLonHdgDist2Lon (dstlat, dstlon, dsthdg, distnm);
+            double curhdg = GCOnCourseHdg (srclat, srclon, dstlat, dstlon, curlat, curlon);
 
-            // get on-course heading from old starting point to destination
-            double oldhdgdeg = GCOnCourseHdg (oldlatdeg, oldlondeg, dstlatdeg, dstlondeg, curlatdeg, curlondeg);
+            double curofs = curhdg - target_curhdg;
+            if (curofs < 0.0) curofs += 360.0;
 
-            // all done if within 0.01 deg of requested on-course heading
-            double difhdgdeg = newhdgdeg - oldhdgdeg;
-            while (difhdgdeg < -180.0) difhdgdeg += 360.0;
-            while (difhdgdeg >= 180.0) difhdgdeg -= 360.0;
-            double difhdgabs = Math.abs (difhdgdeg);
-            if (difhdgabs < 0.01) {
-                newll.lat = oldlatdeg;
-                newll.lon = oldlondeg;
-                return true;
+            if (first) {
+                first_curhdg = curofs;
+                first_dsthdg = dsthdg;
+                last_curhdg  = curofs;
+                last_dsthdg  = dsthdg;
+                first = false;
+            } else {
+                if (first_curhdg > curofs) {
+                    first_curhdg = curofs;
+                    first_dsthdg = dsthdg;
+                }
+                if (last_curhdg < curofs) {
+                    last_curhdg = curofs;
+                    last_dsthdg = dsthdg;
+                }
             }
-
-            // stop if diverging
-            if (lastdiff < difhdgabs) break;
-            lastdiff = difhdgabs;
-
-            // get heading from destination to old starting point
-            double oldtc = LatLonTC (dstlatdeg, dstlondeg, oldlatdeg, oldlondeg);
-
-            // get approximate new starting point
-            // eg, old on-course heading is 070
-            //     new on-course heading is 071
-            //     that moves the course line a little north
-            //     oldtc is something like 290
-            //     so newtc should be 291 cuz we're moving course a little north
-            double newtc = oldtc + difhdgdeg;
-            oldlatdeg = LatHdgDist2Lat (dstlatdeg, newtc, distnm);
-            oldlondeg = LatLonHdgDist2Lon (dstlatdeg, dstlondeg, oldtc, distnm);
         }
 
-        return false;
+        // unwrap the comparing values
+        first_curhdg += target_curhdg;
+        last_curhdg  += target_curhdg - 360.0;
+
+        while (true) {
+
+            // target should be slightly less than the first
+            if (target_curhdg > first_curhdg) return Double.NaN;
+
+            // target should be slightly more than the last
+            if (target_curhdg < last_curhdg) return Double.NaN;
+
+            // we now have:
+            //  first_curhdg   =>  first_dsthdg
+            //  target_curhdg  =>  what we want to know
+            //  last_curhdg    =>  last_dsthdg
+            // where:
+            //  last_curhdg <= target_curhdg <= first_curhdg
+
+            // no assumptions about first_dsthdg,last_dsthdg
+            //  they could be wrapped and/or descending
+
+            // wrap dsthdgs to be close
+            if (last_dsthdg - first_dsthdg > 180.0) first_dsthdg += 360.0;
+            if (first_dsthdg - last_dsthdg > 180.0) last_dsthdg  += 360.0;
+
+            // find proportion of target_curhdg between last_curhdg and first_curhdg
+            double proportion = (target_curhdg - last_curhdg) / (first_curhdg - last_curhdg);
+
+            // estimate target_dsthdg using linear interpolation
+            double trial_dsthdg = proportion * (first_dsthdg - last_dsthdg) + last_dsthdg;
+
+            // calculate corresponding trial_curhdg
+            double srclat = LatHdgDist2Lat (dstlat, trial_dsthdg, distnm);
+            double srclon = LatLonHdgDist2Lon (dstlat, dstlon, trial_dsthdg, distnm);
+            double trial_curhdg = GCOnCourseHdg (srclat, srclon, dstlat, dstlon, curlat, curlon);
+
+            // all done if very close to target_curhdg
+            if (trial_curhdg - target_curhdg >  180.0) trial_curhdg -= 360.0;
+            if (trial_curhdg - target_curhdg < -180.0) trial_curhdg += 360.0;
+            if (Math.abs (trial_curhdg - target_curhdg) < 0.000001) {
+                newll.lat = srclat;
+                newll.lon = srclon;
+                return trial_curhdg;
+            }
+
+            // replace either first or last with the trial mapping to narrow search range
+            // assume divergent if it doesn't narrow the search range
+            if (trial_curhdg > target_curhdg) {
+                if (trial_curhdg >= first_curhdg) return Double.NaN;
+                first_curhdg = trial_curhdg;
+                first_dsthdg = trial_dsthdg;
+            } else {
+                if (trial_curhdg <= last_curhdg) return Double.NaN;
+                last_curhdg = trial_curhdg;
+                last_dsthdg = trial_dsthdg;
+            }
+        }
     }
 
     /**

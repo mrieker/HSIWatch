@@ -43,17 +43,6 @@
                 tools:ignore="HardcodedText" />
 
             <Button
-                android:id="@+id/mapButton"
-                android:layout_width="51dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="3dp"
-                android:layout_marginTop="52dp"
-                android:padding="3dp"
-                android:text="MAP"
-                android:textSize="12sp"
-                tools:ignore="HardcodedText" />
-
-            <Button
                 android:id="@+id/upddbButton"
                 android:layout_width="51dp"
                 android:layout_height="48dp"
@@ -73,16 +62,6 @@
                 android:layout_marginStart="58dp"
                 android:layout_marginTop="0dp"
                 android:text="HSI"
-                android:textSize="12sp"
-                tools:ignore="HardcodedText" />
-
-            <CheckBox
-                android:id="@+id/voiceEnCkbox"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="110dp"
-                android:layout_marginTop="0dp"
-                android:text="Voice"
                 android:textSize="12sp"
                 tools:ignore="HardcodedText" />
 

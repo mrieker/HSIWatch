@@ -6,73 +6,12 @@
     android:background="@color/black"
     android:padding="@dimen/box_inset_layout_padding"
     tools:context=".MainActivity"
-    tools:deviceIds="wear">
+    tools:deviceIds="wear"
+    tools:ignore="PxUsage" >
 
-    <com.outerworldapps.hsiwatch.RotateLayout
-        android:id="@+id/rotateLayout"
+    <com.outerworldapps.hsiwatch.NavDialView
+        android:id="@+id/navDialView"
         android:layout_width="320px"
-        android:layout_height="320px"
-        tools:ignore="PxUsage">
+        android:layout_height="320px" />
 
-        <!-- DRAW HSI DIAL AND NEEDLES AND TEXT FIRST -->
-
-        <com.outerworldapps.hsiwatch.NavDialView
-            android:id="@+id/navDialView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        <!-- MENU BUTTON AND OVERSIZE AREA -->
-
-        <com.outerworldapps.hsiwatch.MyMenuButton
-            android:id="@+id/menuButtonView"
-            android:layout_width="18px"
-            android:layout_height="48px"
-            android:padding="0px"
-            android:layout_marginStart="68px"
-            android:layout_marginTop="135px"
-            tools:ignore="HardcodedText" />
-
-        <Button
-            android:id="@+id/menuButtonViex"
-            android:layout_width="66dp"
-            android:layout_height="70px"
-            android:layout_marginStart="15px"
-            android:layout_marginTop="125px"
-            android:background="#00000000" />
-
-        <!-- NAV MODE BUTTON AND OVERSIZE AREA -->
-
-        <com.outerworldapps.hsiwatch.NavModeButton
-            android:id="@+id/navModeButton"
-            android:layout_width="24px"
-            android:layout_height="24px"
-            android:layout_marginStart="120px"
-            android:layout_marginTop="221px" />
-
-        <Button
-            android:id="@+id/navModeButtox"
-            android:layout_width="70px"
-            android:layout_height="70px"
-            android:layout_marginStart="90px"
-            android:layout_marginTop="200px"
-            android:background="#00000000" />
-
-        <!-- WAYPOINT ENTRY -->
-
-        <com.outerworldapps.hsiwatch.WayptEditText
-            android:id="@+id/identEntry"
-            android:layout_width="82px"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="164px"
-            android:layout_marginTop="167px"
-            android:autofillHints=""
-            android:cursorVisible="false"
-            android:hint="wptid"
-            android:imeOptions="flagNoPersonalizedLearning|actionDone"
-            android:inputType="textShortMessage|textNoSuggestions"
-            android:textColor="#FFFFFF"
-            android:textSize="21px"
-            tools:ignore="HardcodedText,LabelFor" />
-
-    </com.outerworldapps.hsiwatch.RotateLayout>
 </androidx.wear.widget.BoxInsetLayout>

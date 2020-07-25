@@ -21,111 +21,89 @@
 package com.outerworldapps.hsiwatch;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.style.ForegroundColorSpan;
-import android.text.style.RelativeSizeSpan;
-import android.text.style.StyleSpan;
-import android.util.AttributeSet;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
+import android.speech.RecognizerIntent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 
 /**
- * Nav Mode button
+ * Destination Waypoint Entry and Nav Mode Selection page
  */
-@SuppressLint("AppCompatCustomView")
-public class NavModeButton extends View implements View.OnClickListener {
-
-    private static Object modeMenuBold = new StyleSpan (android.graphics.Typeface.BOLD);
-    private static Object modeMenuColor = new ForegroundColorSpan (Color.YELLOW);
-    private static Object modeMenuSize = new RelativeSizeSpan (1.5F);
-
+public class NavModeButton {
     private HashMap<NavDialView.Mode,RadioButton> navModeButtons;
     private MainActivity mainActivity;
-    private Paint bgpaint;
     private RadioGroup modeGroup;
-    private Rect bounds;
-    private String letter;
+    public TextView identDescr;
     private View modePageView;
+    public  WayptEditText identEntry;
 
-    public NavModeButton (Context ctx, AttributeSet attrs)
+    @SuppressLint({ "InflateParams", "ClickableViewAccessibility" })
+    public NavModeButton (MainActivity ma)
     {
-        super (ctx, attrs);
-        construct (ctx);
+        mainActivity = ma;
+
+        LayoutInflater layoutInflater = mainActivity.getLayoutInflater ();
+        modePageView = layoutInflater.inflate (R.layout.mode_page, null);
+        identEntry = modePageView.findViewById (R.id.identEntry);
+        identDescr = modePageView.findViewById (R.id.identDescr);
+
+        Button voiceButton = modePageView.findViewById (R.id.voiceButton);
+        voiceButton.setOnClickListener (new View.OnClickListener () {
+            @Override
+            public void onClick (View v)
+            {
+                displaySpeechRecognizer ();
+            }
+        });
+
+        // waypoint entry text box
+        final SharedPreferences prefs = mainActivity.getPreferences (Context.MODE_PRIVATE);
+        identEntry.wcl = new WayptEditText.WayptChangeListener () {
+            @Override
+            public void wayptChanged (Waypt waypt)
+            {
+                // set it as current waypoint
+                SharedPreferences.Editor editr = prefs.edit ();
+                String ident = (waypt == null) ? "" : waypt.ident;
+                editr.putString ("navWayptId", ident);
+                editr.apply ();
+                if ((mainActivity.navWaypt == null) && (waypt != null)) {
+                    mainActivity.showToast ("click \u25C0BACK to show dial");
+                }
+                mainActivity.setNavWaypt (waypt);
+            }
+
+            @Override
+            public void showToast (String msg)
+            {
+                mainActivity.showToast (msg);
+            }
+
+            @Override
+            public SQLiteDatabase getSqlDB ()
+            {
+                return mainActivity.downloadThread.getSqlDB ();
+            }
+        };
     }
 
-    public NavModeButton (Context ctx)
+    public View getView ()
     {
-        super (ctx);
-        construct (ctx);
-    }
-
-    private void construct (Context ctx)
-    {
-        setOnClickListener (this);
-        bgpaint = new Paint ();
-        bgpaint.setColor (Color.YELLOW);
-        bgpaint.setStrokeWidth (2.0F);
-        bgpaint.setStyle (Paint.Style.STROKE);
-        bgpaint.setTextAlign (Paint.Align.CENTER);
-        bgpaint.setTextSize (18);
-        bounds = new Rect ();
-        letter = "";
-        if (ctx instanceof MainActivity) {
-            mainActivity = (MainActivity) ctx;
-        }
-    }
-
-    public void setAmbient (boolean amb)
-    {
-        bgpaint.setColor (amb ? Color.LTGRAY : Color.YELLOW);
-        invalidate ();
-    }
-
-    public void setMode (NavDialView.Mode mode)
-    {
-        switch (mode) {
-            case OFF:   letter = " "; break;
-            case GCT:   letter = "G"; break;
-            case VOR:   letter = "V"; break;
-            case ADF:   letter = "A"; break;
-            case LOC:   letter = "L"; break;
-            case LOCBC: letter = "B"; break;
-            case ILS:   letter = "I"; break;
-        }
-        bgpaint.getTextBounds (letter, 0, 1, bounds);
-        invalidate ();
-    }
-
-    // nav mode button clicked
-    // open dialog to select new mode
-    @Override
-    public void onClick (View v)
-    {
-        if (mainActivity.navWaypt != null) {
-            showButtons ();
-        } else {
-            mainActivity.showToast ("set waypoint on front page first");
-        }
-    }
-
-    @SuppressLint("InflateParams")
-    public void showButtons ()
-    {
-        // inflate the layout
         if (modeGroup == null) {
-            LayoutInflater layoutInflater = mainActivity.getLayoutInflater ();
-            modePageView = layoutInflater.inflate (R.layout.mode_page, null);
             Button modeBack = modePageView.findViewById (R.id.modeBack);
             modeBack.setOnClickListener (mainActivity.backButtonListener);
             modeGroup = modePageView.findViewById (R.id.modeGroup);
@@ -143,25 +121,17 @@ public class NavModeButton extends View implements View.OnClickListener {
                         double newobs = mainActivity.navWaypt.getMagRadTo (newmode, mainActivity.curLoc);
                         mainActivity.navDialView.setObs (newobs);
                     }
-                    mainActivity.onBackPressed ();
                 }
             };
 
             // make map of radio buttons for all the modes
-            HashMap<NavDialView.Mode,CharSequence> nms = new HashMap<> ();
-            nms.put (NavDialView.Mode.OFF,   "OFF");
-            nms.put (NavDialView.Mode.GCT,   boldCharString ("GCT",   0));
-            nms.put (NavDialView.Mode.VOR,   boldCharString ("VOR",   0));
-            nms.put (NavDialView.Mode.ADF,   boldCharString ("ADF",   0));
-            nms.put (NavDialView.Mode.LOC,   boldCharString ("LOC",   0));
-            nms.put (NavDialView.Mode.LOCBC, boldCharString ("LOCBC", 3));
-            nms.put (NavDialView.Mode.ILS,   boldCharString ("ILS",   0));
-
             HashMap<NavDialView.Mode,RadioButton> nmb = new HashMap<> ();
-            for (NavDialView.Mode mode : nms.keySet ()) {
+            for (NavDialView.Mode mode : NavDialView.Mode.values ()) {
                 RadioButton rb = new RadioButton (mainActivity);
                 rb.setTag (mode);
-                rb.setText (nms.get (mode));
+                String modestr = mode.toString ();
+                if (mode == NavDialView.Mode.GCT) modestr = "GreatCircleTrack";
+                rb.setText (modestr);
                 rb.setOnClickListener (radioButtonListener);
                 nmb.put (mode, rb);
             }
@@ -170,36 +140,164 @@ public class NavModeButton extends View implements View.OnClickListener {
         }
 
         // build group of buttons allowed for the waypoint type
-        NavDialView.Mode oldmode = mainActivity.navDialView.getMode ();
-        modeGroup.removeAllViews ();
-        NavDialView.Mode[] valids = mainActivity.navWaypt.validModes;
-        for (NavDialView.Mode newmode : valids) {
-            RadioButton rb = navModeButtons.get (newmode);
-            assert rb != null;
-            rb.setChecked (newmode == oldmode);
-            modeGroup.addView (rb);
-        }
+        setMode ();
 
         // display radio button page
-        mainActivity.showMainPage (modePageView);
+        return modePageView;
     }
 
-    // make a spannable string with one character bolded
-    private static SpannableString boldCharString (String str, int idx)
+    // waypoint changed, set radio buttons for the waypoint's default mode
+    public void setMode ()
     {
-        SpannableString ss = new SpannableString (str);
-        ss.setSpan (modeMenuBold,  idx, idx + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ss.setSpan (modeMenuColor, idx, idx + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ss.setSpan (modeMenuSize,  idx, idx + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        return ss;
+        if (navModeButtons != null) {
+
+            // build group of buttons allowed for the waypoint type
+            // check the one for the current waypoint
+            NavDialView.Mode oldmode = mainActivity.navDialView.getMode ();
+            modeGroup.removeAllViews ();
+            NavDialView.Mode[] valids = (mainActivity.navWaypt == null) ?
+                new NavDialView.Mode[] { NavDialView.Mode.OFF } :
+                    mainActivity.navWaypt.validModes;
+            for (NavDialView.Mode newmode : valids) {
+                RadioButton rb = navModeButtons.get (newmode);
+                assert rb != null;
+                rb.setChecked (newmode == oldmode);
+                modeGroup.addView (rb);
+            }
+        }
     }
 
-    @Override
-    public void onDraw (Canvas canvas)
+    /**
+     * Voice recognition
+     */
+    private final static int SPEECH_REQUEST_CODE = 0;
+
+    private final static HashMap<String,Character> letters = createLetters ();
+    private static HashMap<String,Character> createLetters ()
     {
-        int w = getWidth ();
-        int h = getHeight ();
-        canvas.drawCircle (w / 2.0F, h / 2.0F, w / 2.0F, bgpaint);
-        canvas.drawText (letter, w / 2.0F, (h + bounds.height ()) / 2.0F, bgpaint);
+        HashMap<String,Character> hm = new HashMap<> ();
+        hm.put ("0", '0');
+        hm.put ("1", '1');
+        hm.put ("2", '2');
+        hm.put ("3", '3');
+        hm.put ("4", '4');
+        hm.put ("5", '5');
+        hm.put ("6", '6');
+        hm.put ("7", '7');
+        hm.put ("8", '8');
+        hm.put ("9", '9');
+        hm.put ("alpha", 'A');
+        hm.put ("ate", '8');
+        hm.put ("bravo", 'B');
+        hm.put ("charlie", 'C');
+        hm.put ("ciara", 'S');
+        hm.put ("delta", 'D');
+        hm.put ("echo", 'E');
+        hm.put ("eight", '8');
+        hm.put ("fife", '5');
+        hm.put ("five", '5');
+        hm.put ("for", '4');
+        hm.put ("four", '4');
+        hm.put ("fox", 'F');
+        hm.put ("foxtrot", 'F');
+        hm.put ("golf", 'G');
+        hm.put ("hotel", 'H');
+        hm.put ("india", 'I');
+        hm.put ("juliet", 'J');
+        hm.put ("kilo", 'K');
+        hm.put ("lima", 'L');
+        hm.put ("mike", 'M');
+        hm.put ("nine", '9');
+        hm.put ("niner", '9');
+        hm.put ("november", 'N');
+        hm.put ("off", '@');
+        hm.put ("one", '1');
+        hm.put ("oscar", 'O');
+        hm.put ("papa", 'P');
+        hm.put ("quebec", 'Q');
+        hm.put ("romeo", 'R');
+        hm.put ("seven", '7');
+        hm.put ("sierra", 'S');
+        hm.put ("six", '6');
+        hm.put ("tango", 'T');
+        hm.put ("three", '3');
+        hm.put ("tree", '3');
+        hm.put ("to", '2');
+        hm.put ("too", '2');
+        hm.put ("two", '2');
+        hm.put ("uniform", 'U');
+        hm.put ("victor", 'V');
+        hm.put ("whiskey", 'W');
+        hm.put ("won", '1');
+        hm.put ("x-ray", 'X');
+        hm.put ("xray", 'X');
+        hm.put ("yankee", 'Y');
+        hm.put ("zero", '0');
+        hm.put ("zulu", 'Z');
+        return hm;
+    }
+
+    // https://developer.android.com/training/wearables/apps/voice#java
+    private void displaySpeechRecognizer ()
+    {
+        Intent intent = new Intent (RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra (RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        //intent.putExtra (RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
+
+        try {
+            mainActivity.startActivityForResult (intent, SPEECH_REQUEST_CODE);
+        } catch (ActivityNotFoundException anfe) {
+            Log.w (MainActivity.TAG, "error starting ACTION_RECOGNIZE_SPEECH", anfe);
+            mainActivity.showToast ("device does not support voice input");
+        }
+    }
+
+    // got speech decoding result
+    public void onActivityResult (int requestCode, int resultCode, Intent data)
+    {
+        Log.d (MainActivity.TAG, "speech requestCode=" + requestCode + " resultCode=" + resultCode);
+
+        if ((requestCode == SPEECH_REQUEST_CODE) && (resultCode == Activity.RESULT_OK)) {
+
+            // translate prowords into string of letters and numbers for waypoint ident
+            StringBuilder sb = new StringBuilder ();
+            List<String> results = data.getStringArrayListExtra (RecognizerIntent.EXTRA_RESULTS);
+            boolean turnedOff = false;
+            for (String result : results) {
+                Log.d (MainActivity.TAG, "speech result='" + result + "'");
+                for (String word : result.replace ("/", " ").split (" ")) {
+                    Character ch = letters.get (word.toLowerCase (Locale.US));
+                    if (ch != null) {
+                        //noinspection SwitchStatementWithTooFewBranches
+                        switch (ch) {
+                            case '@': {
+                                turnedOff = true;
+                                break;
+                            }
+                            default: {
+                                sb.append (ch);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // if turned off, clear input box and set waypoint to null
+            if (turnedOff) {
+                identEntry.setText ("");
+                identEntry.wcl.wayptChanged (null);
+            } else if (sb.length () > 0) {
+
+                // pretend like those letters and numbers were typed in waypoint ident box
+                identEntry.setText (sb);
+                if (identEntry.onEnterKey (identEntry)) {
+
+                    // failed to look it up in database, restore text box and re-open speech input
+                    identEntry.setText ((mainActivity.navWaypt == null) ? "" : mainActivity.navWaypt.ident);
+                    displaySpeechRecognizer ();
+                }
+            }
+        }
     }
 }

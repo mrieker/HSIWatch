@@ -20,7 +20,6 @@
 
 package com.outerworldapps.hsiwatch;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -33,7 +32,7 @@ import android.view.View;
 /**
  * The VOR-like nav dial, needles, etc.
  */
-public class NavDialView extends View {
+public class NavDialView extends DialFlickView {
 
     public enum Mode {
         OFF, GCT, VOR, ADF, LOC, LOCBC, ILS
@@ -52,6 +51,7 @@ public class NavDialView extends View {
     private boolean redRing;
     public  boolean revRotate;
     private boolean showarpln;
+    private char[] strbuf;
     private double deflect;
     private double heading;
     private double obsSetting;
@@ -59,7 +59,7 @@ public class NavDialView extends View {
     private double touchDownOBS;
     private double touchDownX;
     private double touchDownY;
-    private char[] strbuf;
+    private float hsiRotation;
     private int lastdmedist;
     private int lastdmetime;
     private int lastGpsHdg;
@@ -82,7 +82,9 @@ public class NavDialView extends View {
     private Paint fmtoWayptPaint;
     private Paint gpsHdgPaint;
     private Paint gpsMinPaint;
+    private Paint identPaint;
     private Paint innerRingPaint;
+    private Paint modePaint;
     private Paint obsArrowPaint;
     private Paint obsIntPaint;
     private Paint outerRingPaint;
@@ -97,6 +99,7 @@ public class NavDialView extends View {
     private String gpsHdgStr;
     private String gpsHmsStr;
     private String gpsKtsStr;
+    private String identStr;
     private String obsIntStr;
     private String toWayptStr;
 
@@ -118,6 +121,11 @@ public class NavDialView extends View {
         if (ctx instanceof MainActivity) {
             mainActivity = (MainActivity) ctx;
         }
+
+        goDownString = "menu";
+        goLeftString = "exit";
+        goRightString = "map";
+        goUpString = "waypt";
 
         strbuf = new char[8];
 
@@ -176,10 +184,21 @@ public class NavDialView extends View {
         gpsMinPaint.setTextAlign (Paint.Align.LEFT);
         gpsMinPaint.setTextSize (120);
 
+        identPaint = new Paint ();
+        identPaint.setColor (Color.WHITE);
+        identPaint.setStyle (Paint.Style.FILL_AND_STROKE);
+        identPaint.setTextAlign (Paint.Align.LEFT);
+        identPaint.setTextSize (130);
+
         innerRingPaint = new Paint ();
         innerRingPaint.setColor (Color.WHITE);
         innerRingPaint.setStrokeWidth (10);
         innerRingPaint.setStyle (Paint.Style.STROKE);
+
+        modePaint = new Paint ();
+        modePaint.setStyle (Paint.Style.FILL_AND_STROKE);
+        modePaint.setTextAlign (Paint.Align.LEFT);
+        modePaint.setTextSize (110);
 
         obsArrowPaint = new Paint ();
         obsArrowPaint.setStyle (Paint.Style.FILL_AND_STROKE);
@@ -241,8 +260,33 @@ public class NavDialView extends View {
         gpsHdgStr  = "";
         gpsHmsStr  = "";
         gpsKtsStr  = "";
+        identStr   = "";
 
         setAmbient ();
+    }
+
+    @Override
+    protected View getDownView ()
+    {
+        return mainActivity.menuMainPage.getView ();
+    }
+
+    @Override
+    protected View getLeftView ()
+    {
+        return null;
+    }
+
+    @Override
+    protected View getRightView ()
+    {
+        return mainActivity.mapPageView;
+    }
+
+    @Override
+    protected View getUpView ()
+    {
+        return mainActivity.navModeButton.getView ();
     }
 
     /**
@@ -258,6 +302,7 @@ public class NavDialView extends View {
             dmeTimePaint.setColor (Color.LTGRAY);
             gpsHdgPaint.setColor (Color.GRAY);
             gpsMinPaint.setColor (Color.GRAY);
+            modePaint.setColor (Color.GRAY);
             obsArrowPaint.setColor (Color.LTGRAY);
             obsIntPaint.setColor (Color.LTGRAY);
             outerRingPaint.setColor (redRing ? Color.LTGRAY : Color.GRAY);
@@ -269,11 +314,13 @@ public class NavDialView extends View {
             dmeTimePaint.setColor (0xFFFFAA00);
             gpsHdgPaint.setColor (Color.RED);
             gpsMinPaint.setColor (Color.RED);
+            modePaint.setColor (Color.YELLOW);
             obsArrowPaint.setColor (Color.YELLOW);
             obsIntPaint.setColor (Color.YELLOW);
             outerRingPaint.setColor (redRing ? Color.RED : Color.GRAY);
             dialBackPaint.setColor (Color.DKGRAY);
         }
+        invalidate ();
     }
 
     /**
@@ -337,6 +384,16 @@ public class NavDialView extends View {
     }
 
     /**
+     * Set amount to rotate the whole thing.
+     * Leave the flick arrows unrotated.
+     */
+    public void setHSIRotation (float r)
+    {
+        hsiRotation = r;
+        invalidate ();
+    }
+
+    /**
      * Whether or not to show airplane indicating aircraft heading.
      */
     public void showAirplane (boolean sa)
@@ -374,6 +431,15 @@ public class NavDialView extends View {
     public double getObs ()
     {
         return obsSetting;
+    }
+
+    /**
+     * Set destination waypoint string.
+     */
+    public void setIdent (String id)
+    {
+        identStr = id;
+        invalidate ();
     }
 
     /**
@@ -502,9 +568,8 @@ public class NavDialView extends View {
     /**
      * Touch for turning the dial.
      */
-    @SuppressLint("ClickableViewAccessibility")
     @Override
-    public boolean onTouchEvent (MotionEvent event)
+    public boolean onTouchOutside (MotionEvent event)
     {
         switch (event.getActionMasked ()) {
             case MotionEvent.ACTION_DOWN: {
@@ -557,6 +622,7 @@ public class NavDialView extends View {
         return true;
     }
 
+
     /**
      * Draw the nav widget.
      */
@@ -569,12 +635,15 @@ public class NavDialView extends View {
 
         canvas.save ();
 
-        // simplify mode
+        // simplified format
         boolean simplify = (mainActivity != null) && mainActivity.menuMainPage.simplifyCkBox.isChecked ();
 
         // set up translation/scaling so that outer ring is radius 1000 centered at 0,0
         canvas.translate (lastWidth / 2, lastHeight / 2);
         canvas.scale (lastScale, lastScale);
+
+        // leave OFF mode's swipe messages upright
+        if (mode != Mode.OFF) canvas.rotate (hsiRotation);
 
         // draw outer ring
         canvas.drawCircle (0, 0, 1000, outerRingPaint);
@@ -640,7 +709,20 @@ public class NavDialView extends View {
         // cover up end of VOR-style needle in case it goes under dial
         if (! simplify) canvas.drawCircle (0, 0, 718, dialBackPaint);
 
-        if (mode != Mode.OFF) {
+        // always display mode string (OFF,GCT,...,ILS)
+        canvas.drawText (mode.toString (), 85, 410, modePaint);
+
+        if (mode == Mode.OFF) {
+            if (mainActivity.downloadThread.getSqlDB () != null) {
+                canvas.drawText ("swipe down", 0, -390, dialTextPaint);
+                canvas.drawText ("from here to", 0, -240, dialTextPaint);
+                canvas.drawText ("enter waypoint", 0, -90, dialTextPaint);
+            } else {
+                canvas.drawText ("swipe up from", 0, -240, dialTextPaint);
+                canvas.drawText ("OFF button to", 0, -90, dialTextPaint);
+                canvas.drawText ("open menu page", 0, 60, dialTextPaint);
+            }
+        } else {
 
             // draw texts
             canvas.drawText (obsIntStr, -55, -390, obsIntPaint);
@@ -651,6 +733,7 @@ public class NavDialView extends View {
             canvas.drawText (gpsHdgStr.equals ("") ? "" : showarpln ? gpsHdgStr : "---\u00B0", 55, -390, gpsHdgPaint);
             canvas.drawText (gpsHmsStr, 55, -250, gpsMinPaint);
             canvas.drawText (gpsKtsStr, 55, -110, gpsMinPaint);
+            canvas.drawText (identStr, 55, 250, identPaint);
 
             if (simplify) canvas.scale (1.0F/1.25F, 1.0F/1.25F);
 
@@ -692,5 +775,7 @@ public class NavDialView extends View {
         }
 
         canvas.restore ();
+
+        super.onDraw (canvas);
     }
 }
