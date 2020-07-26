@@ -251,41 +251,44 @@ public class MapDialView extends DialFlickView {
             }
         };
 
-        // get list of nearby airports sorted by distance
-        double curlat = mainActivity.curLoc.latitude;
-        double curlon = mainActivity.curLoc.longitude;
-        MapWpt[] bydist = new MapWpt[waypoints.length];
-        int j = 0;
-        for (int i = 0; i < bydist.length; i ++) {
-            MapWpt mapwpt = waypoints[i];
-            if (mapwpt.nav) continue;
-            mapwpt.dist = Lib.LatLonDist (curlat, curlon, mapwpt.lat, mapwpt.lon);
-            bydist[j++] = mapwpt;
-        }
-        Arrays.sort (bydist, 0, j, new Comparator<MapWpt> () {
-            @Override
-            public int compare (MapWpt o1, MapWpt o2)
-            {
-                if (o1.dist < o2.dist) return -1;
-                if (o1.dist > o2.dist) return 1;
-                return o1.id.compareTo (o2.id);
-            }
-        });
-
-        // create radio buttons for nearby airports, closest at top
-        // mark current destination as checked if in list
-        double magvar = mainActivity.curLoc.magvar;
         nearRadioGroup.removeAllViews ();
-        if (j > MAXNEARAPTS) j = MAXNEARAPTS;
-        for (int i = 0; i < j; i ++) {
-            MapWpt mapwpt = bydist[i];
-            mapwpt.mhdg = Lib.LatLonTC (curlat, curlon, mapwpt.lat, mapwpt.lon) + magvar;
-            RadioButton rb = new RadioButton (mainActivity);
-            rb.setChecked ((mainActivity.navWaypt != null) && mapwpt.id.equals (mainActivity.navWaypt.ident));
-            rb.setOnClickListener (radioButtonListener);
-            rb.setTag (mapwpt);
-            rb.setText (mapwpt.rbString ());
-            nearRadioGroup.addView (rb);
+        if ((mainActivity.curLoc != null) && (waypoints != null)) {
+
+            // get list of nearby airports sorted by distance
+            double curlat = mainActivity.curLoc.latitude;
+            double curlon = mainActivity.curLoc.longitude;
+            MapWpt[] bydist = new MapWpt[waypoints.length];
+            int j = 0;
+            for (int i = 0; i < bydist.length; i ++) {
+                MapWpt mapwpt = waypoints[i];
+                if (mapwpt.nav) continue;
+                mapwpt.dist = Lib.LatLonDist (curlat, curlon, mapwpt.lat, mapwpt.lon);
+                bydist[j++] = mapwpt;
+            }
+            Arrays.sort (bydist, 0, j, new Comparator<MapWpt> () {
+                @Override
+                public int compare (MapWpt o1, MapWpt o2)
+                {
+                    if (o1.dist < o2.dist) return -1;
+                    if (o1.dist > o2.dist) return 1;
+                    return o1.id.compareTo (o2.id);
+                }
+            });
+
+            // create radio buttons for nearby airports, closest at top
+            // mark current destination as checked if in list
+            double magvar = mainActivity.curLoc.magvar;
+            if (j > MAXNEARAPTS) j = MAXNEARAPTS;
+            for (int i = 0; i < j; i ++) {
+                MapWpt mapwpt = bydist[i];
+                mapwpt.mhdg = Lib.LatLonTC (curlat, curlon, mapwpt.lat, mapwpt.lon) + magvar;
+                RadioButton rb = new RadioButton (mainActivity);
+                rb.setChecked ((mainActivity.navWaypt != null) && mapwpt.id.equals (mainActivity.navWaypt.ident));
+                rb.setOnClickListener (radioButtonListener);
+                rb.setTag (mapwpt);
+                rb.setText (mapwpt.rbString ());
+                nearRadioGroup.addView (rb);
+            }
         }
 
         // display back button and radio buttons
@@ -502,7 +505,7 @@ public class MapDialView extends DialFlickView {
         Waypt nwp = (mainActivity == null) ? null : mainActivity.navWaypt;
         float nwpxpix = Float.NaN;
         float nwpypix = Float.NaN;
-        if (nwp != null) {
+        if ((nwp != null) && ! Double.isNaN (mainActivity.startlat) && ! Double.isNaN (mainActivity.startlon)) {
             calcPixel (nwp.lat, nwp.lon);
             nwpxpix = xpix;
             nwpypix = ypix;

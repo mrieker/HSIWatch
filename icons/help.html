@@ -48,28 +48,28 @@
             <TR>
                 <TD>
                     <TABLE>
+                        <TR><TD>&nbsp;</TD></TR>
                         <TR><TD ALIGN=RIGHT>OBS setting &#9654;</TD></TR>
                         <TR><TD ALIGN=RIGHT>course to waypoint &#9654;</TD></TR>
                         <TR><TD ALIGN=RIGHT>course from waypoint &#9654;</TD></TR>
                         <TR><TD>&nbsp;</TD></TR>
-                        <TR><TD>&nbsp;</TD></TR>
-                        <TR><TD>&nbsp;</TD></TR>
                         <TR><TD ALIGN=RIGHT>distance to waypoint &#9654;</TD></TR>
                         <TR><TD ALIGN=RIGHT>time to waypoint &#9654;</TD></TR>
+                        <TR><TD>&nbsp;</TD></TR>
                         <TR><TD>&nbsp;</TD></TR>
                     </TABLE>
                 </TD>
                 <TD><IMG SRC="main-page.png"></TD>
                 <TD>
                     <TABLE>
+                        <TR><TD>&nbsp;</TD></TR>
                         <TR><TD ALIGN=LEFT>&#9664; ground track</TD></TR>
-                        <TR><TD ALIGN=LEFT>&#9664; GPS time</TD></TR>
+                        <TR><TD ALIGN=LEFT>&#9664; altitude</TD></TR>
                         <TR><TD ALIGN=LEFT>&#9664; ground speed</TD></TR>
                         <TR><TD>&nbsp;</TD></TR>
                         <TR><TD>&nbsp;</TD></TR>
                         <TR><TD ALIGN=LEFT>&#9664; waypoint ident</TD></TR>
                         <TR><TD ALIGN=LEFT>&#9664; navigation mode</TD></TR>
-                        <TR><TD>&nbsp;</TD></TR>
                         <TR><TD>&nbsp;</TD></TR>
                     </TABLE>
                 </TD>
@@ -101,12 +101,12 @@
                 <TD VALIGN=TOP>
                     <UL>
                         <LI><B>ground track</B> - course line currently following
-                            over the ground, same as red airplane icon.
+                            over the ground as measured from GPS, same as red airplane icon.
                             ---&#176; indicates ground speed too low to determine track.
-                        <LI><B>GPS time</B> -
-                            increments as GPS reports current position
+                        <LI><B>altitude</B> -
+                            feet MSL as measured from GPS
                         <LI><B>ground speed</B> - indicates ground speed in knots
-                            as seen by GPS
+                            as measured from GPS
                         <LI><B>waypoint ident</B> - waypoint being navigated to
                             <UL>
                                 <LI>case-insensitive, and spaces are ignored
@@ -178,6 +178,9 @@
                         <LI><B>menu</B> - access the menu pages
                         <LI><B>waypt</B> - enter waypoint being navigated to
                     </UL>
+                    You must touch in the area of the menu to get the menu to appear.
+                    Touching near the edges will rotate the nav dial (if current nav
+                    mode allows it).
                 </TD>
             </TR>
         </TABLE>

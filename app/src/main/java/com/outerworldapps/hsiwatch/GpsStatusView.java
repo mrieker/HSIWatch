@@ -54,6 +54,7 @@ public class GpsStatusView
     private Paint textPaint         = new Paint ();
     private Paint usedSpotsPaint    = new Paint ();
     private SensorManager instrSM;
+    private String gpstimstr;
 
     public GpsStatusView (Context ctx, AttributeSet attrs)
     {
@@ -91,6 +92,7 @@ public class GpsStatusView
         compRotDeg = Float.NaN;
         textPaint.setTextSize (24.0F);
         instrSM    = getContext ().getSystemService (SensorManager.class);
+        gpstimstr  = "?";
         if (USECOMPASS) {
             Sensor smf = instrSM.getDefaultSensor (Sensor.TYPE_MAGNETIC_FIELD);
             Sensor sac = instrSM.getDefaultSensor (Sensor.TYPE_ACCELEROMETER);
@@ -145,18 +147,40 @@ public class GpsStatusView
     }
 
     /**
+     * Got a GPS location reading.
+     */
+    public void gotGpsTime (long gpstime)
+    {
+        int gpssec = (int) (gpstime / 1000 % 86400);
+        gpstimstr = new String (new char[] {
+                (char) (gpssec / 36000 + '0'),
+                (char) (gpssec / 3600 % 10 + '0'),
+                ':',
+                (char) (gpssec / 600 % 6 + '0'),
+                (char) (gpssec / 60 % 10 + '0'),
+                ':',
+                (char) (gpssec / 10 % 6 + '0'),
+                (char) (gpssec % 10 + '0')
+        });
+        invalidate ();
+    }
+
+    /**
      * Callback to draw the instruments on the screen.
      */
     @Override
     protected void onDraw (Canvas canvas)
     {
+        float screenHeight  = getHeight ();
         float textHeight    = textPaint.getTextSize ();
         float circleCenterX = getWidth ()  / 2.0F;
-        float circleCenterY = getHeight () / 2.0F;
-        float circleRadius  = Math.min (circleCenterX, circleCenterY) - textHeight * 2.0F;
+        float circleCenterY = (screenHeight - textHeight) / 2.0F;
+        float circleRadius  = Math.min (circleCenterX, circleCenterY) - textHeight * 2.25F;
 
         canvas.save ();
         try {
+            canvas.drawText (gpstimstr, circleCenterX, circleCenterY + circleRadius + textHeight * 1.75F, textPaint);
+
             if (! Float.isNaN (compRotDeg)) {
                 String cmphdgstr = Integer.toString (1360 - (int) Math.round (compRotDeg + 360.0) % 360).substring (1) + '\u00B0';
                 canvas.drawText (cmphdgstr, circleCenterX, textHeight, textPaint);

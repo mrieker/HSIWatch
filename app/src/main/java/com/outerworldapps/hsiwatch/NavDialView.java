@@ -62,8 +62,8 @@ public class NavDialView extends DialFlickView {
     private float hsiRotation;
     private int lastdmedist;
     private int lastdmetime;
+    private int lastGpsAlt;
     private int lastGpsHdg;
-    private int lastGpsHms;
     private int lastGpsKts;
     private int lastObsInt;
     private int lastToWaypt;
@@ -96,8 +96,8 @@ public class NavDialView extends DialFlickView {
     private String dmeDistStr;
     private String dmeTimeStr;
     private String fmWayptStr;
+    private String gpsAltStr;
     private String gpsHdgStr;
-    private String gpsHmsStr;
     private String gpsKtsStr;
     private String identStr;
     private String obsIntStr;
@@ -177,12 +177,12 @@ public class NavDialView extends DialFlickView {
         gpsHdgPaint = new Paint ();
         gpsHdgPaint.setStyle (Paint.Style.FILL_AND_STROKE);
         gpsHdgPaint.setTextAlign (Paint.Align.LEFT);
-        gpsHdgPaint.setTextSize (130);
+        gpsHdgPaint.setTextSize (140);
 
         gpsMinPaint = new Paint ();
         gpsMinPaint.setStyle (Paint.Style.FILL_AND_STROKE);
         gpsMinPaint.setTextAlign (Paint.Align.LEFT);
-        gpsMinPaint.setTextSize (120);
+        gpsMinPaint.setTextSize (130);
 
         identPaint = new Paint ();
         identPaint.setColor (Color.WHITE);
@@ -206,7 +206,7 @@ public class NavDialView extends DialFlickView {
         obsIntPaint = new Paint ();
         obsIntPaint.setStyle (Paint.Style.FILL_AND_STROKE);
         obsIntPaint.setTextAlign (Paint.Align.RIGHT);
-        obsIntPaint.setTextSize (130);
+        obsIntPaint.setTextSize (140);
 
         outerRingPaint = new Paint ();
         outerRingPaint.setColor (Color.GRAY);
@@ -246,8 +246,8 @@ public class NavDialView extends DialFlickView {
 
         lastdmedist = -999;
         lastdmetime = -999;
+        lastGpsAlt  = -999;
         lastGpsHdg  = -999;
-        lastGpsHms  = -999;
         lastGpsKts  = -999;
         lastObsInt  = -999;
         lastToWaypt = -999;
@@ -257,8 +257,8 @@ public class NavDialView extends DialFlickView {
         fmWayptStr = "";
         dmeDistStr = "";
         dmeTimeStr = "";
+        gpsAltStr  = "";
         gpsHdgStr  = "";
-        gpsHmsStr  = "";
         gpsKtsStr  = "";
         identStr   = "";
 
@@ -297,6 +297,7 @@ public class NavDialView extends DialFlickView {
         ambient = (mainActivity != null) && mainActivity.ambient;
         if (ambient) {
             adfNeedlePaint.setColor (Color.WHITE);
+            dialBackPaint.setColor (Color.BLACK);
             dirArrowPaint.setColor (Color.GRAY);
             dmeDistPaint.setColor (Color.LTGRAY);
             dmeTimePaint.setColor (Color.LTGRAY);
@@ -306,9 +307,9 @@ public class NavDialView extends DialFlickView {
             obsArrowPaint.setColor (Color.LTGRAY);
             obsIntPaint.setColor (Color.LTGRAY);
             outerRingPaint.setColor (redRing ? Color.LTGRAY : Color.GRAY);
-            dialBackPaint.setColor (Color.BLACK);
         } else {
             adfNeedlePaint.setColor (Color.GREEN);
+            dialBackPaint.setColor (Color.DKGRAY);
             dirArrowPaint.setColor (Color.GREEN);
             dmeDistPaint.setColor (0xFFFFAA00);
             dmeTimePaint.setColor (0xFFFFAA00);
@@ -318,7 +319,6 @@ public class NavDialView extends DialFlickView {
             obsArrowPaint.setColor (Color.YELLOW);
             obsIntPaint.setColor (Color.YELLOW);
             outerRingPaint.setColor (redRing ? Color.RED : Color.GRAY);
-            dialBackPaint.setColor (Color.DKGRAY);
         }
         invalidate ();
     }
@@ -529,18 +529,10 @@ public class NavDialView extends DialFlickView {
             invalidate ();
         }
 
-        int gpshms = (int) (gl.time / 1000 % 86400);
-        if (lastGpsHms != gpshms) {
-            lastGpsHms = gpshms;
-            strbuf[0] = (char) (gpshms / 36000 + '0');
-            strbuf[1] = (char) (gpshms / 3600 % 10 + '0');
-            strbuf[2] = ':';
-            strbuf[3] = (char) (gpshms / 600 % 6 + '0');
-            strbuf[4] = (char) (gpshms / 60 % 10 + '0');
-            strbuf[5] = ':';
-            strbuf[6] = (char) (gpshms / 10 % 6 + '0');
-            strbuf[7] = (char) (gpshms % 10 + '0');
-            gpsHmsStr = new String (strbuf, 0, 8);
+        int gpsalt = (int) Math.round (gl.altitude * Lib.FtPerM);
+        if (lastGpsAlt != gpsalt) {
+            lastGpsAlt = gpsalt;
+            gpsAltStr  = gpsalt + "ft";
             invalidate ();
         }
 
@@ -731,8 +723,8 @@ public class NavDialView extends DialFlickView {
             canvas.drawText (dmeDistStr, -55 + dmeDistPaint.getTextSize () * dmeDistPaint.getTextSkewX (), 190, dmeDistPaint);
             canvas.drawText (dmeTimeStr, -55, 330, dmeTimePaint);
             canvas.drawText (gpsHdgStr.equals ("") ? "" : showarpln ? gpsHdgStr : "---\u00B0", 55, -390, gpsHdgPaint);
-            canvas.drawText (gpsHmsStr, 55, -250, gpsMinPaint);
-            canvas.drawText (gpsKtsStr, 55, -110, gpsMinPaint);
+            canvas.drawText (gpsAltStr, 55, -245, gpsMinPaint);
+            canvas.drawText (gpsKtsStr, 55, -100, gpsMinPaint);
             canvas.drawText (identStr, 55, 250, identPaint);
 
             if (simplify) canvas.scale (1.0F/1.25F, 1.0F/1.25F);

@@ -47,7 +47,7 @@ public class MenuMainPage {
     private long lastExitClick;
     private long lastResetClick;
     private MainActivity mainActivity;
-    private SatsMainPage satsMainPage;
+    public  SatsMainPage satsMainPage;
     public  SimMainPage simMainPage;
     private View menuPageView;
     private View menu2PageView;

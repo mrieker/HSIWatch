@@ -213,7 +213,10 @@ public class MainActivity extends WearableActivity {
     @Override
     public void onDestroy ()
     {
-        deactivateGPS ();
+        navDialView.setMode (NavDialView.Mode.OFF);
+        currentMainPage = null;
+        activateGPS ();
+
         super.onDestroy ();
     }
 
@@ -228,6 +231,7 @@ public class MainActivity extends WearableActivity {
             mainPageStack.push (currentMainPage);
             currentMainPage = view;
             setContentView (view);
+            activateGPS ();
         }
     }
 
@@ -319,6 +323,7 @@ public class MainActivity extends WearableActivity {
         } else {
             currentMainPage = mainPageStack.pop ();
             setContentView (currentMainPage);
+            activateGPS ();
         }
     }
 
@@ -400,9 +405,9 @@ public class MainActivity extends WearableActivity {
             }
         }
         //noinspection ConstantConditions
-        startlat = Double.parseDouble (prefs.getString ("startlat", "0"));
+        startlat = Lib.parseDouble (prefs.getString ("startlat", "NaN"));
         //noinspection ConstantConditions
-        startlon = Double.parseDouble (prefs.getString ("startlon", "0"));
+        startlon = Lib.parseDouble (prefs.getString ("startlon", "NaN"));
     }
 
     /**
@@ -472,13 +477,31 @@ public class MainActivity extends WearableActivity {
             navWaypt.autoTune (this);
         }
 
+        if (currentMainPage == menuMainPage.satsMainPage.satsPageView) {
+            menuMainPage.satsMainPage.gpsStatusView.gotGpsTime (curLoc.time);
+        }
+
         updateNavDial ();
+    }
+
+    /**
+     * Set new nav mode.
+     * Maybe turn GPS on or off.
+     */
+    public void setNavMode (NavDialView.Mode newmode)
+    {
+        if (newmode == NavDialView.Mode.OFF) {
+            setStartLatLon (Double.NaN, Double.NaN);
+        }
+        navDialView.setMode (newmode);
+        navModeButton.setMode ();
+        activateGPS ();
     }
 
     /**
      * Set current course line starting point
      */
-    private void setStartLatLon (double lat, double lon)
+    public void setStartLatLon (double lat, double lon)
     {
         startlat = lat;
         startlon = lon;
@@ -490,44 +513,25 @@ public class MainActivity extends WearableActivity {
     }
 
     /**
-     * Set new nav mode.
-     * Maybe turn GPS on or off.
-     */
-    public void setNavMode (NavDialView.Mode newmode)
-    {
-        navDialView.setMode (newmode);
-        navModeButton.setMode ();
-        if (newmode == NavDialView.Mode.OFF) {
-            deactivateGPS ();
-        } else {
-            activateGPS ();
-        }
-    }
-
-    /**
-     * Turn the GPS on if not already.
-     * First time requires user to give permission.
+     * Turn the GPS on or off as needed.
+     * First time on requires user to give permission.
+     * GPS is on whenever (navDialMode != OFF) || (currentMainPage implements KeepGpsOn)
      */
     private void activateGPS ()
     {
-        if (! gpsEnabled) {
-            if (! gpsReceiver.startSensor ()) return;
-            showToast ("turned GPS on");
-            gpsEnabled = true;
-            flashRedRing.run ();
-        }
-        updateNavDial ();
-    }
-
-    /**
-     * Turn the GPS off if not already.
-     */
-    private void deactivateGPS ()
-    {
-        if (gpsEnabled) {
-            showToast ("turning GPS off");
-            gpsReceiver.stopSensor ();
-            gpsEnabled = false;
+        if ((navDialView.getMode () != NavDialView.Mode.OFF) || (currentMainPage instanceof KeepGpsOn)) {
+            if (!gpsEnabled) {
+                if (!gpsReceiver.startSensor ()) return;
+                showToast ("turned GPS on");
+                gpsEnabled = true;
+                flashRedRing.run ();
+            }
+        } else {
+            if (gpsEnabled) {
+                gpsReceiver.stopSensor ();
+                showToast ("turned GPS off");
+                gpsEnabled = false;
+            }
         }
         updateNavDial ();
     }
@@ -587,30 +591,32 @@ public class MainActivity extends WearableActivity {
         mapDialView.drawRedRing (flashon);
 
         // update nav dial contents
-        if (gpsEnabled && (navWaypt != null) && (curLoc != null)) {
+        if (gpsEnabled && (curLoc != null)) {
 
             // update nav dial needles for new waypoint and/or new GPS location
-            navWaypt.updateNav (this);
+            if (navDialView.getMode () != NavDialView.Mode.OFF) {
+                navWaypt.updateNav (this);
 
-            // gps info
-            navDialView.setGpsInfo (curLoc);
+                // gps info
+                navDialView.setGpsInfo (curLoc);
 
-            // bearing to and from the station
-            double radto = navWaypt.getMagRadTo (navDialView.getMode(), curLoc);
-            navDialView.setToWaypt (radto);
+                // bearing to and from the station
+                double radto = navWaypt.getMagRadTo (navDialView.getMode (), curLoc);
+                navDialView.setToWaypt (radto);
 
-            // rotate whole dial, text and all, if HSI mode, to put airplane at top
-            // otherwise, yellow triangle (OBS setting) stays at top
-            boolean hsiEnable = menuMainPage.hsiModeCkBox.isChecked ();
-            float dialRotation = hsiEnable ? (float) - navDialView.getHeading () : 0;
-            navDialView.setHSIRotation (dialRotation);
+                // rotate whole dial, text and all, if HSI mode, to put airplane at top
+                // otherwise, yellow triangle (OBS setting) stays at top
+                boolean hsiEnable = menuMainPage.hsiModeCkBox.isChecked ();
+                float dialRotation = hsiEnable ? (float) -navDialView.getHeading () : 0;
+                navDialView.setHSIRotation (dialRotation);
 
-            // update DME distance and time
-            double dmenm = Lib.LatLonDist (curLoc.latitude, curLoc.longitude, navWaypt.dme_lat, navWaypt.dme_lon);
-            int dmeTimeSec = (int) Math.round (dmenm * Lib.MPerNM / curLoc.speed);
-            boolean slant = ! Double.isNaN (navWaypt.elev);
-            if (slant) dmenm = Math.hypot (dmenm, curLoc.altitude / Lib.MPerNM - navWaypt.elev / Lib.FtPerNM);
-            navDialView.setDme (dmenm, dmeTimeSec, slant);
+                // update DME distance and time
+                double dmenm = Lib.LatLonDist (curLoc.latitude, curLoc.longitude, navWaypt.dme_lat, navWaypt.dme_lon);
+                int dmeTimeSec = (int) Math.round (dmenm * Lib.MPerNM / curLoc.speed);
+                boolean slant = !Double.isNaN (navWaypt.elev);
+                if (slant) dmenm = Math.hypot (dmenm, curLoc.altitude / Lib.MPerNM - navWaypt.elev / Lib.FtPerNM);
+                navDialView.setDme (dmenm, dmeTimeSec, slant);
+            }
 
             // update moving map location
             mapDialView.setLocation (curLoc);

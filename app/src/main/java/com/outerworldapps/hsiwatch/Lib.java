@@ -368,6 +368,15 @@ public class Lib {
     }
 
     /**
+     * Parse a double, accept 'NaN'.
+     */
+    public static double parseDouble (String str)
+    {
+        if (str.equalsIgnoreCase ("NaN")) return Double.NaN;
+        return Double.parseDouble (str);
+    }
+
+    /**
      * Various compiler warnings.
      */
     public static void Ignored (@SuppressWarnings("UnusedParameters") boolean x) { }

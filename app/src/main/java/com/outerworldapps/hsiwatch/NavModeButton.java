@@ -115,9 +115,8 @@ public class NavModeButton {
                 {
                     NavDialView.Mode newmode = (NavDialView.Mode) v.getTag ();
                     mainActivity.setNavMode (newmode);
-                    if ((mainActivity.navWaypt != null) && (mainActivity.curLoc != null)) {
-                        mainActivity.startlat = mainActivity.curLoc.latitude;
-                        mainActivity.startlon = mainActivity.curLoc.longitude;
+                    if ((newmode != NavDialView.Mode.OFF) && (mainActivity.navWaypt != null) && (mainActivity.curLoc != null)) {
+                        mainActivity.setStartLatLon (mainActivity.curLoc.latitude, mainActivity.curLoc.longitude);
                         double newobs = mainActivity.navWaypt.getMagRadTo (newmode, mainActivity.curLoc);
                         mainActivity.navDialView.setObs (newobs);
                     }

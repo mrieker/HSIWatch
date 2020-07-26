@@ -29,9 +29,9 @@ import android.widget.Button;
  * Contains a BACK button and the GPS satellite status circle.
  */
 public class SatsMainPage {
-    private GpsStatusView gpsStatusView;
+    public  GpsStatusView gpsStatusView;
     private MainActivity mainActivity;
-    private View satsPageView;
+    public  View satsPageView;
 
     public SatsMainPage (MainActivity ma)
     {

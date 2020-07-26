@@ -100,6 +100,7 @@ public class SimMainPage implements GpsReceiver, Runnable {
     public void stopSensor ()
     {
         started = false;
+        saveValues ();
     }
 
     @Override
@@ -127,6 +128,7 @@ public class SimMainPage implements GpsReceiver, Runnable {
             {
                 boolean enab = ptendCheckbox.isChecked ();
                 mainActivity.setSimMode (enab);
+                if (! enab) saveValues ();
             }
         });
 
@@ -141,9 +143,11 @@ public class SimMainPage implements GpsReceiver, Runnable {
                 ptendLat.setText (Lib.DoubleNTZ (waypt.lat, 6));
                 ptendLon.setText (Lib.DoubleNTZ (waypt.lon, 6));
 
-                putPref ("simWaypoint", waypt.ident);
-                putPref ("simLatitude", ptendLat.getText ().toString ());
-                putPref ("simLongitude", ptendLon.getText ().toString ());
+                SharedPreferences.Editor editr = prefs.edit ();
+                editr.putString ("simWaypoint", waypt.ident);
+                editr.putString ("simLatitude", ptendLat.getText ().toString ());
+                editr.putString ("simLongitude", ptendLon.getText ().toString ());
+                editr.apply ();
             }
 
             @Override
@@ -247,7 +251,9 @@ public class SimMainPage implements GpsReceiver, Runnable {
             @Override
             public boolean onEnterKey (TextView v)
             {
-                putPref (prefName, v.getText ().toString ());
+                SharedPreferences.Editor editr = prefs.edit ();
+                editr.putString (prefName, v.getText ().toString ());
+                editr.apply ();
                 return false;
             }
             @Override
@@ -257,11 +263,15 @@ public class SimMainPage implements GpsReceiver, Runnable {
         return met;
     }
 
-    private void putPref (String name, String value)
+    @SuppressLint("ApplySharedPref")
+    private void saveValues ()
     {
         SharedPreferences.Editor editr = prefs.edit ();
-        editr.putString (name, value);
-        editr.apply ();
+        editr.putString ("simLatitude", ptendLat.getText ().toString ());
+        editr.putString ("simLongitude", ptendLon.getText ().toString ());
+        editr.putString ("simHeading", ptendHeading.getText ().toString ());
+        editr.putString ("simAltitude", ptendAltitude.getText ().toString ());
+        editr.commit ();
     }
 
     /**
@@ -312,13 +322,6 @@ public class SimMainPage implements GpsReceiver, Runnable {
             ptendLon.setText (Lib.DoubleNTZ (newlon, 6));
             ptendHeading.setText (Lib.DoubleNTZ (newhdg, 2));
             ptendAltitude.setText (Lib.DoubleNTZ (newalt, 2));
-
-            SharedPreferences.Editor editr = prefs.edit ();
-            editr.putString ("simLatitude", ptendLat.getText ().toString ());
-            editr.putString ("simLongitude", ptendLon.getText ().toString ());
-            editr.putString ("simHeading", ptendHeading.getText ().toString ());
-            editr.putString ("simAltitude", ptendAltitude.getText ().toString ());
-            editr.apply ();
 
             /*
              * Send the values in the form of a GPS reading to the active screen.
