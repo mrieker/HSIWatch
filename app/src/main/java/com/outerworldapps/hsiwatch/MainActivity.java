@@ -53,14 +53,19 @@ public class MainActivity extends WearableActivity {
 
     public final static int airplaneHeight = 313 - 69;
 
+    public  boolean ambient;
     private boolean autoTunePending;
     private boolean gpsEnabled;
-    public  boolean ambient;
     public  boolean hadPreviouslyAgreed;
     public  boolean isScreenRound;
+    public  boolean redRingOn;
+    public  double latesttc;                // latest GPS truecourse received when above minimum speed
+    public  double obsMagVar;               // magnetic variation used with obsSetting
+    public  double obsSetting;              // where yellow triangle is on dials (always magnetic)
     public  double startlat;                // GPS received lat,lon when waypoint was selected
     public  double startlon;
     public  DownloadThread downloadThread;
+    public  float dotsPerSqIn;
     public  GpsLocation curLoc;
     private GpsReceiver gpsReceiver;
     public  GpsTransmitter gpsTransmitter;
@@ -68,6 +73,7 @@ public class MainActivity extends WearableActivity {
     public  int widthPixels;
     public  int heightPixels;
     public  InternalGps internalGps;
+    private LatLon newll;
     private long gpslastheardat;
     private long lastBackPressed;
     public  MapDialView mapDialView;
@@ -91,9 +97,14 @@ public class MainActivity extends WearableActivity {
 
         AcraApplication.sendReports (this);
 
-        isScreenRound = getResources ().getConfiguration ().isScreenRound ();
+        DisplayMetrics metrics = new DisplayMetrics ();
+        getWindowManager ().getDefaultDisplay ().getMetrics (metrics);
+        dotsPerSqIn = metrics.xdpi * metrics.ydpi;
 
+        curLoc = new GpsLocation ();
+        isScreenRound = getResources ().getConfiguration ().isScreenRound ();
         myHandler = new Handler ();
+        newll = new LatLon ();
 
         // make sure they have agreed to little agreement
         final SharedPreferences prefs = getPreferences (MODE_PRIVATE);
@@ -213,7 +224,7 @@ public class MainActivity extends WearableActivity {
     @Override
     public void onDestroy ()
     {
-        navDialView.setMode (NavDialView.Mode.OFF);
+        navModeButton.setMode (NavDialView.Mode.OFF);
         currentMainPage = null;
         activateGPS ();
 
@@ -335,33 +346,6 @@ public class MainActivity extends WearableActivity {
     {
         // the OBS dial and needles
         navDialView = findViewById (R.id.navDialView);
-        navDialView.revRotate = menuMainPage.hsiModeCkBox.isChecked ();
-        navDialView.obsChangedListener = new NavDialView.OBSChangedListener () {
-            private LatLon newll = new LatLon ();
-
-            @SuppressLint("SetTextI18n")
-            @Override
-            public void obsChanged (double obs)
-            {
-                if ((navWaypt != null) && (curLoc != null) &&
-                        (navDialView.getMode () == NavDialView.Mode.GCT)) {
-                    // rotate whole course line by moving the start{lat,lon}
-                    // if failed to converge, leave start{lat,lon} as is
-                    // ...and updateNavDial() will put OBS dial back when it
-                    //    updates on-course OBS for GCT mode
-                    double newobstru = navDialView.getObs () - curLoc.magvar;
-                    if (! Double.isNaN (Lib.GCXTKCourse (
-                            curLoc.latitude, curLoc.longitude,
-                            navWaypt.lat, navWaypt.lon,
-                            startlat, startlon, newobstru, newll))) {
-                        setStartLatLon (newll.lat, newll.lon);
-                    }
-                }
-
-                // update numeric string and needle deflection
-                updateNavDial ();
-            }
-        };
 
         // waypoint entry and nav mode selection page
         navModeButton = new NavModeButton (this);
@@ -426,18 +410,18 @@ public class MainActivity extends WearableActivity {
      */
     public void setNavWaypt (Waypt waypt)
     {
+        SharedPreferences prefs = getPreferences (MODE_PRIVATE);
+        SharedPreferences.Editor editr = prefs.edit ();
+        editr.putString ("navWayptId", (waypt == null) ? "" : waypt.ident);
+        editr.apply ();
+
         navWaypt = waypt;
         if (navWaypt == null) {
             autoTunePending = false;
             setNavMode (NavDialView.Mode.OFF);
-            navDialView.drawRedRing (false);
-            mapDialView.drawRedRing (false);
-            navDialView.setObs (0.0);
-            navDialView.setIdent ("");
             navModeButton.identEntry.setText ("");
             navModeButton.identDescr.setText ("");
         } else {
-            navDialView.setIdent (waypt.ident);
             navModeButton.identEntry.setText (navWaypt.ident);
             navModeButton.identDescr.setText (navWaypt.name);
 
@@ -447,6 +431,76 @@ public class MainActivity extends WearableActivity {
             // make sure GPS is on and stays on until changed to OFF mode
             setNavMode (navWaypt.getInitialMode ());
         }
+    }
+
+    /**
+     * OBS dial was manually rotated.
+     */
+    public void obsChanged ()
+    {
+        if (navWaypt != null) {
+            switch (navModeButton.getMode ()) {
+
+                // rotate whole course line by moving the start{lat,lon}
+                // if failed to converge, leave start{lat,lon} as is
+                // ...and updateNavDial() will put OBS dial back when it
+                //    updates on-course OBS for GCT mode
+                case GCT: {
+                    double newobstru = obsSetting - obsMagVar;
+                    if (! Double.isNaN (Lib.GCXTKCourse (
+                            curLoc.latitude, curLoc.longitude,
+                            navWaypt.lat, navWaypt.lon,
+                            startlat, startlon, newobstru, newll))) {
+                        setStartLatLon (newll.lat, newll.lon);
+                    }
+                    break;
+                }
+
+                // rotate whole course line by moving the start{lat,lon}
+                case VOR: {
+                    double distnm = Lib.LatLonDist (navWaypt.lat, navWaypt.lon, startlat, startlon);
+                    double newobstru = obsSetting - obsMagVar;
+                    double newlat = Lib.LatHdgDist2Lat (navWaypt.lat, newobstru, distnm);
+                    double newlon = Lib.LatLonHdgDist2Lon (navWaypt.lat, navWaypt.lon, newobstru, distnm);
+                    double wenlat = Lib.LatHdgDist2Lat (navWaypt.lat, newobstru + 180, distnm);
+                    double wenlon = Lib.LatLonHdgDist2Lon (navWaypt.lat, navWaypt.lon, newobstru + 180, distnm);
+                    double newdiff = Lib.LatLonDist (startlat, startlon, newlat, newlon);
+                    double wendiff = Lib.LatLonDist (startlat, startlon, wenlat, wenlon);
+                    if (newdiff < wendiff) {
+                        wenlat = newlat;
+                        wenlon = newlon;
+                    }
+                    setStartLatLon (wenlat, wenlon);
+                    break;
+                }
+
+                // localizer is set to the inbound course line only
+                case LOC:
+                case ILS: {
+                    Waypt.LocWaypt locwp = (Waypt.LocWaypt) navWaypt;
+                    double distnm = Lib.LatLonDist (locwp.lat, locwp.lon, startlat, startlon);
+                    setStartLatLon (
+                            Lib.LatHdgDist2Lat (locwp.lat, locwp.thdg + 180.0, distnm),
+                            Lib.LatLonHdgDist2Lon (locwp.lat, locwp.lon, locwp.thdg + 180.0, distnm)
+                    );
+                    break;
+                }
+
+                // localizer back-course is set to the outbound course line only
+                case LOCBC: {
+                    Waypt.LocWaypt locwp = (Waypt.LocWaypt) navWaypt;
+                    double distnm = Lib.LatLonDist (locwp.lat, locwp.lon, startlat, startlon);
+                    setStartLatLon (
+                            Lib.LatHdgDist2Lat (locwp.lat, locwp.thdg, distnm),
+                            Lib.LatLonHdgDist2Lon (locwp.lat, locwp.lon, locwp.thdg, distnm)
+                    );
+                    break;
+                }
+            }
+        }
+
+        // update numeric string and needle deflection
+        updateNavDial ();
     }
 
     /**
@@ -460,20 +514,22 @@ public class MainActivity extends WearableActivity {
         location.magvar = - gmf.getDeclination();
 
         // ignore GPS for first 15 sec of every minute
-        //if (((now / 15000) & 3) == 0) return;
+        //if (((System.currentTimeMillis () / 15000) & 3) == 0) return;
 
         if (gpsTransmitter != null) {
             gpsTransmitter.sendLocation (location);
         }
 
         curLoc = location;
+        if (curLoc.speed > gpsMinSpeedMPS) {
+            latesttc = curLoc.truecourse;
+        }
         gpslastheardat = System.currentTimeMillis ();
 
         // new waypoint was just entered and we know where we are
         // set the nav dial initial settings for that waypoint
         if (autoTunePending) {
             autoTunePending = false;
-            setStartLatLon (curLoc.latitude, curLoc.longitude);
             navWaypt.autoTune (this);
         }
 
@@ -493,8 +549,7 @@ public class MainActivity extends WearableActivity {
         if (newmode == NavDialView.Mode.OFF) {
             setStartLatLon (Double.NaN, Double.NaN);
         }
-        navDialView.setMode (newmode);
-        navModeButton.setMode ();
+        navModeButton.setMode (newmode);
         activateGPS ();
     }
 
@@ -519,7 +574,7 @@ public class MainActivity extends WearableActivity {
      */
     private void activateGPS ()
     {
-        if ((navDialView.getMode () != NavDialView.Mode.OFF) || (currentMainPage instanceof KeepGpsOn)) {
+        if ((navModeButton.getMode () != NavDialView.Mode.OFF) || (currentMainPage instanceof KeepGpsOn)) {
             if (!gpsEnabled) {
                 if (!gpsReceiver.startSensor ()) return;
                 showToast ("turned GPS on");
@@ -558,7 +613,7 @@ public class MainActivity extends WearableActivity {
         {
             if (gpsEnabled) {
                 updateNavDial ();
-                int t = isAmbient () ? 8192: 1024;
+                int t = isAmbient () ? 8192 : 1024;
                 myHandler.postDelayed (this, t - (System.currentTimeMillis () % t));
             }
         }
@@ -571,7 +626,7 @@ public class MainActivity extends WearableActivity {
     public void updateNavDial ()
     {
         // flash outer ring red if haven't heard from GPS in a while
-        boolean flashon = false;
+        redRingOn = false;
         if (gpsEnabled) {
             long now = System.currentTimeMillis ();
             long gto = isAmbient () ? gpstimeout_amb : gpstimeout_nor;
@@ -584,42 +639,20 @@ public class MainActivity extends WearableActivity {
                     editr.apply ();
                 }
                 int t = isAmbient () ? 8192 : 1024;
-                flashon = (now & t) != 0;
+                redRingOn = (now & t) != 0;
             }
         }
-        navDialView.drawRedRing (flashon);
-        mapDialView.drawRedRing (flashon);
 
-        // update nav dial contents
-        if (gpsEnabled && (curLoc != null)) {
+        // update nav dial
+        if (navWaypt != null) navWaypt.updateNeedles (this);
+        navDialView.invalidate ();
 
-            // update nav dial needles for new waypoint and/or new GPS location
-            if (navDialView.getMode () != NavDialView.Mode.OFF) {
-                navWaypt.updateNav (this);
+        // update moving map
+        mapDialView.invalidate ();
 
-                // gps info
-                navDialView.setGpsInfo (curLoc);
-
-                // bearing to and from the station
-                double radto = navWaypt.getMagRadTo (navDialView.getMode (), curLoc);
-                navDialView.setToWaypt (radto);
-
-                // rotate whole dial, text and all, if HSI mode, to put airplane at top
-                // otherwise, yellow triangle (OBS setting) stays at top
-                boolean hsiEnable = menuMainPage.hsiModeCkBox.isChecked ();
-                float dialRotation = hsiEnable ? (float) -navDialView.getHeading () : 0;
-                navDialView.setHSIRotation (dialRotation);
-
-                // update DME distance and time
-                double dmenm = Lib.LatLonDist (curLoc.latitude, curLoc.longitude, navWaypt.dme_lat, navWaypt.dme_lon);
-                int dmeTimeSec = (int) Math.round (dmenm * Lib.MPerNM / curLoc.speed);
-                boolean slant = !Double.isNaN (navWaypt.elev);
-                if (slant) dmenm = Math.hypot (dmenm, curLoc.altitude / Lib.MPerNM - navWaypt.elev / Lib.FtPerNM);
-                navDialView.setDme (dmenm, dmeTimeSec, slant);
-            }
-
-            // update moving map location
-            mapDialView.setLocation (curLoc);
+        // update runway diagram
+        if (mapDialView.rwyDiagView != null) {
+            mapDialView.rwyDiagView.invalidate ();
         }
     }
 

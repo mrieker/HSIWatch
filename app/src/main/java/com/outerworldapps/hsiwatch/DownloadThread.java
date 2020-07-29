@@ -57,7 +57,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
     private final static int throtkbps = 1024;  // throttle download to 1MByte per second
 
     @SuppressWarnings("deprecation")
-    private final static long oldversiontime = new Date (2020-1900, 7-1, 14).getTime ();
+    private final static long oldversiontime = Date.UTC (2020-1900, 7-1, 26, 15, 0, 0);
 
     private boolean threadrunning;      // gui thread only
     private long lastdownloadmsgat;     // gui thread only
@@ -105,7 +105,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
                 String oldname = oldfile.getName ();
                 if (oldname.startsWith ("wayptabbs_") && oldname.endsWith (".db")) {
                     if (oldfile.lastModified () < oldversiontime) {
-                        // delete database that doesn't have runways table
+                        // delete database that doesn't have rwy_length,rwy_width
                         //noinspection ResultOfMethodCallIgnored
                         oldfile.delete ();
                         continue;

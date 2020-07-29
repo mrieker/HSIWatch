@@ -69,15 +69,17 @@ public abstract class Waypt {
     public void autoTune (MainActivity mainActivity)
     {
         GpsLocation curLoc = mainActivity.curLoc;
-        NavDialView ndv = mainActivity.navDialView;
+
+        // course line starts at current airplane location
+        mainActivity.setStartLatLon (curLoc.latitude, curLoc.longitude);
 
         // set crosstrack mode to give crosstrack difference with great circle course
         mainActivity.setNavMode (NavDialView.Mode.GCT);
 
         // set obs to great circle initial heading
-        double tc = Lib.LatLonTC (mainActivity.startlat, mainActivity.startlon, lat, lon);
-        double mc = tc + curLoc.magvar;
-        ndv.setObs (mc);
+        double tc = Lib.LatLonTC (curLoc.latitude, curLoc.longitude, lat, lon);
+        mainActivity.obsMagVar  = curLoc.magvar;
+        mainActivity.obsSetting = tc + curLoc.magvar;
     }
 
     // get magnetic radial from curLoc to this waypoint
@@ -102,25 +104,25 @@ public abstract class Waypt {
         }
     }
 
-    // new GPS co-ordinate received, update navdial
-    public void updateNav (MainActivity mainActivity)
+    // new GPS co-ordinate received, update navdial needles
+    public void updateNeedles (MainActivity mainActivity)
     {
         GpsLocation curLoc = mainActivity.curLoc;
         NavDialView ndv = mainActivity.navDialView;
 
-        switch (ndv.getMode ()) {
+        switch (mainActivity.navModeButton.getMode ()) {
             case OFF: {
                 break;
             }
 
             // for cross-track mode, adjust needle to show crosstrack distance in degrees
+            // also update obs for current on-course heading
             case GCT: {
                 double och = Lib.GCOnCourseHdg (mainActivity.startlat, mainActivity.startlon, lat, lon, curLoc.latitude, curLoc.longitude);
-                double obs = och + curLoc.magvar;
-                ndv.setObs (obs);
+                mainActivity.obsMagVar  = curLoc.magvar;
+                mainActivity.obsSetting = och + curLoc.magvar;
                 double cth = Lib.LatLonTC (curLoc.latitude, curLoc.longitude, lat, lon);
                 ndv.setDeflect (och - cth + 180.0);
-                currentHeading (ndv, curLoc);
                 break;
             }
 
@@ -129,8 +131,7 @@ public abstract class Waypt {
             // for other waypoints, it shows the direction to fly away from waypoint
             case VOR: {
                 double radial = computeVorRadial (curLoc);
-                ndv.setDeflect (ndv.getObs () - radial);
-                currentHeading (ndv, curLoc);
+                ndv.setDeflect (mainActivity.obsSetting - radial);
                 break;
             }
 
@@ -138,8 +139,7 @@ public abstract class Waypt {
             case ADF: {
                 double tctowp = Lib.LatLonTC (curLoc.latitude, curLoc.longitude, lat, lon);
                 double mctowp = tctowp + curLoc.magvar;
-                ndv.setDeflect (mctowp - ndv.getObs ());
-                currentHeading (ndv, curLoc);
+                ndv.setDeflect (mctowp - mainActivity.obsSetting);
                 break;
             }
 
@@ -147,38 +147,21 @@ public abstract class Waypt {
             // for LOC, LOCBC, ILS, needle shows offset from localizer published true course
             case LOC: {
                 ndv.setDeflect (computeLocDeflect (curLoc, 1));
-                currentHeading (ndv, curLoc);
                 break;
             }
 
             case LOCBC: {
                 ndv.setDeflect (computeLocDeflect (curLoc, -1));
-                currentHeading (ndv, curLoc);
                 break;
             }
 
             case ILS: {
                 ndv.setDeflect (computeLocDeflect (curLoc, 1));
                 ndv.setSlope (computeGSDeflect (curLoc));
-                currentHeading (ndv, curLoc);
                 break;
             }
         }
     }
-
-    // draw airplane depicting current heading
-    // also twists the dial for HSI mode
-    private void currentHeading (NavDialView ndv, GpsLocation curLoc)
-    {
-        boolean speedGood = curLoc.speed > MainActivity.gpsMinSpeedMPS;
-        if (speedGood) {
-            oldMagHeading = curLoc.truecourse + curLoc.magvar;
-        }
-        ndv.setHeading (oldMagHeading - ndv.getObs ());
-        ndv.showAirplane (speedGood);
-    }
-
-    private double oldMagHeading;
 
     // nav dial in VOR mode: compute the radial from the waypoint we are on
     // - for VOR waypoints: use the VOR's built-in variation
@@ -221,9 +204,11 @@ public abstract class Waypt {
 
     public static class AptWaypt extends Waypt {
         private final static String[] aptcols = new String[] {
-                "apt_icaoid", "apt_lat", "apt_lon", "apt_name", "apt_desc1", "apt_elev" };
+                "apt_icaoid", "apt_lat", "apt_lon", "apt_name", "apt_desc1", "apt_elev", "apt_faaid" };
 
-        public static Waypt find (SQLiteDatabase sqldb, String ident, boolean icao)
+        public String faaid;
+
+        public static AptWaypt find (SQLiteDatabase sqldb, String ident, boolean icao)
         {
             String where = icao ? "apt_icaoid=?" : "apt_faaid=?";
             try (Cursor cursor = sqldb.query ("airports", aptcols,
@@ -235,6 +220,7 @@ public abstract class Waypt {
                     waypt.dme_lon = waypt.lon = cursor.getDouble (2);
                     waypt.name    = cursor.getString (3) + "\n" + cursor.getString (4);
                     waypt.elev    = cursor.getDouble (5);
+                    waypt.faaid   = cursor.getString (6);
                     waypt.magvar  = Double.NaN;
                     waypt.validModes = valgen;
                     return waypt;
@@ -251,7 +237,7 @@ public abstract class Waypt {
     public static class FixWaypt extends Waypt {
         private final static String[] fixcols = new String[] { "fix_lat", "fix_lon", "fix_desc" };
 
-        public static Waypt find (SQLiteDatabase sqldb, String ident)
+        public static FixWaypt find (SQLiteDatabase sqldb, String ident)
         {
             try (Cursor cursor = sqldb.query ("fixes", fixcols,
                     "fix_name=?", new String[] { ident }, null, null, null, null)) {
@@ -296,9 +282,9 @@ public abstract class Waypt {
         private final static String[] loccols = new String[] {
                 "loc_lat", "loc_lon", "gs_elev", "gs_tilt", "gs_lat", "gs_lon",
                 "loc_thdg", "loc_elev", "apt_name", "dme_lat", "dme_lon",
-                "apt_elev", "loc_type", "loc_rwyid" };
+                "apt_elev", "loc_type", "loc_rwyid", "apt_icaoid" };
 
-        public static Waypt find (SQLiteDatabase sqldb, String ident)
+        public static LocWaypt find (SQLiteDatabase sqldb, String ident)
         {
             if (! ident.startsWith ("I")) return null;
             if (! ident.startsWith ("I-")) ident = "I-" + ident.substring (1);
@@ -317,6 +303,7 @@ public abstract class Waypt {
                     waypt.thdg    = cursor.getDouble (6);
                     waypt.elev    = cursor.isNull (7) ? cursor.getDouble (11) : cursor.getDouble (7);
                     waypt.name    = cursor.getString (12) + " RW " + cursor.getString (13) + '\n' + cursor.getString (8);
+                    waypt.apticao = cursor.getString (14);
                     waypt.dme_lat = cursor.isNull  (9) ? 0.0 : cursor.getDouble  (9);
                     waypt.dme_lon = cursor.isNull (10) ? 0.0 : cursor.getDouble (10);
                     if ((waypt.dme_lat == 0.0) && (waypt.dme_lon == 0)) {
@@ -336,6 +323,7 @@ public abstract class Waypt {
         public double gs_lat;
         public double gs_lon;
         public double thdg;
+        public String apticao;
 
         // get mode associated with the waypoint type
         // should match what autoTune() does
@@ -347,13 +335,22 @@ public abstract class Waypt {
 
         // for localizer, we always tune OBS to localizer heading
         // and we set to LOC or ILS mode
+        // and start of course is on the extended runway centerline
         @Override  // Waypt
         public void autoTune (MainActivity mainActivity)
         {
-            NavDialView ndv = mainActivity.navDialView;
+            GpsLocation curLoc = mainActivity.curLoc;
+
+            double distnm = Lib.LatLonDist (lat, lon, curLoc.latitude, curLoc.longitude);
+            mainActivity.setStartLatLon (
+                    Lib.LatHdgDist2Lat (lat, thdg + 180.0, distnm),
+                    Lib.LatLonHdgDist2Lon (lat, lon, thdg + 180.0, distnm)
+            );
 
             mainActivity.setNavMode (Double.isNaN (gs_elev) ? NavDialView.Mode.LOC : NavDialView.Mode.ILS);
-            ndv.setObs (thdg + getMagVar (Double.NaN));
+
+            mainActivity.obsMagVar  = getMagVar (Double.NaN);
+            mainActivity.obsSetting = thdg + mainActivity.obsMagVar;
         }
 
         // get magnetic radial from curLoc to this waypoint
@@ -410,7 +407,7 @@ public abstract class Waypt {
         private final static String[] navcols = new String[] { "nav_lat", "nav_lon", "nav_name",
                 "nav_magvar", "nav_type", "nav_elev" };
 
-        public static Waypt find (SQLiteDatabase sqldb, String ident)
+        public static NavWaypt find (SQLiteDatabase sqldb, String ident)
         {
             try (Cursor cursor = sqldb.query ("navaids", navcols,
                     "nav_faaid=?", new String[] { ident }, null, null, null, null)) {
@@ -444,16 +441,17 @@ public abstract class Waypt {
         public void autoTune (MainActivity mainActivity)
         {
             GpsLocation curLoc = mainActivity.curLoc;
-            NavDialView ndv = mainActivity.navDialView;
-
+            mainActivity.setStartLatLon (curLoc.latitude, curLoc.longitude);
             if (type.contains ("NDB")) {
                 mainActivity.setNavMode (NavDialView.Mode.ADF);
-                ndv.setObs (curLoc.truecourse + curLoc.magvar);
+                mainActivity.obsMagVar  = curLoc.magvar;
+                mainActivity.obsSetting = curLoc.truecourse + curLoc.magvar;
             } else {
                 double tc = Lib.LatLonTC (lat, lon, curLoc.latitude, curLoc.longitude);
                 double mc = tc + magvar + 180.0;
                 mainActivity.setNavMode (NavDialView.Mode.VOR);
-                ndv.setObs (mc);
+                mainActivity.obsMagVar  = magvar;
+                mainActivity.obsSetting = mc;
             }
         }
     }
@@ -465,9 +463,9 @@ public abstract class Waypt {
     public static class RwyWaypt extends LocWaypt {
         private final static String[] rwycols = new String[] {
                 "apt_faaid", "apt_name", "rwy_tdze", "rwy_beglat", "rwy_beglon",
-                "rwy_endlat", "rwy_endlon", "rwy_number", "apt_elev" };
+                "rwy_endlat", "rwy_endlon", "rwy_number", "apt_elev", "apt_icaoid" };
 
-        public static Waypt find (SQLiteDatabase sqldb, String ident)
+        public static RwyWaypt find (SQLiteDatabase sqldb, String ident)
         {
             // accept <aptid>.<rwyno>
             int i = ident.indexOf ('.');
@@ -480,13 +478,13 @@ public abstract class Waypt {
             // also try without the . (assumes <aptid> is 3 or 4 chars)
             i = ident.length ();
             if (i < 4) return null;
-            Waypt w = find (sqldb, ident.substring (0, 3), ident.substring (3));
+            RwyWaypt w = find (sqldb, ident.substring (0, 3), ident.substring (3));
             if (w != null) return w;
             if (i < 5) return null;
             return find (sqldb, ident.substring (0, 4), ident.substring (4));
         }
 
-        private static Waypt find (SQLiteDatabase sqldb, String aptid, String rwyno)
+        private static RwyWaypt find (SQLiteDatabase sqldb, String aptid, String rwyno)
         {
             try (Cursor cursor = sqldb.query ("runways,airports", rwycols,
                     "(apt_icaoid=? OR apt_faaid=?) AND rwy_faaid=apt_faaid AND (rwy_number=? OR rwy_number=?)",
@@ -502,6 +500,7 @@ public abstract class Waypt {
                     RwyWaypt waypt = new RwyWaypt ();
                     // use faaid for airport cuz it's shorter than icaoid
                     waypt.ident    = cursor.getString (0) + "." + rwyno;
+                    waypt.apticao  = cursor.getString (9);
                     // loc antenna 1000ft past far end numbers
                     waypt.lat      = Lib.LatHdgDist2Lat (endlat, rwytc, 1000.0 / Lib.FtPerNM);
                     waypt.lon      = Lib.LatLonHdgDist2Lon (endlat, endlon, rwytc, 1000.0 / Lib.FtPerNM);

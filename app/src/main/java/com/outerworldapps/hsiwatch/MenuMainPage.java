@@ -94,7 +94,6 @@ public class MenuMainPage {
             public void onClick (View v)
             {
                 boolean checked = hsiModeCkBox.isChecked ();
-                mainActivity.navDialView.revRotate = checked;
                 mainActivity.updateNavDial ();
                 SharedPreferences prefs = mainActivity.getPreferences (Context.MODE_PRIVATE);
                 SharedPreferences.Editor editr = prefs.edit ();

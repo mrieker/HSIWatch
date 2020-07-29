@@ -43,7 +43,16 @@
           document.write('m')
         </SCRIPT></P>
         <HR>
-        <H3> Main Page </H3>
+        <H3> Page Map </H3>
+        <TABLE>
+            <TR><TD ALIGN=CENTER>       </TD><TD ALIGN=CENTER>         </TD><TD ALIGN=CENTER> Waypoint Entry <BR> Nav Mode Select <BR> <IMG SRC="thumb-wpent.png"> </TD><TD ALIGN=CENTER>         </TD><TD ALIGN=CENTER> Nearest Airport <BR> <IMG SRC="thumb-near.png"> </TD><TD ALIGN=CENTER>         </TD><TD ALIGN=CENTER>         </TD></TR>
+            <TR><TD ALIGN=CENTER>       </TD><TD ALIGN=CENTER>         </TD><TD ALIGN=CENTER> &#8679;        </TD><TD ALIGN=CENTER>         </TD><TD ALIGN=CENTER> &#8679;         </TD><TD ALIGN=CENTER>         </TD><TD ALIGN=CENTER>         </TD></TR>
+            <TR><TD ALIGN=CENTER> start </TD><TD ALIGN=CENTER> &#8680; </TD><TD ALIGN=CENTER> Nav Dial <BR> <IMG SRC="thumb-nav.png"> </TD><TD ALIGN=CENTER> &#8680; </TD><TD ALIGN=CENTER> Moving Map <BR> <IMG SRC="thumb-map.png"> </TD><TD ALIGN=CENTER> &#8680; </TD><TD ALIGN=CENTER> Runways <BR> <IMG SRC="thumb-rwys.png"> </TD></TR>
+            <TR><TD ALIGN=CENTER>       </TD><TD ALIGN=CENTER>         </TD><TD ALIGN=CENTER> &#8681;        </TD><TD ALIGN=CENTER>         </TD><TD ALIGN=CENTER> &#8681;         </TD><TD ALIGN=CENTER>         </TD><TD ALIGN=CENTER>         </TD></TR>
+            <TR><TD ALIGN=CENTER>       </TD><TD ALIGN=CENTER>         </TD><TD ALIGN=CENTER COLSPAN=3> ... menu pages ... <BR> <IMG SRC="thumb-menu.png"> <IMG SRC="thumb-menu2.png"> </TD><TD ALIGN=CENTER>         </TD><TD ALIGN=CENTER>         </TD></TR>
+        </TABLE>
+        <HR>
+        <H3> Nav Dial Page </H3>
         <TABLE>
             <TR>
                 <TD>
@@ -119,7 +128,7 @@
                                     7B3.02, 7B3.2, 7B302, 7B32 are all the same.  in any case, you are
                                     presented with a dial of a generic ILS lined up on the runway.
                             </UL>
-                            <P>To select a waypoint, swipe downward on the main nav page to
+                            <P>To select a waypoint, swipe downward on the nav dial page to
                                 open the waypoint entry page.</P>
                         <LI><B>navigation mode</B> - indicates current navigation mode<BR>
                             Valid for all waypoints:
@@ -165,7 +174,7 @@
                 </TD>
             </TR>
         </TABLE>
-        <P>To access the other screens, touch near the center of the screen, and a menu will
+        <P>To access the other pages, touch near the center of the screen, and a diagram will
             appear:</P>
         <TABLE>
             <TR>
@@ -191,7 +200,7 @@
                 <TD><IMG SRC="menu-page.png" WIDTH=320 HEIGHT=320></TD>
                 <TD>
                     <UL>
-                        <LI><B>BACK</B> - goes back to main page
+                        <LI><B>BACK</B> - goes back to nav dial or moving map page
                         <LI><B>SATS</B> - show GPS satellite status (also has a magnetic compass)
                         <LI><B>UPDDB</B> - download database update (requires Internet access)
                             <UL>
@@ -201,7 +210,7 @@
                             </UL>
                         <LI><B>HSI</B> - select HSI mode for nav dial (airplane always at top); else OBS with yellow triangle always at top
                         <LI><B>Ambient</B> - slow to 20 seconds per GPS sample in ambient mode; else maintain 1 second per sample
-                        <LI><B>Simplify</B> - simplify main navigation screen allowing text to be enlarged
+                        <LI><B>Simplify</B> - simplify nav dial page allowing text to be enlarged
                             <TABLE>
                                 <TR><TD>Normal</TD><TD>Simplified</TD></TR>
                                 <TR><TD><IMG SRC="main-page.png" WIDTH=107 HEIGHT=107></TD><TD><IMG SRC="simplified.png" WIDTH=107 HEIGHT=107></TD></TR>
@@ -240,14 +249,14 @@
                     <LI><FONT COLOR=CYAN>CYAN</FONT> - VORs (if not 20 airports)
                     <LI><FONT COLOR=YELLOW>YELLOW</FONT> - range ring at half radius
                     <LI><FONT COLOR=MAGENTA>MAGENTA</FONT> - course line and destination waypoint<BR>
-                        course line shown is always great circle regardless of nav mode selected on main page
+                        course line shown is always great circle regardless of mode selected for nav dial page
                 </UL></TD>
             </TR>
             <TR><TD ALIGN=CENTER>zoom in</TD></TR>
         </TABLE>
-        <P>The moving map page can be accessed by swiping right-to-left on the main
-            navigation page.</P>
-        <P>To access the other screens from the map page, touch near the center of the screen, and a menu will appear:</P>
+        <P>The moving map page can be accessed by swiping right-to-left on the
+            nav dial page.</P>
+        <P>To access the other pages from the moving map page, touch near the center of the screen and a diagram will appear:</P>
         <TABLE>
             <TR>
                 <TD><IMG SRC="map-menu.png" WIDTH=320 HEIGHT=320></TD>
@@ -257,6 +266,7 @@
                         <LI><B>back</B> - go back to nav dial page
                         <LI><B>menu</B> - access the menu pages
                         <LI><B>near</B> - access nearest airport selection page
+                        <LI><B>rwys</B> - display runway diagram for current airport
                     </UL>
                 </TD>
             </TR>
@@ -274,7 +284,7 @@
             to connect to Google or something similar.  Swipe the voice input panel away then uncheck the <B>Voice</B>
             checkbox then use keyboard input instead.</P>
         <OL>
-            <LI>open the waypoint input page by swiping downward on the main navigation page
+            <LI>open the waypoint input page by swiping downward on the nav dial page
             <LI>tap the <B>VOICE</B> button, speech entry page should show
             <LI>tap microphone icon on speech page
             <LI>say prowords for the desired waypoint

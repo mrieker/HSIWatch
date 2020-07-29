@@ -46,6 +46,7 @@ import java.util.Locale;
 public class NavModeButton {
     private HashMap<NavDialView.Mode,RadioButton> navModeButtons;
     private MainActivity mainActivity;
+    private NavDialView.Mode curmode;
     private RadioGroup modeGroup;
     public TextView identDescr;
     private View modePageView;
@@ -55,6 +56,7 @@ public class NavModeButton {
     public NavModeButton (MainActivity ma)
     {
         mainActivity = ma;
+        curmode = NavDialView.Mode.OFF;
 
         LayoutInflater layoutInflater = mainActivity.getLayoutInflater ();
         modePageView = layoutInflater.inflate (R.layout.mode_page, null);
@@ -77,10 +79,6 @@ public class NavModeButton {
             public void wayptChanged (Waypt waypt)
             {
                 // set it as current waypoint
-                SharedPreferences.Editor editr = prefs.edit ();
-                String ident = (waypt == null) ? "" : waypt.ident;
-                editr.putString ("navWayptId", ident);
-                editr.apply ();
                 if ((mainActivity.navWaypt == null) && (waypt != null)) {
                     mainActivity.showToast ("click \u25C0BACK to show dial");
                 }
@@ -115,10 +113,10 @@ public class NavModeButton {
                 {
                     NavDialView.Mode newmode = (NavDialView.Mode) v.getTag ();
                     mainActivity.setNavMode (newmode);
-                    if ((newmode != NavDialView.Mode.OFF) && (mainActivity.navWaypt != null) && (mainActivity.curLoc != null)) {
+                    if ((newmode != NavDialView.Mode.OFF) && (mainActivity.navWaypt != null)) {
                         mainActivity.setStartLatLon (mainActivity.curLoc.latitude, mainActivity.curLoc.longitude);
-                        double newobs = mainActivity.navWaypt.getMagRadTo (newmode, mainActivity.curLoc);
-                        mainActivity.navDialView.setObs (newobs);
+                        mainActivity.obsSetting = mainActivity.navWaypt.getMagRadTo (newmode, mainActivity.curLoc);
+                        mainActivity.obsChanged ();
                     }
                 }
             };
@@ -139,20 +137,32 @@ public class NavModeButton {
         }
 
         // build group of buttons allowed for the waypoint type
-        setMode ();
+        updateButtons ();
 
         // display radio button page
         return modePageView;
     }
 
+    // set navigation mode
+    public void setMode (NavDialView.Mode newmode)
+    {
+        curmode = newmode;
+        updateButtons ();
+    }
+
+    public NavDialView.Mode getMode ()
+    {
+        return curmode;
+    }
+
     // waypoint changed, set radio buttons for the waypoint's default mode
-    public void setMode ()
+    private void updateButtons ()
     {
         if (navModeButtons != null) {
 
             // build group of buttons allowed for the waypoint type
             // check the one for the current waypoint
-            NavDialView.Mode oldmode = mainActivity.navDialView.getMode ();
+            NavDialView.Mode oldmode = curmode;
             modeGroup.removeAllViews ();
             NavDialView.Mode[] valids = (mainActivity.navWaypt == null) ?
                 new NavDialView.Mode[] { NavDialView.Mode.OFF } :

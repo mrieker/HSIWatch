@@ -29,7 +29,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RadioButton;
@@ -42,7 +41,7 @@ import java.util.HashMap;
 /**
  * Moving Map
  */
-public class MapDialView extends DialFlickView {
+public class MapDialView extends OBSDialView {
 
     private final static int MAXNEARAPTS = 20;
     private final static int MAXWAYPTS = 20;
@@ -67,6 +66,7 @@ public class MapDialView extends DialFlickView {
         public int rft;     // runway length feet
         public boolean nav;
 
+        // string to put on nearest airport radio button
         public String rbString ()
         {
             StringBuilder sb = new StringBuilder ();
@@ -78,6 +78,7 @@ public class MapDialView extends DialFlickView {
             sb.append (hdg % 10);
             sb.append ("\u00B0 ");
             sb.append (Math.round (dist));
+            sb.append (" nm");
             if (name != null) {
                 sb.append (": ");
                 sb.append (name);
@@ -95,12 +96,8 @@ public class MapDialView extends DialFlickView {
     }
 
     private boolean ambient;
-    private boolean redRing;
     private float xpix, ypix;
-    private double centerLat;
-    private double centerLon;
-    private double magHdgUp;
-    private double truHdgUp;
+    private double trueuprad;
     private double wayptEastLon;
     private double wayptNorthLat;
     private double wayptSouthLat;
@@ -111,12 +108,12 @@ public class MapDialView extends DialFlickView {
     private MapWpt[] drawnwpts;
     private MapWpt[] waypoints;
     private Paint coursePaint;
-    private Paint dialTextPaint;
     private Paint dirArrowPaint;
     private Paint outerRingPaint;
     private Paint rangeRingPaint;
     private Paint wayptPaint;
     private RadioGroup nearRadioGroup;
+    public  RwyDiagView rwyDiagView;
     private UpdateThread updateThread;
     private View nearPageView;
 
@@ -139,9 +136,10 @@ public class MapDialView extends DialFlickView {
             mainActivity = (MainActivity) ctx;
         }
 
-        goDownString = "menu";
-        goLeftString = "back";
-        goUpString   = "near";
+        goDownString  = "menu";
+        goLeftString  = "back";
+        goRightString = "rwys";
+        goUpString    = "near";
 
         drawnwpts = new MapWpt[MAXWAYPTS];
         drawnwpts[0] = new MapWpt ();
@@ -150,13 +148,7 @@ public class MapDialView extends DialFlickView {
 
         coursePaint = new Paint ();
         coursePaint.setStyle (Paint.Style.FILL_AND_STROKE);
-        coursePaint.setTextSize (150);
-
-        dialTextPaint = new Paint ();
-        dialTextPaint.setColor (Color.WHITE);
-        dialTextPaint.setStrokeWidth (10);
-        dialTextPaint.setTextAlign (Paint.Align.CENTER);
-        dialTextPaint.setTextSize (140);
+        coursePaint.setTextSize (120);
 
         dirArrowPaint = new Paint ();
         dirArrowPaint.setStyle (Paint.Style.FILL_AND_STROKE);
@@ -170,24 +162,18 @@ public class MapDialView extends DialFlickView {
         rangeRingPaint.setStrokeWidth (10);
         rangeRingPaint.setStyle (Paint.Style.STROKE);
         rangeRingPaint.setTextAlign (Paint.Align.CENTER);
-        rangeRingPaint.setTextSize (170);
+        rangeRingPaint.setTextSize (100);
 
         wayptPaint = new Paint ();
         wayptPaint.setColor (Color.GREEN);
         wayptPaint.setStrokeWidth (10);
         wayptPaint.setStyle (Paint.Style.FILL_AND_STROKE);
-        wayptPaint.setTextSize (130);
+        wayptPaint.setTextSize (110);
 
         radiusIndex = defradidx;
         radiusNM = radiinm[radiusIndex];
 
         setAmbient ();
-    }
-
-    @Override
-    public boolean onTouchOutside (MotionEvent event)
-    {
-        return true;
     }
 
     // go DOWN: open menu
@@ -207,7 +193,8 @@ public class MapDialView extends DialFlickView {
     @Override
     public View getRightView ()
     {
-        return null;
+        if (rwyDiagView == null) rwyDiagView = new RwyDiagView (mainActivity);
+        return rwyDiagView;
     }
 
     // go UP: open nearby airport selection page
@@ -241,18 +228,20 @@ public class MapDialView extends DialFlickView {
                 // select the given waypoint as current
                 MapWpt mapwpt = (MapWpt) v.getTag ();
                 Waypt waypt = Waypt.find (mainActivity.downloadThread.getSqlDB (), mapwpt.id);
-                if (waypt != null) {
-                    if (mapwpt.name == null) {
-                        mapwpt.name = waypt.name;
-                        ((RadioButton) v).setText (mapwpt.rbString ());
-                    }
+
+                // fill in long name (eg, BEVERLY RGNL) into radio button
+                if ((waypt != null) && (mapwpt.name == null)) {
+                    mapwpt.name = waypt.name;
+                    ((RadioButton) v).setText (mapwpt.rbString ());
                 }
+
+                // set it up for navigation
                 mainActivity.setNavWaypt (waypt);
             }
         };
 
         nearRadioGroup.removeAllViews ();
-        if ((mainActivity.curLoc != null) && (waypoints != null)) {
+        if (waypoints != null) {
 
             // get list of nearby airports sorted by distance
             double curlat = mainActivity.curLoc.latitude;
@@ -295,6 +284,7 @@ public class MapDialView extends DialFlickView {
         return nearPageView;
     }
 
+    // zoom-{in,out} was clicked, change radius
     public void incRadius (int inc)
     {
         inc += radiusIndex;
@@ -311,6 +301,7 @@ public class MapDialView extends DialFlickView {
     public void setAmbient ()
     {
         ambient = (mainActivity != null) && mainActivity.ambient;
+        boolean redRing = (mainActivity != null) && mainActivity.redRingOn;
         if (ambient) {
             coursePaint.setColor (Color.WHITE);
             dirArrowPaint.setColor (Color.GRAY);
@@ -322,37 +313,16 @@ public class MapDialView extends DialFlickView {
             outerRingPaint.setColor (redRing ? Color.RED : Color.GRAY);
             rangeRingPaint.setColor (Color.YELLOW);
         }
+        if (rwyDiagView != null) rwyDiagView.setAmbient ();
         invalidate ();
-    }
-
-    /**
-     * Draw red ring or not indicating loss of GPS signal.
-     */
-    public void drawRedRing (boolean drr)
-    {
-        redRing = drr;
-        outerRingPaint.setColor (drr ? (ambient ? Color.LTGRAY : Color.RED) : Color.GRAY);
-        invalidate ();
-    }
-
-    /**
-     * GPS has reported a new location, so update the moving map.
-     */
-    public void setLocation (GpsLocation loc)
-    {
-        centerLat = loc.latitude;
-        centerLon = loc.longitude;
-        magHdgUp  = loc.truecourse + loc.magvar;
-        truHdgUp  = loc.truecourse;
-        updateWaypoints ();
     }
 
     // make sure we have the waypoints within the screen area
     // start reading from database if not
     private void updateWaypoints ()
     {
-        double lat = centerLat;
-        double lon = centerLon;
+        double lat = mainActivity.curLoc.latitude;
+        double lon = mainActivity.curLoc.longitude;
         double radiusLat = radiusNM / Lib.NMPerDeg;
         double radiusLon = radiusLat * Math.cos (Math.toRadians (lat));
         double northLat  = lat + radiusLat;
@@ -373,8 +343,6 @@ public class MapDialView extends DialFlickView {
                     updateThread.start ();
                 }
             }
-        } else {
-            invalidate ();
         }
     }
 
@@ -389,7 +357,7 @@ public class MapDialView extends DialFlickView {
         @Override
         public void run ()
         {
-            // read waypoints within double radius
+            // read waypoints within double radius so we don't need to read again for a while
             radiusLat *= 2;
             radiusLon *= 2;
             final double northLat = lat + radiusLat;
@@ -466,40 +434,48 @@ public class MapDialView extends DialFlickView {
         }
     }
 
-    /**
-     * Draw the nav widget.
-     */
+    // get magnetic variation in vicinity of drawn map
     @Override
-    public void onDraw (Canvas canvas)
+    protected double getDispMagVar ()
     {
-        float lastWidth  = 320.0F; // getWidth ();
-        float lastHeight = 320.0F; // getHeight ();
-        float lastScale  = 320.0F / (1000 * 2 + outerRingPaint.getStrokeWidth ());
+        return mainActivity.curLoc.magvar;
+    }
 
+    // always use simplified display
+    @Override
+    protected boolean getSimplify ()
+    {
+        return true;
+    }
+
+    // draw moving map assuming true north is up
+    @Override
+    protected void onDrawInnards (Canvas canvas, double trueup, double scale)
+    {
+        updateWaypoints ();
+
+        // draw airplane in center of screen pointed in direction we are tracking
         canvas.save ();
-
-        // set up translation/scaling so that outer ring is radius 1000 centered at 0,0
-        canvas.translate (lastWidth / 2, lastHeight / 2);
-        canvas.scale (lastScale, lastScale);
-
-        // draw airplane
-        canvas.scale (180.0F / MainActivity.airplaneHeight, 180.0F / MainActivity.airplaneHeight);
-        canvas.drawPath (mainActivity.airplanePath, mainActivity.airplanePaint);
-        canvas.scale (MainActivity.airplaneHeight / 180.0F, MainActivity.airplaneHeight / 180.0F);
-
-        // draw range ring
-        canvas.drawCircle (0, 0, 500, rangeRingPaint);
-
-        // draw outer ring
-        canvas.drawCircle (0, 0, 1000, outerRingPaint);
-
-        // draw OBS dial
-        canvas.rotate ((float) - magHdgUp);
-        for (int deg = 0; deg < 360; deg += 30) {
-            canvas.drawText (Integer.toString (deg), 0, -823, dialTextPaint);
-            canvas.rotate (30.0F);
+        try {
+            canvas.rotate ((float) mainActivity.curLoc.truecourse);
+            canvas.scale (180.0F / MainActivity.airplaneHeight, 180.0F / MainActivity.airplaneHeight);
+            canvas.drawPath (mainActivity.airplanePath, mainActivity.airplanePaint);
+        } finally {
+            canvas.restore ();
         }
-        canvas.rotate ((float) magHdgUp);
+
+        // draw range rings
+        int outerNM = (int) Math.ceil (radiusNM * 0.8F);
+        float outerRad = INNARDSRADIUS * outerNM / (float) radiusNM;
+        canvas.drawCircle (0, 0, INNARDSRADIUS * 0.5F, rangeRingPaint);
+        canvas.drawCircle (0, 0, outerRad, rangeRingPaint);
+
+        // everything drawn below assumes trueup is up
+        // this lets drawText() calls to draw text horizontally
+        canvas.rotate ((float) trueup);
+
+        // tell calcPixel() what true course is up for subsequent drawing
+        trueuprad = Math.toRadians (trueup);
 
         // draw course line
         Waypt nwp = (mainActivity == null) ? null : mainActivity.navWaypt;
@@ -514,7 +490,7 @@ public class MapDialView extends DialFlickView {
             canvas.drawLine (nwpxpix, nwpypix, xpix, ypix, coursePaint);
         }
 
-        // make sure nav-to waypoint doesn't get drawn under
+        // make sure nav-to waypoint doesn't get overlapped by other waypoint
         float r = 25.0F;
         int numwpts = 0;
         if (nwp != null) {
@@ -559,7 +535,8 @@ public class MapDialView extends DialFlickView {
         }
 
         // draw range numbers
-        canvas.drawText (Integer.toString (radiusNM / 2), 0, 500, rangeRingPaint);
+        canvas.drawText (Integer.toString (radiusNM / 2), 0, INNARDSRADIUS * 0.5F, rangeRingPaint);
+        canvas.drawText (Integer.toString (outerNM), 0, outerRad, rangeRingPaint);
 
         // always draw 'to' waypoint in magenta
         if (nwp != null) {
@@ -567,21 +544,19 @@ public class MapDialView extends DialFlickView {
             canvas.drawText (nwp.ident, nwpxpix + r, nwpypix - r, coursePaint);
             canvas.drawCircle (nwpxpix, nwpypix, r, coursePaint);
         }
-
-        canvas.restore ();
-
-        super.onDraw (canvas);
     }
 
     // calculate pixel for the given lat,lon
     // return whether the point is within radius or not
     private boolean calcPixel (double lat, double lon)
     {
+        double centerLat = mainActivity.curLoc.latitude;
+        double centerLon = mainActivity.curLoc.longitude;
         double nm = Lib.LatLonDist (centerLat, centerLon, lat, lon);
-        double tc = Lib.LatLonTC (centerLat, centerLon, lat, lon);
-        double pix = nm / radiusNM * 1000.0;
-        xpix = (float) (pix * Math.sin (Math.toRadians (tc - truHdgUp)));
-        ypix = (float) (-pix * Math.cos (Math.toRadians (tc - truHdgUp)));
+        double tc = Lib.LatLonTC_rad (centerLat, centerLon, lat, lon) - trueuprad;
+        double pix = nm / radiusNM * INNARDSRADIUS;
+        xpix = (float) (pix * Math.sin (tc));
+        ypix = (float) (-pix * Math.cos (tc));
         return nm < radiusNM;
     }
 }
