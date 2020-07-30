@@ -23,9 +23,7 @@ package com.outerworldapps.hsiwatch;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.speech.RecognizerIntent;
 import android.util.Log;
@@ -73,7 +71,6 @@ public class NavModeButton {
         });
 
         // waypoint entry text box
-        final SharedPreferences prefs = mainActivity.getPreferences (Context.MODE_PRIVATE);
         identEntry.wcl = new WayptEditText.WayptChangeListener () {
             @Override
             public void wayptChanged (Waypt waypt)

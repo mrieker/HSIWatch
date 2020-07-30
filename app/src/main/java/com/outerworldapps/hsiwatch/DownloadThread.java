@@ -57,7 +57,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
     private final static int throtkbps = 1024;  // throttle download to 1MByte per second
 
     @SuppressWarnings("deprecation")
-    private final static long oldversiontime = Date.UTC (2020-1900, 7-1, 26, 15, 0, 0);
+    private final static long oldversiontime = Date.UTC (2020-1900, 7-1, 30, 15, 0, 0);
 
     private boolean threadrunning;      // gui thread only
     private long lastdownloadmsgat;     // gui thread only

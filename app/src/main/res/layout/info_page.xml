@@ -16,19 +16,25 @@
         android:orientation="vertical">
 
         <Button
-            android:id="@+id/satsBack"
+            android:id="@+id/infoBack"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="\u25C0BACK"
             tools:ignore="HardcodedText" />
 
-        <com.outerworldapps.hsiwatch.GpsStatusView
-            android:id="@+id/gpsStatusView"
+        <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:padding="@dimen/inner_frame_layout_padding"
             app:boxedEdges="all"
-            tools:ignore="MissingPrefix" />
+            tools:ignore="MissingPrefix">
 
+            <TextView
+                android:id="@+id/infoText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:textColor="#FFFFFFFF" />
+        </ScrollView>
     </LinearLayout>
 </com.outerworldapps.hsiwatch.BoxInsetLayoutKGO>

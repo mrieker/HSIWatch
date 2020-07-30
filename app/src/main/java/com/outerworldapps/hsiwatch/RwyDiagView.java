@@ -20,14 +20,22 @@
 
 package com.outerworldapps.hsiwatch;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.util.AttributeSet;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 
 import java.util.LinkedList;
 
@@ -65,6 +73,7 @@ public class RwyDiagView extends OBSDialView implements Invalidatable {
     private Paint numberFGPaint;
     private Paint runwayPaint;
     private RwyPair[] rwyPairs;
+    private View aptInfoPage;
     private Waypt waypoint;
     private Waypt.AptWaypt airport;
 
@@ -93,7 +102,9 @@ public class RwyDiagView extends OBSDialView implements Invalidatable {
             mainActivity = (MainActivity) ctx;
         }
 
+        goDownString = "menu";
         goLeftString = "back";
+        goUpString   = "info";
 
         rwyPairs = nullRwyPairArray;
 
@@ -122,10 +133,53 @@ public class RwyDiagView extends OBSDialView implements Invalidatable {
         setAmbient ();
     }
 
-    protected View getDownView () { return null; }
+    protected View getDownView () { return mainActivity.menuMainPage.getView (); }
     protected View getLeftView () { openStreetMap.CloseBitmaps (); return null; }
     protected View getRightView () { return null; }
-    protected View getUpView () { return null; }
+
+    @SuppressLint({ "InflateParams", "SetTextI18n" })
+    protected View getUpView ()
+    {
+        // get overall display loaded if not already
+        if (aptInfoPage == null) {
+            LayoutInflater inflater = mainActivity.getLayoutInflater ();
+            aptInfoPage = inflater.inflate (R.layout.info_page, null);
+            Button infoBackButton = aptInfoPage.findViewById (R.id.infoBack);
+            infoBackButton.setOnClickListener (mainActivity.backButtonListener);
+        }
+
+        TextView aptInfoText = aptInfoPage.findViewById (R.id.infoText);
+        SpannableStringBuilder ssb = new SpannableStringBuilder ();
+        if (waypoint == null) {
+            ssb.append ("no waypoint selected");
+        } else {
+            ssb.append (waypoint.ident);
+            ssb.append (": ");
+            ssb.append (waypoint.name);
+            if (airport != null) {
+                // add yellow color to keyword of each desc2 line
+                for (String des : airport.desc2.split ("\n")) {
+                    ssb.append ('\n');
+                    int i = des.indexOf (':');
+                    if (i < 0) ssb.append (des);
+                    else {
+                        ForegroundColorSpan fcs = new ForegroundColorSpan (Color.YELLOW);
+                        int j = ssb.length ();
+                        ssb.append (des, 0, ++i);
+                        int k = ssb.length ();
+                        ssb.append (des, i, des.length ());
+                        ssb.setSpan (fcs, j, k, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                    }
+                }
+                // for small scrolling at the bottom
+                ssb.append ("\n\n\n\n\n\n\n");
+            }
+        }
+        aptInfoText.setText (ssb);
+
+        // display the info page
+        return aptInfoPage;
+    }
 
     // ambient level changed
     // update paints and redraw
@@ -195,6 +249,15 @@ public class RwyDiagView extends OBSDialView implements Invalidatable {
             canvas.drawText ("selected", 0, rwytextsize * 1.5F, numberFGPaint);
         } else {
 
+            // display copyright message for first 3 seconds
+            if ((pixmap.copyrtSize == 0.0F) && (pixmap.copyrtPath == null)) {
+                float r = INNARDSRADIUS * 0.92F;
+                pixmap.copyrtPath = new Path ();
+                pixmap.copyrtPath.addArc (-r, -r, r, r, (float) trueup - 90, 180);
+                pixmap.copyrtSize = INNARDSRADIUS * 0.10F;
+                mainActivity.myHandler.postDelayed (pixmap, 3000);
+            }
+
             // draw background tiles
             if (!mainActivity.ambient) {
                 double cppsi = mainActivity.dotsPerSqIn / (scale * scale);
@@ -217,25 +280,47 @@ public class RwyDiagView extends OBSDialView implements Invalidatable {
     // draw all the runways
     private void drawRunways (Canvas canvas, boolean numbers, Paint paint)
     {
-        for (RwyPair rp : rwyPairs) {
-            float cxp = rp.centerxpix;
-            float cyp = rp.centerypix;
-            float hwp = rp.widthpix  / 2.0F;
-            float hlp = rp.lengthpix / 2.0F;
-            float typ = cyp + hlp + rwytextsize;
-            canvas.save ();
-            try {
-                canvas.rotate (rp.rotate, cxp, cyp);
+
+        canvas.save ();
+        try {
+            float lasttx = 0;
+            float lastty = 0;
+            float lastrot = 0;
+            for (RwyPair rp : rwyPairs) {
+                float cxp = rp.centerxpix;
+                float cyp = rp.centerypix;
+                float hwp = rp.widthpix  / 2.0F;
+                float hlp = rp.lengthpix / 2.0F;
+                float typ = cyp + hlp + rwytextsize;
+
+                // equivalent to:
+                //  rotate (-lastrot)               // undo last rotate
+                //  translate (-lasttx, -lastty)    // undo last translate
+                //  translate (cxp, cyp)            // do this translate
+                //  rotate (rp.rotate)              // do this rotate
+                float cos_lastrot = (float) Math.cos (Math.toRadians (lastrot));
+                float sin_lastrot = (float) Math.sin (Math.toRadians (lastrot));
+                canvas.translate (
+                        cos_lastrot * (cxp - lasttx) + sin_lastrot * (cyp - lastty),
+                        cos_lastrot * (cyp - lastty) - sin_lastrot * (cxp - lasttx)
+                );
+                canvas.rotate (rp.rotate - lastrot);
+                lastrot = rp.rotate;
+                lasttx  = cxp;
+                lastty  = cyp;
+
+                // draw either the numbers or the runway rectangle
                 if (numbers) {
-                    canvas.drawText (rp.numa, cxp, typ, paint);
-                    canvas.rotate (180.0F, cxp, cyp);
-                    canvas.drawText (rp.numb, cxp, typ, paint);
+                    canvas.drawText (rp.numa, 0, typ - cyp, paint);
+                    canvas.scale (-1, -1);
+                    lastrot += 180.0F;
+                    canvas.drawText (rp.numb, 0, typ - cyp, paint);
                 } else {
-                    canvas.drawRect (cxp - hwp, cyp - hlp, cxp + hwp, cyp + hlp, paint);
+                    canvas.drawRect (- hwp, - hlp, hwp, hlp, paint);
                 }
-            } finally {
-                canvas.restore ();
             }
+        } finally {
+            canvas.restore ();
         }
     }
 
@@ -258,13 +343,22 @@ public class RwyDiagView extends OBSDialView implements Invalidatable {
         ll.lon = Lib.LatLonHdgDist2Lon (airport.lat, airport.lon, tc, nm);
     }
 
-    private final PixelMapper pixmap = new PixelMapper () {
+    private final RwyPixelMapper pixmap = new RwyPixelMapper ();
+    private class RwyPixelMapper extends PixelMapper implements Runnable {
+
         @Override
         public void LatLon2CanPixAprox (double lat, double lon, PointD pix)
         {
             getPixXY (lat, lon, pix);
         }
-    };
+
+        @Override
+        public void run ()
+        {
+            copyrtPath = null;
+            invalidate ();
+        }
+    }
 
     // build drawable list of runways for an airport
     private class BuildThread extends Thread {
@@ -351,6 +445,9 @@ public class RwyDiagView extends OBSDialView implements Invalidatable {
                         pixmap.canvasSouthLat = Lib.LatHdgDist2Lat (aptwp.lat, 180.0, radnm);
                         pixmap.canvasEastLon  = Lib.LatLonHdgDist2Lon (aptwp.lat, aptwp.lon, 90.0, radnm);
                         pixmap.canvasWestLon  = Lib.LatLonHdgDist2Lon (aptwp.lat, aptwp.lon, 270.0, radnm);
+
+                        pixmap.copyrtPath = null;
+                        pixmap.copyrtSize = 0.0F;
 
                         LatLon ll = new LatLon ();
                         getLatLon (-INNARDSRADIUS, -INNARDSRADIUS, ll);

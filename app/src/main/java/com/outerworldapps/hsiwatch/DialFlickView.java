@@ -25,7 +25,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -65,7 +64,6 @@ public abstract class DialFlickView extends View {
     private Paint textPaint;
     private Path arrows;
     private Path draggedClipPath;
-    private Rect bounds;
     private View displacedView;
 
     protected DialFlickView (Context ctx, AttributeSet attrs)
@@ -87,7 +85,6 @@ public abstract class DialFlickView extends View {
             mainActivity = (MainActivity) ctx;
         }
 
-        bounds = new Rect ();
         dragFromDir = Dir.N;
 
         arrowPaint = new Paint ();
@@ -246,23 +243,10 @@ public abstract class DialFlickView extends View {
                 canvas.drawCircle (0, 0, 320, circlePaint);
                 canvas.drawCircle (0, 0, 319, arrowPaint);
 
-                float rot = 0.0F;
-                if (goDownString != null) {
-                    rot = drawArrows (canvas, rot, 180.0F, null);
-                    canvas.rotate (0.0F - rot);
-                    textPaint.getTextBounds (goDownString, 0, goDownString.length (), bounds);
-                    canvas.drawText (goDownString, 0, 240 + bounds.height (), textPaint);
-                    rot = 0.0F;
-                }
-                if (goLeftString != null) {
-                    rot = drawArrows (canvas, rot, 270.0F, goLeftString);
-                }
-                if (goRightString != null) {
-                    rot = drawArrows (canvas, rot, 90.0F, goRightString);
-                }
-                if (goUpString != null) {
-                    drawArrows (canvas, rot, 0.0F, goUpString);
-                }
+                drawArrows (canvas, 180, goDownString);
+                drawArrows (canvas, 270, goLeftString);
+                drawArrows (canvas,  90, goRightString);
+                drawArrows (canvas,   0, goUpString);
             } finally {
                 canvas.restore ();
             }
@@ -292,11 +276,45 @@ public abstract class DialFlickView extends View {
         }
     }
 
-    private float drawArrows (Canvas canvas, float oldrot, float newrot, String text)
+    private void drawArrows (Canvas canvas, int newrot, String text)
     {
-        canvas.rotate (newrot - oldrot);
-        if (text != null) canvas.drawText (text, 0, - 240, textPaint);
+        if (text == null) return;
+
+        canvas.rotate (newrot);
         canvas.drawPath (arrows, arrowPaint);
-        return newrot;
+        switch (newrot) {
+            // going up
+            case   0: {
+                canvas.drawText (text, 0, -240, textPaint);
+                break;
+            }
+            // going right
+            case  90: {
+                canvas.rotate (270);
+                drawVertText (canvas, text, 265, textPaint);
+                break;
+            }
+            // going down
+            case 180: {
+                canvas.rotate (180);
+                canvas.drawText (text, 0, 240+40, textPaint);
+                break;
+            }
+            // going left
+            case 270: {
+                canvas.rotate (90);
+                drawVertText (canvas, text, -265, textPaint);
+                break;
+            }
+        }
+    }
+
+    private static void drawVertText (Canvas canvas, String text, float x, Paint paint)
+    {
+        int len = text.length ();
+        for (int i = 0; i < len; i ++) {
+            float y = (i - len / 2.0F) * 70 + 55;
+            canvas.drawText (text, i, i + 1, x, y, paint);
+        }
     }
 }

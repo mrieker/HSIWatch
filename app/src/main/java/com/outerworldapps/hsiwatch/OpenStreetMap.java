@@ -27,7 +27,6 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.util.DisplayMetrics;
 import android.util.Log;
 
 import java.io.File;
@@ -46,26 +45,18 @@ import java.util.Iterator;
 public class OpenStreetMap {
     private final static String TAG = "WairToNow";
 
-    public  static final int BitmapSize = 256;  // all OSM tiles are this size
-    public  static final int MAXZOOM = 17;
-    private static final int LOG2PIXPERIN = 8;
-    private static final long TILE_FILE_AGE_MS = 1000L*60*60*24*365;
+    public  final static int BitmapSize = 256;  // all OSM tiles are this size
+    public  final static int MAXZOOM = 17;
+    private final static int LOG2PIXPERIN = 8;
+    private final static long TILE_FILE_AGE_MS = 1000L*60*60*24*365;
+    private final static String copyrtMessage = "\u00A9 OpenStreetMap contributors";
 
-    private float textSize;
-    private float thickLine;
     private MainActivity mainActivity;
     private MainTileDrawer mainTileDrawer;
 
     public OpenStreetMap (MainActivity ma)
     {
         mainActivity = ma;
-
-        DisplayMetrics metrics = new DisplayMetrics ();
-        mainActivity.getWindowManager ().getDefaultDisplay ().getMetrics (metrics);
-        float dpi = (float) Math.sqrt (metrics.xdpi * metrics.ydpi);
-        textSize  = dpi / 7.0F;
-        thickLine = dpi / 12.0F;
-
         mainTileDrawer = new MainTileDrawer ();
     }
 
@@ -103,7 +94,6 @@ public class OpenStreetMap {
         private Canvas canvas;
         private float[] bitmappts = new float[8];
         private Invalidatable redrawView;
-        private long drawCycle;
         private Matrix matrix = new Matrix ();
         private Paint copyrtBGPaint = new Paint ();
         private Paint copyrtTxPaint = new Paint ();
@@ -120,10 +110,9 @@ public class OpenStreetMap {
         {
             copyrtBGPaint.setColor (Color.WHITE);
             copyrtBGPaint.setStyle (Paint.Style.FILL_AND_STROKE);
-            copyrtBGPaint.setTextSize (textSize * 3 / 4);
-            copyrtBGPaint.setStrokeWidth (thickLine);
+            copyrtBGPaint.setTextAlign (Paint.Align.CENTER);
             copyrtTxPaint.setColor (Color.BLACK);
-            copyrtTxPaint.setTextSize (textSize * 3 / 4);
+            copyrtTxPaint.setTextAlign (Paint.Align.CENTER);
         }
 
         public void Draw (Canvas canvas, PixelMapper pmap, Invalidatable inval)
@@ -133,18 +122,24 @@ public class OpenStreetMap {
 
             stopReadingTiles (false);
 
-            ++ drawCycle;
-            if (DrawTiles (pmap)) {
-                int h = pmap.canvasHeight;
-                String copyrtMessage = "Copyright OpenStreetMap contributors";
-                canvas.drawText (copyrtMessage, 5, h - 5, copyrtBGPaint);
-                canvas.drawText (copyrtMessage, 5, h - 5, copyrtTxPaint);
+            synchronized (openedBitmaps) {
+                for (TileBitmap tbm : openedBitmaps.values ()) {
+                    tbm.used = false;
+                }
+            }
+
+            if (DrawTiles (pmap) && (pmap.copyrtPath != null)) {
+                copyrtBGPaint.setStrokeWidth (pmap.copyrtSize);
+                copyrtBGPaint.setTextSize (pmap.copyrtSize);
+                copyrtTxPaint.setTextSize (pmap.copyrtSize);
+                canvas.drawTextOnPath (copyrtMessage, pmap.copyrtPath, 0, 0, copyrtBGPaint);
+                canvas.drawTextOnPath (copyrtMessage, pmap.copyrtPath, 0, 0, copyrtTxPaint);
             }
 
             synchronized (openedBitmaps) {
                 for (Iterator<TileBitmap> it = openedBitmaps.values ().iterator (); it.hasNext ();) {
                     TileBitmap tbm = it.next ();
-                    if (tbm.used < drawCycle) {
+                    if (! tbm.used) {
                         it.remove ();
                         if (tbm.bm != null) tbm.bm.recycle ();
                     }
@@ -206,7 +201,7 @@ public class OpenStreetMap {
 
             // it is opened, remember it is being used so it doesn't get recycled
             // also it might be null meaning the bitmap file is corrupt
-            tbm.used = drawCycle;
+            tbm.used = true;
             Bitmap tile = tbm.bm;
             if (tile == null) return false;
 
@@ -274,17 +269,20 @@ public class OpenStreetMap {
 
         private void stopReadingTiles (boolean wait)
         {
+            Thread t;
             synchronized (openedBitmaps) {
                 neededBitmaps.clear ();
+                t = tileOpenerThread;
             }
-            if (wait && (tileOpenerThread != null)) {
-                try { tileOpenerThread.join (); } catch (InterruptedException ignored) { }
+            if (wait && (t != null)) {
+                try { t.join (); } catch (InterruptedException ignored) { }
             }
             synchronized (downloadBitmaps) {
                 downloadBitmaps.clear ();
+                t = tileDownloaderThread;
             }
-            if (wait && (tileDownloaderThread != null)) {
-                try { tileDownloaderThread.join (); } catch (InterruptedException ignored) { }
+            if (wait && (t != null)) {
+                try { t.join (); } catch (InterruptedException ignored) { }
             }
         }
 
@@ -310,8 +308,8 @@ public class OpenStreetMap {
                             openedBitmaps.put (key, tbm);
                             tbm.inval.postInvalidate ();
                         }
+                        Iterator<Long> it = neededBitmaps.keySet ().iterator ();
                         do {
-                            Iterator<Long> it = neededBitmaps.keySet ().iterator ();
                             if (! it.hasNext ()) {
                                 tileOpenerThread = null;
                                 return;
@@ -354,7 +352,7 @@ public class OpenStreetMap {
                         tbm = null;
                     } else {
                         key = (((long) tileIX) << 36) | (((long) tileIY) << 8) | zl;
-                        tbm.used = Long.MAX_VALUE;
+                        tbm.used = true;
                     }
                 }
             }
@@ -393,7 +391,7 @@ public class OpenStreetMap {
     private static class TileBitmap {
         public Invalidatable inval;     // callback when tile gets loaded
         public Bitmap bm;               // bitmap (or null if not on flash or corrupt)
-        public long used;               // cycle it was used on
+        public boolean used;            // it was used this cycle, don't recycle
     }
 
     /**

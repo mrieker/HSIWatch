@@ -27,9 +27,7 @@
             android:layout_height="match_parent"
             android:padding="@dimen/inner_frame_layout_padding"
             app:boxedEdges="all"
-            tools:ignore="MissingPrefix">
+            tools:ignore="MissingPrefix" />
 
-        </ScrollView>
     </LinearLayout>
-
 </androidx.wear.widget.BoxInsetLayout>

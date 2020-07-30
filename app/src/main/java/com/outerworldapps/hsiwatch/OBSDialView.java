@@ -65,6 +65,7 @@ public abstract class OBSDialView extends DialFlickView {
     private Paint obsBackPaint;
     private Paint obsIntPaint;
     private Paint outerRingPaint;
+    private Path circleClipPath;
     private Path obsArrowPath;
 
     public OBSDialView (Context ctx, AttributeSet attrs)
@@ -162,6 +163,9 @@ public abstract class OBSDialView extends DialFlickView {
         obsArrowPath.moveTo (-71, -518);
         obsArrowPath.lineTo (  0, -624);
         obsArrowPath.lineTo ( 71, -518);
+
+        circleClipPath = new Path ();
+        circleClipPath.addCircle (0, 0, 1000, Path.Direction.CCW);
 
         firstTime = true;
     }
@@ -317,6 +321,7 @@ public abstract class OBSDialView extends DialFlickView {
             // draw innards assuming true north is up
             canvas.save ();
             try {
+                canvas.clipPath (circleClipPath);
                 if (simplify) {
                     canvas.scale (SIMPLESCALE, SIMPLESCALE);
                     scale *= SIMPLESCALE;

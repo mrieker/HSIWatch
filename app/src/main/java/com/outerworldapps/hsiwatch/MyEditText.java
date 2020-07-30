@@ -32,7 +32,7 @@ import android.widget.TextView;
  * EditText with ENTER,BACKSPACE key callbacks.
  */
 @SuppressLint("AppCompatCustomView")
-class MyEditText extends EditText implements TextView.OnEditorActionListener {
+public class MyEditText extends EditText implements TextView.OnEditorActionListener {
 
     public interface Listener {
         boolean onEnterKey (TextView v);  // true: stay in keypad; false: return to page with text box

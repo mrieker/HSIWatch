@@ -204,9 +204,10 @@ public abstract class Waypt {
 
     public static class AptWaypt extends Waypt {
         private final static String[] aptcols = new String[] {
-                "apt_icaoid", "apt_lat", "apt_lon", "apt_name", "apt_desc1", "apt_elev", "apt_faaid" };
+                "apt_icaoid", "apt_lat", "apt_lon", "apt_name", "apt_desc1", "apt_elev", "apt_faaid", "apt_desc2" };
 
         public String faaid;
+        public String desc2;
 
         public static AptWaypt find (SQLiteDatabase sqldb, String ident, boolean icao)
         {
@@ -221,6 +222,7 @@ public abstract class Waypt {
                     waypt.name    = cursor.getString (3) + "\n" + cursor.getString (4);
                     waypt.elev    = cursor.getDouble (5);
                     waypt.faaid   = cursor.getString (6);
+                    waypt.desc2   = cursor.getString (7);
                     waypt.magvar  = Double.NaN;
                     waypt.validModes = valgen;
                     return waypt;

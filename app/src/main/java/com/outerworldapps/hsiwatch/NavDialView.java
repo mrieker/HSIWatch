@@ -390,6 +390,9 @@ public class NavDialView extends OBSDialView {
             case LOC:
             case LOCBC: {
 
+                // draw inner ring
+                canvas.drawCircle (0, 0, 412.0F / 5, innerRingPaint);
+
                 // draw dots
                 for (int ir = 1; ++ ir <= 5;) {
                     float r = ir * 412.0F / 5;

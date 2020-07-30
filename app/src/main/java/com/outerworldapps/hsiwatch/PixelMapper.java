@@ -20,6 +20,8 @@
 
 package com.outerworldapps.hsiwatch;
 
+import android.graphics.Path;
+
 public abstract class PixelMapper {
     public int canvasWidth;
     public int canvasHeight;
@@ -39,6 +41,9 @@ public abstract class PixelMapper {
     public double lastBlLon;
     public double lastBrLat;
     public double lastBrLon;
+
+    public Path copyrtPath;
+    public float copyrtSize;
 
     public abstract void LatLon2CanPixAprox (double lat, double lon, PointD pix);
 }
