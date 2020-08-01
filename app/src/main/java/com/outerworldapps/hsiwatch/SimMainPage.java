@@ -328,8 +328,8 @@ public class SimMainPage implements GpsReceiver, Runnable {
              */
             GpsLocation loc = new GpsLocation ();
             loc.altitude = altft / Lib.FtPerM;
-            loc.latitude = newlat;
-            loc.longitude = newlon;
+            loc.lat = newlat;
+            loc.lon = newlon;
             loc.speed = spdkts / Lib.KtPerMPS;
             loc.time = newnow;
             loc.truecourse = hdgtru;

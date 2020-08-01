@@ -42,6 +42,7 @@ public class MenuMainPage {
     public  CheckBox fillChinCkBox;
     public  CheckBox hsiModeCkBox;
     public  CheckBox simplifyCkBox;
+    public  CheckBox timeDotsCkBox;
     private CommMainPage commMainPage;
     private int numResetClicks;
     private long lastExitClick;
@@ -123,6 +124,18 @@ public class MenuMainPage {
             {
                 SharedPreferences.Editor editr = prefs.edit ();
                 editr.putBoolean ("simplify", simplifyCkBox.isChecked ());
+                editr.apply ();
+            }
+        });
+
+        timeDotsCkBox = menuPageView.findViewById (R.id.timeDotsCkBox);
+        timeDotsCkBox.setChecked (prefs.getBoolean ("timeDots", false));
+        timeDotsCkBox.setOnClickListener (new View.OnClickListener () {
+            @Override
+            public void onClick (View v)
+            {
+                SharedPreferences.Editor editr = prefs.edit ();
+                editr.putBoolean ("timeDots", timeDotsCkBox.isChecked ());
                 editr.apply ();
             }
         });

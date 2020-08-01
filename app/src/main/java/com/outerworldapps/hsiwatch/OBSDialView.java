@@ -44,10 +44,13 @@ public abstract class OBSDialView extends DialFlickView {
 
     private boolean firstTime;
     private boolean lastAmbient;
+    private boolean lastFillChin;
     private boolean lastRedRing;
     private double touchDownOBS;
     private double touchDownX;
     private double touchDownY;
+    private float chin_x;
+    private float chin_y;
     private MainActivity mainActivity;
     private Paint adfNeedlePaint;
     private Paint dialBackPaint;
@@ -64,6 +67,7 @@ public abstract class OBSDialView extends DialFlickView {
     private Paint obsArrowPaint;
     private Paint obsBackPaint;
     private Paint obsIntPaint;
+    private Paint timeDotPaint;
     private Paint outerRingPaint;
     private Path circleClipPath;
     private Path obsArrowPath;
@@ -155,9 +159,12 @@ public abstract class OBSDialView extends DialFlickView {
         obsIntPaint.setTextSize (140);
 
         outerRingPaint = new Paint ();
-        outerRingPaint.setColor (Color.GRAY);
+        outerRingPaint.setColor (Color.DKGRAY);
         outerRingPaint.setStrokeWidth (50);
         outerRingPaint.setStyle (Paint.Style.STROKE);
+
+        timeDotPaint = new Paint ();
+        timeDotPaint.setStyle (Paint.Style.FILL_AND_STROKE);
 
         obsArrowPath = new Path ();
         obsArrowPath.moveTo (-71, -518);
@@ -165,7 +172,7 @@ public abstract class OBSDialView extends DialFlickView {
         obsArrowPath.lineTo ( 71, -518);
 
         circleClipPath = new Path ();
-        circleClipPath.addCircle (0, 0, 1000, Path.Direction.CCW);
+        circleClipPath.addCircle (0, 0, 1000 - 50, Path.Direction.CCW);
 
         firstTime = true;
     }
@@ -264,7 +271,6 @@ public abstract class OBSDialView extends DialFlickView {
         boolean ambient = (mainActivity != null) && mainActivity.ambient;
         boolean redRing = (mainActivity != null) && mainActivity.redRingOn;
         if (lastAmbient ^ ambient | lastRedRing ^ redRing | firstTime) {
-            firstTime   = false;
             lastAmbient = ambient;
             lastRedRing = redRing;
             if (ambient) {
@@ -278,7 +284,7 @@ public abstract class OBSDialView extends DialFlickView {
                 modePaint.setColor (Color.GRAY);
                 obsArrowPaint.setColor (Color.LTGRAY);
                 obsIntPaint.setColor (Color.LTGRAY);
-                outerRingPaint.setColor (redRing ? Color.LTGRAY : Color.GRAY);
+                outerRingPaint.setColor (redRing ? Color.GRAY : Color.DKGRAY);
             } else {
                 adfNeedlePaint.setColor (Color.GREEN);
                 dialBackPaint.setColor (Color.DKGRAY);
@@ -290,9 +296,27 @@ public abstract class OBSDialView extends DialFlickView {
                 modePaint.setColor (Color.YELLOW);
                 obsArrowPaint.setColor (Color.YELLOW);
                 obsIntPaint.setColor (Color.YELLOW);
-                outerRingPaint.setColor (redRing ? Color.RED : Color.GRAY);
+                outerRingPaint.setColor (redRing ? Color.RED : Color.DKGRAY);
             }
         }
+
+        // if we are filling a chin, get the height of the chin
+        boolean fillChin = (mainActivity != null) && mainActivity.menuMainPage.fillChinCkBox.isChecked ();
+        if ((fillChin ^ lastFillChin) | firstTime) {
+            lastFillChin = fillChin;
+            chin_x = 0.0F;
+            chin_y = 1000.0F;
+            if (fillChin) {
+                int displayWidth  = mainActivity.widthPixels;
+                int displayHeight = mainActivity.heightPixels;
+                float scaledWidth = 1000 * 2 + outerRingPaint.getStrokeWidth ();
+                float scaledHeight = displayHeight * scaledWidth / displayWidth;
+                chin_y = scaledHeight - 1000.0F - outerRingPaint.getStrokeWidth ();
+                chin_x = (float) Math.sqrt (1000.0 * 1000.0 - chin_y * chin_y);
+            }
+        }
+
+        firstTime = false;
 
         canvas.save ();
         try {
@@ -306,6 +330,55 @@ public abstract class OBSDialView extends DialFlickView {
             float scale = Math.min (width, height) / (1000 * 2 + outerRingPaint.getStrokeWidth ());
             canvas.translate (width / 2, height / 2);
             canvas.scale (scale, scale);
+
+            // draw outer ring - maybe it is flashing red
+            canvas.drawCircle (0, 0, 1000, outerRingPaint);
+
+            // maybe draw time dots on outer ring
+            if ((mainActivity != null) && mainActivity.menuMainPage.timeDotsCkBox.isChecked ()) {
+
+                // if fill chin mode, see where outer ring is chopped off
+                // it's at approximately 5o'clock to 7o'clock
+                if (mainActivity.menuMainPage.fillChinCkBox.isChecked ()) {
+
+                    // draw flattened outer ring
+                    // chin_x,_y = flattened endpoints of center of outer ring line
+                    canvas.drawLine (chin_x, chin_y, - chin_x, chin_y, outerRingPaint);
+                }
+
+                // draw minute dots
+                // solid grayscale if normal, open grayscale if ambient
+                timeDotPaint.setStyle (lastAmbient ? Paint.Style.STROKE : Paint.Style.FILL_AND_STROKE);
+                for (int i = 0; i < 60; i ++) {
+                    if (i == 0) {
+                        drawTimeDot (canvas, 25, 0.0, Color.WHITE);
+                        continue;
+                    }
+                    if (i % 15 == 0) {
+                        drawTimeDot (canvas, 25, i / 60.0, Color.LTGRAY);
+                        continue;
+                    }
+                    if (i % 5 == 0) {
+                        drawTimeDot (canvas, 25, i / 60.0, Color.GRAY);
+                        continue;
+                    }
+                    drawTimeDot (canvas, 15, i / 60.0, Color.BLACK);
+                }
+
+                // draw current time dots
+                // colored if normal, grayscale if ambient
+                timeDotPaint.setStyle (Paint.Style.FILL_AND_STROKE);
+                long time = mainActivity.curLoc.time;
+                double gps12hr = (time % 43200000L) / 43200000.0;
+                double gpshour = (time %  3600000L) /  3600000.0;
+                double gpsmin  = (time %    60000L) /    60000.0;
+                drawTimeDot (canvas, 25, gps12hr, lastAmbient ? Color.WHITE  : Color.RED);
+                drawTimeDot (canvas, 25, gpshour, lastAmbient ? Color.LTGRAY : Color.GREEN);
+                drawTimeDot (canvas, 25, gpsmin,  lastAmbient ? Color.GRAY   : Color.CYAN);
+
+                // don't overdraw the line and dots just above the chin
+                canvas.clipRect (-1000.0F, -1000.0F, 1000.0F, chin_y - outerRingPaint.getStrokeWidth () / 2.0F);
+            }
 
             // see how much to rotate from true north
             // hsi: airplane at top; else: yellow triangle at top
@@ -330,9 +403,6 @@ public abstract class OBSDialView extends DialFlickView {
             } finally {
                 canvas.restore ();
             }
-
-            // draw outer ring - maybe it is flashing red
-            canvas.drawCircle (0, 0, 1000, outerRingPaint);
 
             // draw backing for tickmarks
             if (!simplify) canvas.drawCircle (0, 0, 718, dialBackPaint);
@@ -393,5 +463,22 @@ public abstract class OBSDialView extends DialFlickView {
 
         // maybe draw swipe menu
         super.onDraw (canvas);
+    }
+
+    // draw time dot on top of the outer ring
+    //  input:
+    //   canvas = what to draw dot on
+    //   where  = 0: top; 0.5: bottom; 0.25: right side; 0.75: left side
+    //   color  = color for the dot
+    private void drawTimeDot (Canvas canvas, float radius, double where, int color)
+    {
+        timeDotPaint.setColor (color);
+        float cx =  1000.0F * (float) Math.sin (where * 2.0 * Math.PI);
+        float cy = -1000.0F * (float) Math.cos (where * 2.0 * Math.PI);
+        if (cy > chin_y) {
+            cx *= chin_y / cy;
+            cy  = chin_y;
+        }
+        canvas.drawCircle (cx, cy, radius, timeDotPaint);
     }
 }

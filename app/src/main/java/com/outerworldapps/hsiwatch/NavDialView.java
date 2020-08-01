@@ -471,7 +471,7 @@ public class NavDialView extends OBSDialView {
             fmWayptStr = new String (strbuf, 2, 5);
         }
 
-        double dmenm = Lib.LatLonDist (curLoc.latitude, curLoc.longitude, navWaypt.dme_lat, navWaypt.dme_lon);
+        double dmenm = Lib.LatLonDist (curLoc.lat, curLoc.lon, navWaypt.dme_lat, navWaypt.dme_lon);
         boolean slant = !Double.isNaN (navWaypt.elev);
         if (slant) dmenm = Math.hypot (dmenm, curLoc.altitude / Lib.MPerNM - navWaypt.elev / Lib.FtPerNM);
         int d10 = (int) Math.round (dmenm * 10.0);

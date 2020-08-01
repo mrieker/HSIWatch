@@ -94,7 +94,8 @@ public class WayptEditText extends MyEditText implements MyEditText.Listener, Vi
             }
 
             // find waypoint in database
-            Waypt waypt = Waypt.find (sqldb, idstr);
+            MainActivity ma = (MainActivity) getContext ();
+            Waypt waypt = Waypt.find (sqldb, idstr, ma.curLoc);
             if (waypt == null) {
                 wcl.showToast ("unknown " + idstr);
                 return true;  // remain in text box

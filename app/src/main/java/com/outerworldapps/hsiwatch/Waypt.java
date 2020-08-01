@@ -45,12 +45,12 @@ public abstract class Waypt {
 
     protected double magvar;  // at waypoint (NaN until computed)
 
-    public static Waypt find (SQLiteDatabase sqldb, String ident)
+    public static Waypt find (SQLiteDatabase sqldb, String ident, LatLon refll)
     {
         Waypt waypt = AptWaypt.find (sqldb, ident, true);
         if (waypt == null) waypt = FixWaypt.find (sqldb, ident);
         if (waypt == null) waypt = LocWaypt.find (sqldb, ident);
-        if (waypt == null) waypt = NavWaypt.find (sqldb, ident);
+        if (waypt == null) waypt = NavWaypt.find (sqldb, ident, refll);
         if (waypt == null) waypt = RwyWaypt.find (sqldb, ident);
         if (waypt == null) waypt = AptWaypt.find (sqldb, ident, false);
         return waypt;
@@ -71,13 +71,13 @@ public abstract class Waypt {
         GpsLocation curLoc = mainActivity.curLoc;
 
         // course line starts at current airplane location
-        mainActivity.setStartLatLon (curLoc.latitude, curLoc.longitude);
+        mainActivity.setStartLatLon (curLoc.lat, curLoc.lon);
 
         // set crosstrack mode to give crosstrack difference with great circle course
         mainActivity.setNavMode (NavDialView.Mode.GCT);
 
         // set obs to great circle initial heading
-        double tc = Lib.LatLonTC (curLoc.latitude, curLoc.longitude, lat, lon);
+        double tc = Lib.LatLonTC (curLoc.lat, curLoc.lon, lat, lon);
         mainActivity.obsMagVar  = curLoc.magvar;
         mainActivity.obsSetting = tc + curLoc.magvar;
     }
@@ -92,13 +92,13 @@ public abstract class Waypt {
             // GCT and ADF use the great circle course from curLoc to the waypt
             case GCT:
             case ADF: {
-                double tc = Lib.LatLonTC (curLoc.latitude, curLoc.longitude, lat, lon);
+                double tc = Lib.LatLonTC (curLoc.lat, curLoc.lon, lat, lon);
                 return tc + curLoc.magvar;
             }
 
             // VOR uses the radial that a VOR receiver would show being at curLoc
             case VOR: {
-                return Lib.LatLonTC (lat, lon, curLoc.latitude, curLoc.longitude) +
+                return Lib.LatLonTC (lat, lon, curLoc.lat, curLoc.lon) +
                         getMagVar (curLoc.altitude) + 180.0;
             }
         }
@@ -118,10 +118,10 @@ public abstract class Waypt {
             // for cross-track mode, adjust needle to show crosstrack distance in degrees
             // also update obs for current on-course heading
             case GCT: {
-                double och = Lib.GCOnCourseHdg (mainActivity.startlat, mainActivity.startlon, lat, lon, curLoc.latitude, curLoc.longitude);
+                double och = Lib.GCOnCourseHdg (mainActivity.startlat, mainActivity.startlon, lat, lon, curLoc.lat, curLoc.lon);
                 mainActivity.obsMagVar  = curLoc.magvar;
                 mainActivity.obsSetting = och + curLoc.magvar;
-                double cth = Lib.LatLonTC (curLoc.latitude, curLoc.longitude, lat, lon);
+                double cth = Lib.LatLonTC (curLoc.lat, curLoc.lon, lat, lon);
                 ndv.setDeflect (och - cth + 180.0);
                 break;
             }
@@ -137,7 +137,7 @@ public abstract class Waypt {
 
             // for ADF mode, point needle to direction to fly to head toward waypoint
             case ADF: {
-                double tctowp = Lib.LatLonTC (curLoc.latitude, curLoc.longitude, lat, lon);
+                double tctowp = Lib.LatLonTC (curLoc.lat, curLoc.lon, lat, lon);
                 double mctowp = tctowp + curLoc.magvar;
                 ndv.setDeflect (mctowp - mainActivity.obsSetting);
                 break;
@@ -168,7 +168,7 @@ public abstract class Waypt {
     // - everything else uses modelled variation at waypoint site
     public double computeVorRadial (GpsLocation curLoc)
     {
-        double radial = Lib.LatLonTC (lat, lon, curLoc.latitude, curLoc.longitude);
+        double radial = Lib.LatLonTC (lat, lon, curLoc.lat, curLoc.lon);
         return radial + getMagVar (curLoc.altitude);
     }
 
@@ -299,19 +299,15 @@ public abstract class Waypt {
                     waypt.lat     = cursor.getDouble (0);
                     waypt.lon     = cursor.getDouble (1);
                     waypt.gs_elev = cursor.isNull (2) ? Double.NaN : cursor.getDouble (2);
-                    waypt.gs_tilt = cursor.isNull (3) ? 0.0 : cursor.getDouble (3);
+                    waypt.gs_tilt = cursor.isNull (3) ? Double.NaN : cursor.getDouble (3);
                     waypt.gs_lat  = cursor.getDouble (4);
                     waypt.gs_lon  = cursor.getDouble (5);
                     waypt.thdg    = cursor.getDouble (6);
                     waypt.elev    = cursor.isNull (7) ? cursor.getDouble (11) : cursor.getDouble (7);
                     waypt.name    = cursor.getString (12) + " RW " + cursor.getString (13) + '\n' + cursor.getString (8);
                     waypt.apticao = cursor.getString (14);
-                    waypt.dme_lat = cursor.isNull  (9) ? 0.0 : cursor.getDouble  (9);
-                    waypt.dme_lon = cursor.isNull (10) ? 0.0 : cursor.getDouble (10);
-                    if ((waypt.dme_lat == 0.0) && (waypt.dme_lon == 0)) {
-                        waypt.dme_lat = waypt.lat;
-                        waypt.dme_lon = waypt.lon;
-                    }
+                    waypt.dme_lat = cursor.isNull  (9) ? waypt.lat : cursor.getDouble  (9);
+                    waypt.dme_lon = cursor.isNull (10) ? waypt.lon : cursor.getDouble (10);
                     waypt.magvar  = Double.NaN;
                     waypt.validModes = Double.isNaN (waypt.gs_elev) ? valngs : valwgs;
                     return waypt;
@@ -343,7 +339,7 @@ public abstract class Waypt {
         {
             GpsLocation curLoc = mainActivity.curLoc;
 
-            double distnm = Lib.LatLonDist (lat, lon, curLoc.latitude, curLoc.longitude);
+            double distnm = Lib.LatLonDist (lat, lon, curLoc.lat, curLoc.lon);
             mainActivity.setStartLatLon (
                     Lib.LatHdgDist2Lat (lat, thdg + 180.0, distnm),
                     Lib.LatLonHdgDist2Lon (lat, lon, thdg + 180.0, distnm)
@@ -379,7 +375,7 @@ public abstract class Waypt {
         @Override  // Waypt
         public double computeLocDeflect (GpsLocation curLoc, int bc)
         {
-            double tcfromloc = Lib.LatLonTC (lat, lon, curLoc.latitude, curLoc.longitude);
+            double tcfromloc = Lib.LatLonTC (lat, lon, curLoc.lat, curLoc.lon);
             double diff = (tcfromloc + 180.0 - thdg) * bc;
             while (diff < -180.0) diff += 360.0;
             while (diff >= 180.0) diff -= 360.0;
@@ -392,9 +388,9 @@ public abstract class Waypt {
         @Override  // Waypt
         public double computeGSDeflect (GpsLocation curLoc)
         {
-            double tctogsant = Lib.LatLonTC (curLoc.latitude, curLoc.longitude, gs_lat, gs_lon);
+            double tctogsant = Lib.LatLonTC (curLoc.lat, curLoc.lon, gs_lat, gs_lon);
             double factor = Math.cos (Math.toRadians (tctogsant - thdg));
-            double horizfromant_nm = Lib.LatLonDist (curLoc.latitude, curLoc.longitude, gs_lat, gs_lon) * factor;
+            double horizfromant_nm = Lib.LatLonDist (curLoc.lat, curLoc.lon, gs_lat, gs_lon) * factor;
             double aboveantenna_ft = curLoc.altitude * Lib.FtPerM - gs_elev;
             double degaboveantenna = Math.toDegrees (Math.atan2 (aboveantenna_ft, horizfromant_nm * Lib.FtPerNM));
             return gs_tilt - degaboveantenna;
@@ -409,47 +405,56 @@ public abstract class Waypt {
         private final static String[] navcols = new String[] { "nav_lat", "nav_lon", "nav_name",
                 "nav_magvar", "nav_type", "nav_elev" };
 
-        public static NavWaypt find (SQLiteDatabase sqldb, String ident)
+        public static NavWaypt find (SQLiteDatabase sqldb, String ident, LatLon refll)
         {
             try (Cursor cursor = sqldb.query ("navaids", navcols,
                     "nav_faaid=?", new String[] { ident }, null, null, null, null)) {
                 if (cursor.moveToFirst ()) {
-                    NavWaypt waypt = new NavWaypt ();
-                    waypt.ident   = ident;
-                    waypt.dme_lat = waypt.lat = cursor.getDouble (0);
-                    waypt.dme_lon = waypt.lon = cursor.getDouble (1);
-                    waypt.name    = cursor.getString (2);
-                    waypt.magvar  = cursor.getInt (3);
-                    waypt.type    = cursor.getString (4);
-                    waypt.elev    = cursor.getDouble (5);
-                    waypt.validModes = valgen;
-                    return waypt;
+                    double bestnm = 999999;
+                    NavWaypt bestwp = new NavWaypt ();
+                    do {
+                        double lat = cursor.getDouble (0);
+                        double lon = cursor.getDouble (1);
+                        double distnm = Lib.LatLonDist (lat, lon, refll.lat, refll.lon);
+                        if (bestnm > distnm) {
+                            bestnm = distnm;
+                            bestwp.ident   = ident;
+                            bestwp.dme_lat = bestwp.lat = lat;
+                            bestwp.dme_lon = bestwp.lon = lon;
+                            bestwp.name    = cursor.getString (4) + " " + cursor.getString (2);
+                            bestwp.magvar  = cursor.getInt (3);
+                            bestwp.isndb   = cursor.getString (4).contains ("NDB");
+                            bestwp.elev    = cursor.getDouble (5);
+                            bestwp.validModes = valgen;
+                        }
+                    } while (cursor.moveToNext ());
+                    return bestwp;
                 }
             }
             return null;
         }
 
-        public String type;
+        private boolean isndb;
 
         // get mode associated with the waypoint type
         // should match what autoTune() does
         @Override  // Waypt
         public NavDialView.Mode getInitialMode ()
         {
-            return type.contains ("NDB") ? NavDialView.Mode.ADF : NavDialView.Mode.VOR;
+            return isndb ? NavDialView.Mode.ADF : NavDialView.Mode.VOR;
         }
 
         @Override  // Waypt
         public void autoTune (MainActivity mainActivity)
         {
             GpsLocation curLoc = mainActivity.curLoc;
-            mainActivity.setStartLatLon (curLoc.latitude, curLoc.longitude);
-            if (type.contains ("NDB")) {
+            mainActivity.setStartLatLon (curLoc.lat, curLoc.lon);
+            if (isndb) {
                 mainActivity.setNavMode (NavDialView.Mode.ADF);
                 mainActivity.obsMagVar  = curLoc.magvar;
                 mainActivity.obsSetting = curLoc.truecourse + curLoc.magvar;
             } else {
-                double tc = Lib.LatLonTC (lat, lon, curLoc.latitude, curLoc.longitude);
+                double tc = Lib.LatLonTC (lat, lon, curLoc.lat, curLoc.lon);
                 double mc = tc + magvar + 180.0;
                 mainActivity.setNavMode (NavDialView.Mode.VOR);
                 mainActivity.obsMagVar  = magvar;

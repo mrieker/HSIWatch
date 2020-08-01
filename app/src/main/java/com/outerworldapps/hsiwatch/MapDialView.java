@@ -52,9 +52,7 @@ public class MapDialView extends OBSDialView {
 
     private final static MapWpt[] nullMapWptArray = new MapWpt[0];
 
-    private static class MapWpt implements Comparable<MapWpt> {
-        public double lat;
-        public double lon;
+    private static class MapWpt extends LatLon implements Comparable<MapWpt> {
         public double dist;
         public double mhdg;
         public String id;
@@ -227,9 +225,9 @@ public class MapDialView extends OBSDialView {
 
                 // select the given waypoint as current
                 MapWpt mapwpt = (MapWpt) v.getTag ();
-                Waypt waypt = Waypt.find (mainActivity.downloadThread.getSqlDB (), mapwpt.id);
+                Waypt waypt = Waypt.find (mainActivity.downloadThread.getSqlDB (), mapwpt.id, mapwpt);
 
-                // fill in long name (eg, BEVERLY RGNL) into radio button
+                // fill long name (eg, BEVERLY RGNL) into radio button
                 if ((waypt != null) && (mapwpt.name == null)) {
                     mapwpt.name = waypt.name;
                     ((RadioButton) v).setText (mapwpt.rbString ());
@@ -244,8 +242,8 @@ public class MapDialView extends OBSDialView {
         if (waypoints != null) {
 
             // get list of nearby airports sorted by distance
-            double curlat = mainActivity.curLoc.latitude;
-            double curlon = mainActivity.curLoc.longitude;
+            double curlat = mainActivity.curLoc.lat;
+            double curlon = mainActivity.curLoc.lon;
             MapWpt[] bydist = new MapWpt[waypoints.length];
             int j = 0;
             for (int i = 0; i < bydist.length; i ++) {
@@ -321,8 +319,8 @@ public class MapDialView extends OBSDialView {
     // start reading from database if not
     private void updateWaypoints ()
     {
-        double lat = mainActivity.curLoc.latitude;
-        double lon = mainActivity.curLoc.longitude;
+        double lat = mainActivity.curLoc.lat;
+        double lon = mainActivity.curLoc.lon;
         double radiusLat = radiusNM / Lib.NMPerDeg;
         double radiusLon = radiusLat * Math.cos (Math.toRadians (lat));
         double northLat  = lat + radiusLat;
@@ -550,8 +548,8 @@ public class MapDialView extends OBSDialView {
     // return whether the point is within radius or not
     private boolean calcPixel (double lat, double lon)
     {
-        double centerLat = mainActivity.curLoc.latitude;
-        double centerLon = mainActivity.curLoc.longitude;
+        double centerLat = mainActivity.curLoc.lat;
+        double centerLon = mainActivity.curLoc.lon;
         double nm = Lib.LatLonDist (centerLat, centerLon, lat, lon);
         double tc = Lib.LatLonTC_rad (centerLat, centerLon, lat, lon) - trueuprad;
         double pix = nm / radiusNM * INNARDSRADIUS;

@@ -35,6 +35,7 @@
                 android:layout_height="wrap_content"
                 android:textAlignment="center"
                 android:textColor="#FFFFFFFF" />
+
         </ScrollView>
     </LinearLayout>
 </com.outerworldapps.hsiwatch.BoxInsetLayoutKGO>

@@ -123,8 +123,8 @@ public class InternalGps implements GpsReceiver, LocationListener {
     {
         GpsLocation gpsloc = new GpsLocation ();
         gpsloc.altitude   = location.getAltitude ();
-        gpsloc.latitude   = location.getLatitude ();
-        gpsloc.longitude  = location.getLongitude ();
+        gpsloc.lat        = location.getLatitude ();
+        gpsloc.lon        = location.getLongitude ();
         gpsloc.speed      = location.getSpeed ();
         gpsloc.time       = location.getTime ();
         gpsloc.truecourse = location.getBearing ();

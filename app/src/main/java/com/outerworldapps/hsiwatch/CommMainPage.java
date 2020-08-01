@@ -282,8 +282,8 @@ public class CommMainPage implements GpsTransmitter {
         String strhms = sdfhms.format (loc.time);   // hhmmss.sss
         String strdmy = sdfdmy.format (loc.time);   // ddmmyy
 
-        double lat = loc.latitude;
-        double lon = loc.longitude;
+        double lat = loc.lat;
+        double lon = loc.lon;
         double alt = loc.altitude;
 
         byte[] buf = new byte[200];

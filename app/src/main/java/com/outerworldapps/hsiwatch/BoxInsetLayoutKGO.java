@@ -23,10 +23,8 @@ package com.outerworldapps.hsiwatch;
 import android.content.Context;
 import android.util.AttributeSet;
 
-import androidx.wear.widget.BoxInsetLayout;
-
 // wraps BoxInsetLayout to indicate the GPS should be forced on while page visible
-public class BoxInsetLayoutKGO extends BoxInsetLayout implements KeepGpsOn {
+public class BoxInsetLayoutKGO extends BoxInsetLayoutAmb implements KeepGpsOn {
     public BoxInsetLayoutKGO (Context ctx)
     {
         super (ctx);

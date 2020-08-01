@@ -23,10 +23,8 @@ package com.outerworldapps.hsiwatch;
 /**
  * Our own GPS location that holds magnetic variation.
  */
-public class GpsLocation {
+public class GpsLocation extends LatLon {
     public double altitude;     // metres MSL
-    public double latitude;     // degrees
-    public double longitude;    // degrees
     public double magvar;       // degrees (magcourse = truecourse + magvar)
                                 // - gets filled in by MainActivity.gpsLocationReceived()
     public double speed;        // metres per second

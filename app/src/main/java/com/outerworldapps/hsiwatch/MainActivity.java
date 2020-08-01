@@ -274,6 +274,9 @@ public class MainActivity extends WearableActivity {
         ambient = true;
         if ((menuMainPage != null) && (menuMainPage.ambEnabCkBox != null) &&
                 menuMainPage.ambEnabCkBox.isChecked ()) {
+            if (currentMainPage instanceof BoxInsetLayoutAmb) {
+                ((BoxInsetLayoutAmb) currentMainPage).setAmbient (true);
+            }
             airplanePaint.setColor (Color.GRAY);
             gpsReceiver.enterAmbient ();
             navDialView.setAmbient ();
@@ -292,6 +295,9 @@ public class MainActivity extends WearableActivity {
         ambient = false;
         if ((menuMainPage != null) && (menuMainPage.ambEnabCkBox != null) &&
                 menuMainPage.ambEnabCkBox.isChecked ()) {
+            if (currentMainPage instanceof BoxInsetLayoutAmb) {
+                ((BoxInsetLayoutAmb) currentMainPage).setAmbient (false);
+            }
             airplanePaint.setColor (Color.RED);
             navDialView.setAmbient ();
             mapDialView.setAmbient ();
@@ -385,7 +391,12 @@ public class MainActivity extends WearableActivity {
             navModeButton.identEntry.setText (navWayptId);
             SQLiteDatabase sqldb = downloadThread.getSqlDB ();
             if (sqldb != null) {
-                setNavWaypt (Waypt.find (sqldb, navWayptId));
+                LatLon refll = new LatLon ();
+                //noinspection ConstantConditions
+                refll.lat = Double.parseDouble (prefs.getString ("navWayptLat", "0.0"));
+                //noinspection ConstantConditions
+                refll.lon = Double.parseDouble (prefs.getString ("navWayptLon", "0.0"));
+                setNavWaypt (Waypt.find (sqldb, navWayptId, refll));
             }
         }
         //noinspection ConstantConditions
@@ -412,7 +423,9 @@ public class MainActivity extends WearableActivity {
     {
         SharedPreferences prefs = getPreferences (MODE_PRIVATE);
         SharedPreferences.Editor editr = prefs.edit ();
-        editr.putString ("navWayptId", (waypt == null) ? "" : waypt.ident);
+        editr.putString ("navWayptId",  (waypt == null) ? ""    : waypt.ident);
+        editr.putString ("navWayptLat", (waypt == null) ? "0.0" : Double.toString (waypt.lat));
+        editr.putString ("navWayptLon", (waypt == null) ? "0.0" : Double.toString (waypt.lon));
         editr.apply ();
 
         navWaypt = waypt;
@@ -448,7 +461,7 @@ public class MainActivity extends WearableActivity {
                 case GCT: {
                     double newobstru = obsSetting - obsMagVar;
                     if (! Double.isNaN (Lib.GCXTKCourse (
-                            curLoc.latitude, curLoc.longitude,
+                            curLoc.lat, curLoc.lon,
                             navWaypt.lat, navWaypt.lon,
                             startlat, startlon, newobstru, newll))) {
                         setStartLatLon (newll.lat, newll.lon);
@@ -509,7 +522,7 @@ public class MainActivity extends WearableActivity {
     public void gpsLocationReceived (GpsLocation location)
     {
         GeomagneticField gmf = new GeomagneticField (
-                (float) location.latitude, (float) location.longitude,
+                (float) location.lat, (float) location.lon,
                 (float) location.altitude, location.time);
         location.magvar = - gmf.getDeclination();
 

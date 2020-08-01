@@ -148,43 +148,64 @@ public class RwyDiagView extends OBSDialView implements Invalidatable {
             infoBackButton.setOnClickListener (mainActivity.backButtonListener);
         }
 
-        TextView aptInfoText = aptInfoPage.findViewById (R.id.infoText);
+        // fill in waypoint information text
+        buildInfoText ();
+
+        // display the info page
+        return aptInfoPage;
+    }
+
+    // fill in the info text box with the current waypoint info
+    private void buildInfoText ()
+    {
+        int tagcolor = mainActivity.ambient ? Color.LTGRAY : Color.YELLOW;
+
+        // build string with waypoint info
         SpannableStringBuilder ssb = new SpannableStringBuilder ();
         if (waypoint == null) {
             ssb.append ("no waypoint selected");
         } else {
+
+            // waypoint ident and name
+            ForegroundColorSpan fcs = new ForegroundColorSpan (tagcolor);
             ssb.append (waypoint.ident);
             ssb.append (": ");
+            ssb.setSpan (fcs, 0, ssb.length (), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             ssb.append (waypoint.name);
+
+            // airport frequencies and such
             if (airport != null) {
+
                 // add yellow color to keyword of each desc2 line
                 for (String des : airport.desc2.split ("\n")) {
                     ssb.append ('\n');
                     int i = des.indexOf (':');
                     if (i < 0) ssb.append (des);
                     else {
-                        ForegroundColorSpan fcs = new ForegroundColorSpan (Color.YELLOW);
+                        fcs = new ForegroundColorSpan (tagcolor);
                         int j = ssb.length ();
-                        ssb.append (des, 0, ++i);
+                        ssb.append (des, 0, ++ i);
                         int k = ssb.length ();
                         ssb.append (des, i, des.length ());
                         ssb.setSpan (fcs, j, k, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
                     }
                 }
-                // for small scrolling at the bottom
-                ssb.append ("\n\n\n\n\n\n\n");
             }
-        }
-        aptInfoText.setText (ssb);
 
-        // display the info page
-        return aptInfoPage;
+            // for small scrolling area at the bottom
+            ssb.append ("\n\n\n\n\n\n\n");
+        }
+
+        // put text in box on screen
+        TextView aptInfoText = aptInfoPage.findViewById (R.id.infoText);
+        aptInfoText.setText (ssb);
     }
 
     // ambient level changed
     // update paints and redraw
     public void setAmbient ()
     {
+        // fix up moving map in case it is showing
         if (mainActivity.ambient) {
             numberBGPaint.setColor (Color.DKGRAY);
             numberFGPaint.setColor (Color.LTGRAY);
@@ -193,6 +214,9 @@ public class RwyDiagView extends OBSDialView implements Invalidatable {
             numberFGPaint.setColor (Color.RED);
         }
         invalidate ();
+
+        // fix up waypoint info in case it is showing
+        if (aptInfoPage != null) buildInfoText ();
     }
 
     // magnetic variation in vicinity of what is drawn
