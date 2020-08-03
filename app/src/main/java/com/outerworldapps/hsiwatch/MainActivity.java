@@ -35,9 +35,13 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Stack;
 
@@ -53,12 +57,14 @@ public class MainActivity extends WearableActivity {
 
     public final static int airplaneHeight = 313 - 69;
 
+    private BluetoothGps bluetoothGps;
     public  boolean ambient;
     private boolean autoTunePending;
     private boolean gpsEnabled;
     public  boolean hadPreviouslyAgreed;
     public  boolean isScreenRound;
     public  boolean redRingOn;
+    public  Collection<GpsStatus> gpsStatuses;
     public  double latesttc;                // latest GPS truecourse received when above minimum speed
     public  double obsMagVar;               // magnetic variation used with obsSetting
     public  double obsSetting;              // where yellow triangle is on dials (always magnetic)
@@ -67,9 +73,11 @@ public class MainActivity extends WearableActivity {
     public  DownloadThread downloadThread;
     public  float dotsPerSqIn;
     public  GpsLocation curLoc;
-    private GpsReceiver gpsReceiver;
+    public  GpsReceiver gpsReceiver;
     public  GpsTransmitter gpsTransmitter;
     public  Handler myHandler;
+    private int gpsSourceParamCount;
+    private int gpsSourceParamIndex;
     public  int widthPixels;
     public  int heightPixels;
     public  InternalGps internalGps;
@@ -84,11 +92,15 @@ public class MainActivity extends WearableActivity {
     public  NavModeButton navModeButton;
     public  Paint airplanePaint;
     public  Path airplanePath;
+    private RadioGroup gpsSource;
+    private SimulatorGps simulatorGps;
     private Stack<View> mainPageStack;
-    private View currentMainPage;
+    public  View currentMainPage;
+    public  View gpsPageView;
     public  View mapPageView;
     private View navMainPage;
     public  Waypt navWaypt;
+    public  WiFiUDPGps wiFiUDPGps;
 
     @Override
     protected void onCreate (Bundle savedInstanceState)
@@ -179,7 +191,7 @@ public class MainActivity extends WearableActivity {
         menuMainPage = new MenuMainPage (this);
         setNavMainPageScale ();
 
-        gpsReceiver = internalGps = new InternalGps (this);
+        setupGpsReceiver ();
 
         // enables Always-on
         setAmbientEnabled ();
@@ -243,23 +255,6 @@ public class MainActivity extends WearableActivity {
             currentMainPage = view;
             setContentView (view);
             activateGPS ();
-        }
-    }
-
-    /**
-     * Switch between real and simulated.
-     */
-    public void setSimMode (boolean sim)
-    {
-        if (gpsEnabled) gpsReceiver.stopSensor ();
-        if (sim) {
-            gpsReceiver = menuMainPage.simMainPage;
-        } else {
-            gpsReceiver = internalGps;
-        }
-        if (gpsEnabled && ! gpsReceiver.startSensor ()) {
-            showToast ("failed to start new gps source");
-            gpsEnabled = false;
         }
     }
 
@@ -405,6 +400,117 @@ public class MainActivity extends WearableActivity {
         startlon = Lib.parseDouble (prefs.getString ("startlon", "NaN"));
     }
 
+    // set up GPS receiver based on what is selected by radio buttons on GPS menu
+    @SuppressLint("InflateParams")
+    private void setupGpsReceiver ()
+    {
+        gpsPageView = getLayoutInflater ().inflate (R.layout.gps_page, null);
+
+        Button gpsBack = gpsPageView.findViewById (R.id.gpsBack);
+        gpsBack.setOnClickListener (backButtonListener);
+
+        gpsSource = gpsPageView.findViewById (R.id.gpsSource);
+
+        RadioButton gpsSourceInternal = gpsPageView.findViewById (R.id.gpsSourceInternal);
+        gpsSourceInternal.setOnClickListener (new View.OnClickListener () {
+            @Override
+            public void onClick (View v)
+            {
+                setNewGpsReceiver (v, internalGps, "internal");
+            }
+        });
+
+        RadioButton gpsSourceBluetooth = gpsPageView.findViewById (R.id.gpsSourceBluetooth);
+        gpsSourceBluetooth.setOnClickListener (new View.OnClickListener () {
+            @Override
+            public void onClick (View v)
+            {
+                setNewGpsReceiver (v, bluetoothGps, "bluetooth");
+            }
+        });
+
+        RadioButton gpsSourceWiFiUDP = gpsPageView.findViewById (R.id.gpsSourceWiFiUDP);
+        gpsSourceWiFiUDP.setOnClickListener (new View.OnClickListener () {
+            @Override
+            public void onClick (View v)
+            {
+                setNewGpsReceiver (v, wiFiUDPGps, "wifiudp");
+            }
+        });
+
+        RadioButton gpsSourceSimulator = gpsPageView.findViewById (R.id.gpsSourceSimulator);
+        gpsSourceSimulator.setOnClickListener (new View.OnClickListener () {
+            @Override
+            public void onClick (View v)
+            {
+                setNewGpsReceiver (v, simulatorGps, "simulator");
+            }
+        });
+
+        SharedPreferences prefs = getPreferences (MODE_PRIVATE);
+        String gpsrcvr = prefs.getString ("gpsrcvr", "internal");
+        gpsSourceInternal.setChecked ("internal".equals (gpsrcvr));
+        gpsSourceBluetooth.setChecked ("bluetooth".equals (gpsrcvr));
+        gpsSourceWiFiUDP.setChecked ("wifiudp".equals (gpsrcvr));
+        gpsSourceSimulator.setChecked ("simulator".equals (gpsrcvr));
+
+        internalGps  = new InternalGps  (this);
+        bluetoothGps = new BluetoothGps (this);
+        wiFiUDPGps   = new WiFiUDPGps   (this);
+        simulatorGps = new SimulatorGps (this);
+
+        if (gpsSourceInternal.isChecked  ()) setNewGpsReceiver (gpsSourceInternal,  internalGps,  null);
+        if (gpsSourceBluetooth.isChecked ()) setNewGpsReceiver (gpsSourceBluetooth, bluetoothGps, null);
+        if (gpsSourceWiFiUDP.isChecked   ()) setNewGpsReceiver (gpsSourceWiFiUDP,   wiFiUDPGps,   null);
+        if (gpsSourceSimulator.isChecked ()) setNewGpsReceiver (gpsSourceSimulator, simulatorGps, null);
+    }
+
+    // a GPS source radio button was clicked
+    // turn off the old GPS receiver
+    // select and turn on the new GPS receiver
+    private void setNewGpsReceiver (View rb, GpsReceiver rcvr, String name)
+    {
+        // shut old receiver off
+        boolean loc = (gpsReceiver != null) && gpsReceiver.stopLocationSensor ();
+        boolean sts = (gpsReceiver != null) && gpsReceiver.stopStatusSensor ();
+
+        // remove old parameters from page
+        while (-- gpsSourceParamCount >= 0) {
+            gpsSource.removeViewAt (gpsSourceParamIndex);
+        }
+
+        // write new receiver to prefs so it will be chosen on next startup
+        if (name != null) {
+            SharedPreferences prefs = getPreferences (MODE_PRIVATE);
+            SharedPreferences.Editor editr = prefs.edit ();
+            editr.putString ("gpsrcvr", name);
+            editr.apply ();
+        }
+
+        // remember which receiver we are using now
+        gpsReceiver = rcvr;
+
+        // add its parameters to screen just below its radio button
+        View[] params = rcvr.getParamViews ();
+        int n = gpsSource.getChildCount ();
+        for (int i = 0; i < n; i ++) {
+            if (gpsSource.getChildAt (i) == rb) {
+                gpsSourceParamCount = params.length;
+                gpsSourceParamIndex = ++ i;
+                RadioGroup.LayoutParams lp = new RadioGroup.LayoutParams (
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                for (View pv : params) {
+                    gpsSource.addView (pv, i ++, lp);
+                }
+                break;
+            }
+        }
+
+        // start it up
+        if (loc) gpsReceiver.startLocationSensor ();
+        if (sts) gpsReceiver.startStatusSensor ();
+    }
+
     /**
      * Voice recognition result, pass to waypoint entry screen.
      */
@@ -547,10 +653,19 @@ public class MainActivity extends WearableActivity {
         }
 
         if (currentMainPage == menuMainPage.satsMainPage.satsPageView) {
-            menuMainPage.satsMainPage.gpsStatusView.gotGpsTime (curLoc.time);
+            menuMainPage.satsMainPage.gpsStatusView.invalidate ();
         }
 
         updateNavDial ();
+    }
+
+    // got an incoming GPS status
+    public void gpsStatusReceived (Collection<GpsStatus> statuses)
+    {
+        gpsStatuses = statuses;
+        if (currentMainPage == menuMainPage.satsMainPage.satsPageView) {
+            menuMainPage.satsMainPage.gpsStatusView.invalidate ();
+        }
     }
 
     /**
@@ -589,14 +704,14 @@ public class MainActivity extends WearableActivity {
     {
         if ((navModeButton.getMode () != NavDialView.Mode.OFF) || (currentMainPage instanceof KeepGpsOn)) {
             if (!gpsEnabled) {
-                if (!gpsReceiver.startSensor ()) return;
+                if (!gpsReceiver.startLocationSensor ()) return;
                 showToast ("turned GPS on");
                 gpsEnabled = true;
                 flashRedRing.run ();
             }
         } else {
             if (gpsEnabled) {
-                gpsReceiver.stopSensor ();
+                gpsReceiver.stopLocationSensor ();
                 showToast ("turned GPS off");
                 gpsEnabled = false;
             }

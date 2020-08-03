@@ -20,19 +20,13 @@
 
 package com.outerworldapps.hsiwatch;
 
-import android.view.View;
-
 /**
- * Something that receives GPS signal.
- * Passes locations to MainActivity.gpsLocationReceived()
- * Passes statuses to MainActivity.gpsStatusReceived()
+ * Our own GPS status that we can instantiate.
  */
-public interface GpsReceiver {
-    View[] getParamViews ();
-    boolean startLocationSensor ();
-    boolean startStatusSensor ();
-    boolean stopLocationSensor ();
-    boolean stopStatusSensor ();
-    void enterAmbient ();
-    void exitAmbient ();
+public class GpsStatus extends LatLon {
+    public int prn;
+    public double elev;
+    public double azim;
+    public double snr;
+    public boolean used;
 }

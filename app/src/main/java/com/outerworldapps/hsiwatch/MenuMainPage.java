@@ -49,7 +49,6 @@ public class MenuMainPage {
     private long lastResetClick;
     private MainActivity mainActivity;
     public  SatsMainPage satsMainPage;
-    public  SimMainPage simMainPage;
     private View menuPageView;
     private View menu2PageView;
 
@@ -73,6 +72,15 @@ public class MenuMainPage {
             public void onClick (View v)
             {
                 satsMainPage.show ();
+            }
+        });
+
+        final Button gpsButton = menuPageView.findViewById (R.id.gpsButton);
+        gpsButton.setOnClickListener (new View.OnClickListener () {
+            @Override
+            public void onClick (View v)
+            {
+                mainActivity.showMainPage (mainActivity.gpsPageView);
             }
         });
 
@@ -231,16 +239,6 @@ public class MenuMainPage {
                 }
             });
         }
-
-        simMainPage = new SimMainPage (mainActivity);
-        Button simButton = menu2PageView.findViewById (R.id.simButton);
-        simButton.setOnClickListener (new View.OnClickListener () {
-            @Override
-            public void onClick (View v)
-            {
-                simMainPage.show ();
-            }
-        });
 
         Button exitButton = menu2PageView.findViewById (R.id.exitButton);
         exitButton.setOnClickListener (new View.OnClickListener () {

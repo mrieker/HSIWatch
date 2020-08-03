@@ -50,14 +50,12 @@ public class SatsMainPage {
                 public void onClick (View v)
                 {
                     gpsStatusView.Shutdown ();
-                    mainActivity.internalGps.setStatusListener (null);
                     mainActivity.onBackPressed ();
                 }
             });
             gpsStatusView = satsPageView.findViewById (R.id.gpsStatusView);
         }
         gpsStatusView.Startup ();
-        mainActivity.internalGps.setStatusListener (gpsStatusView);
         mainActivity.showMainPage (satsPageView);
     }
 }

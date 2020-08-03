@@ -26,56 +26,18 @@ import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.hardware.GeomagneticField;
 import android.text.InputType;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
-import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
-public class SimMainPage implements GpsReceiver, Runnable {
-    private MainActivity mainActivity;
-    private SharedPreferences prefs;
-    public  View simPageView;
+public class SimulatorGps implements GpsReceiver, Runnable {
+    private final static long dtms = 1000;
 
-    public SimMainPage (MainActivity ma)
-    {
-        mainActivity = ma;
-        prefs = mainActivity.getPreferences (Context.MODE_PRIVATE);
-    }
-
-    @SuppressLint("InflateParams")
-    public void show ()
-    {
-        if (simPageView == null) {
-            LayoutInflater layoutInflater = mainActivity.getLayoutInflater ();
-            simPageView = layoutInflater.inflate (R.layout.sim_page, null);
-            Button simBack = simPageView.findViewById (R.id.simBack);
-            simBack.setOnClickListener (new View.OnClickListener () {
-                @Override
-                public void onClick (View v)
-                {
-                    displayOpen = false;
-                    if (started && ! ptendTimerPend) {
-                        ptendTime = System.currentTimeMillis ();
-                        PretendStep ();
-                    }
-                    mainActivity.onBackPressed ();
-                }
-            });
-            ScrollView simScroll = simPageView.findViewById (R.id.simScroll);
-            simScroll.addView (Initialize ());
-        }
-        mainActivity.showMainPage (simPageView);
-        displayOpen = true;
-    }
-
-    private boolean displayOpen;
     private boolean ptendTimerPend;
-    private boolean started;
+    private boolean locationRunning;
+    private boolean statusRunning;
+    private MainActivity mainActivity;
     private MyEditText ptendAltitude;
     private MyEditText ptendClimbRt;
     private MyEditText ptendHeading;
@@ -84,23 +46,57 @@ public class SimMainPage implements GpsReceiver, Runnable {
     private MyEditText ptendSpeed;
     private MyEditText ptendTurnRt;
     private long ptendTime;
+    private SharedPreferences prefs;
+    private View[] paramViews;
+
+    public SimulatorGps (MainActivity ma)
+    {
+        mainActivity = ma;
+        prefs = mainActivity.getPreferences (Context.MODE_PRIVATE);
+    }
+
+    @Override  // GpsReceiver
+    public View[] getParamViews ()
+    {
+        if (paramViews == null) {
+            paramViews = initialize ();
+        }
+        return paramViews;
+    }
 
     @Override
-    public boolean startSensor ()
+    public boolean startLocationSensor ()
     {
-        started = true;
-        if (! displayOpen && ! ptendTimerPend) {
-            ptendTime = System.currentTimeMillis ();
+        locationRunning = true;
+        if (! ptendTimerPend) {
+            ptendTime = System.currentTimeMillis () / dtms * dtms;
             PretendStep ();
         }
         return true;
     }
 
     @Override
-    public void stopSensor ()
+    public boolean startStatusSensor ()
     {
-        started = false;
+        statusRunning = true;
+        return true;
+    }
+
+    @Override
+    public boolean stopLocationSensor ()
+    {
+        boolean loc = locationRunning;
+        locationRunning = false;
         saveValues ();
+        return loc;
+    }
+
+    @Override
+    public boolean stopStatusSensor ()
+    {
+        boolean sts = statusRunning;
+        statusRunning = false;
+        return sts;
     }
 
     @Override
@@ -119,19 +115,8 @@ public class SimMainPage implements GpsReceiver, Runnable {
     }
 
     @SuppressLint("SetTextI18n")
-    private View Initialize ()
+    private View[] initialize ()
     {
-        final CheckBox ptendCheckbox = new CheckBox (mainActivity);
-        ptendCheckbox.setOnClickListener (new View.OnClickListener () {
-            @Override
-            public void onClick (View view)
-            {
-                boolean enab = ptendCheckbox.isChecked ();
-                mainActivity.setSimMode (enab);
-                if (! enab) saveValues ();
-            }
-        });
-
         WayptEditText wet = new WayptEditText (mainActivity);
         wet.setEms (4);
         wet.setImeOptions (EditorInfo.IME_ACTION_DONE);
@@ -165,11 +150,11 @@ public class SimMainPage implements GpsReceiver, Runnable {
         wet.setText (prefs.getString ("simWaypoint", ""));
 
         ptendLat = makeEditText (
-                InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL,
+                InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED,
                 5, "simLatitude");
 
         ptendLon = makeEditText (
-                InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL,
+                InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED,
                 5, "simLongitude");
 
         ptendSpeed = makeEditText (
@@ -177,11 +162,11 @@ public class SimMainPage implements GpsReceiver, Runnable {
                 3, "simSpeed");
 
         ptendHeading = makeEditText (
-                InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL,
+                InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED,
                 3, "simHeading");
 
         ptendAltitude = makeEditText (
-                InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL,
+                InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED,
                 4, "simAltitude");
 
         ptendTurnRt = makeEditText (
@@ -198,7 +183,6 @@ public class SimMainPage implements GpsReceiver, Runnable {
         LinearLayout linearLayout = new LinearLayout (mainActivity);
         linearLayout.setOrientation (LinearLayout.VERTICAL);
 
-        LinearLayout lena = makeLine (new View[] { ptendCheckbox, TextString ("Pretend to be at ") });
         LinearLayout lwpt = makeLine (new View[] { TextString ("wpt"),    wet });
         LinearLayout llat = makeLine (new View[] { TextString ("lat"),    ptendLat });
         LinearLayout llon = makeLine (new View[] { TextString ("lon"),    ptendLon });
@@ -208,20 +192,9 @@ public class SimMainPage implements GpsReceiver, Runnable {
         LinearLayout ltrt = makeLine (new View[] { TextString ("turnrt"), ptendTurnRt,   TextString ("dps") });
         LinearLayout lcrt = makeLine (new View[] { TextString ("climb"),  ptendClimbRt,  TextString ("fpm") });
 
-        LinearLayout.LayoutParams llpwc = new LinearLayout.LayoutParams (
-                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        llpwc.gravity = Gravity.CENTER;
-        linearLayout.addView (lena, llpwc);
-        linearLayout.addView (lwpt, llpwc);
-        linearLayout.addView (llat, llpwc);
-        linearLayout.addView (llon, llpwc);
-        linearLayout.addView (lspd, llpwc);
-        linearLayout.addView (lhdg, llpwc);
-        linearLayout.addView (lalt, llpwc);
-        linearLayout.addView (ltrt, llpwc);
-        linearLayout.addView (lcrt, llpwc);
-
-        return linearLayout;
+        return new View[] {
+                lwpt, llat, llon, lspd, lhdg, lalt, ltrt, lcrt
+        };
     }
 
     private TextView TextString (String str)
@@ -275,71 +248,80 @@ public class SimMainPage implements GpsReceiver, Runnable {
     }
 
     /**
-     * Called every pretendInterval milliseconds to step simulation.
+     * Called every dtms milliseconds to step simulation.
      */
     @SuppressLint("SetTextI18n")
     private void PretendStep ()
     {
-        if (! displayOpen && started) {
+        if (locationRunning) {
+            if (! isDisplayOpen ()) {
 
-            /*
-             * Get values input by the user.
-             */
-            double oldlat = Double.parseDouble (ptendLat.getText ().toString ());
-            double oldlon = Double.parseDouble (ptendLon.getText ().toString ());
-            double spdkts = 0.0;
-            double hdgdeg = 0.0;
-            double altft  = 0.0;
-            double turnrt = 0.0;
-            double climrt = 0.0;
-            try { spdkts = Double.parseDouble (ptendSpeed.getText ().toString ()); } catch (NumberFormatException ignored) { }
-            try { hdgdeg = Double.parseDouble (ptendHeading.getText ().toString ()); } catch (NumberFormatException ignored) { }
-            try { altft  = Double.parseDouble (ptendAltitude.getText ().toString ()); } catch (NumberFormatException ignored) { }
-            try { turnrt = Double.parseDouble (ptendTurnRt.getText ().toString ()); } catch (NumberFormatException ignored) { }
-            try { climrt = Double.parseDouble (ptendClimbRt.getText ().toString ()); } catch (NumberFormatException ignored) { }
+                /*
+                 * Get values input by the user.
+                 */
+                double oldlat = 0.0;
+                double oldlon = 0.0;
+                double spdkts = 0.0;
+                double hdgdeg = 0.0;
+                double altft  = 0.0;
+                double turnrt = 0.0;
+                double climrt = 0.0;
+                try { oldlat = Double.parseDouble (ptendLat.getText ().toString ()); } catch (NumberFormatException ignored) { }
+                try { oldlon = Double.parseDouble (ptendLon.getText ().toString ()); } catch (NumberFormatException ignored) { }
+                try { spdkts = Double.parseDouble (ptendSpeed.getText ().toString ()); } catch (NumberFormatException ignored) { }
+                try { hdgdeg = Double.parseDouble (ptendHeading.getText ().toString ()); } catch (NumberFormatException ignored) { }
+                try { altft  = Double.parseDouble (ptendAltitude.getText ().toString ()); } catch (NumberFormatException ignored) { }
+                try { turnrt = Double.parseDouble (ptendTurnRt.getText ().toString ()); } catch (NumberFormatException ignored) { }
+                try { climrt = Double.parseDouble (ptendClimbRt.getText ().toString ()); } catch (NumberFormatException ignored) { }
 
-            /*
-             * Get updated lat/lon, heading and time.
-             */
-            long   dtms   = 1000;
-            long   newnow = ptendTime + dtms;
-            double distnm = spdkts * dtms / 3600000.0;
-            double newhdg = hdgdeg + dtms / 1000.0 * turnrt;
-            GeomagneticField gmf = new GeomagneticField ((float) oldlat, (float) oldlon, (float) (altft / Lib.FtPerM), newnow);
-            double hdgtru = newhdg + gmf.getDeclination ();
-            double newlat = Lib.LatHdgDist2Lat (oldlat, hdgtru, distnm);
-            double newlon = Lib.LatLonHdgDist2Lon (oldlat, oldlon, hdgtru, distnm);
-            double newalt = altft + dtms / 60000.0 * climrt;
+                /*
+                 * Get updated lat/lon, heading and time.
+                 */
+                long   newnow = ptendTime + dtms;
+                double distnm = spdkts * dtms / 3600000.0;
+                double newhdg = hdgdeg + dtms / 1000.0 * turnrt;
+                GeomagneticField gmf = new GeomagneticField ((float) oldlat, (float) oldlon, (float) (altft / Lib.FtPerM), newnow);
+                double hdgtru = newhdg + gmf.getDeclination ();
+                double newlat = Lib.LatHdgDist2Lat (oldlat, hdgtru, distnm);
+                double newlon = Lib.LatLonHdgDist2Lon (oldlat, oldlon, hdgtru, distnm);
+                double newalt = altft + dtms / 60000.0 * climrt;
 
-            while (newhdg <=  0.0) newhdg += 360.0;
-            while (newhdg > 360.0) newhdg -= 360.0;
+                while (newhdg <=  0.0) newhdg += 360.0;
+                while (newhdg > 360.0) newhdg -= 360.0;
 
-            /*
-             * Save the new values in the on-screen boxes.
-             */
-            ptendTime = newnow;
-            ptendLat.setText (Lib.DoubleNTZ (newlat, 6));
-            ptendLon.setText (Lib.DoubleNTZ (newlon, 6));
-            ptendHeading.setText (Lib.DoubleNTZ (newhdg, 2));
-            ptendAltitude.setText (Lib.DoubleNTZ (newalt, 2));
+                /*
+                 * Save the new values in the on-screen boxes.
+                 */
+                ptendTime = newnow;
+                ptendLat.setText (Lib.DoubleNTZ (newlat, 6));
+                ptendLon.setText (Lib.DoubleNTZ (newlon, 6));
+                ptendHeading.setText (Lib.DoubleNTZ (newhdg, 2));
+                ptendAltitude.setText (Lib.DoubleNTZ (newalt, 2));
 
-            /*
-             * Send the values in the form of a GPS reading to the active screen.
-             */
-            GpsLocation loc = new GpsLocation ();
-            loc.altitude = altft / Lib.FtPerM;
-            loc.lat = newlat;
-            loc.lon = newlon;
-            loc.speed = spdkts / Lib.KtPerMPS;
-            loc.time = newnow;
-            loc.truecourse = hdgtru;
-            mainActivity.gpsLocationReceived (loc);
+                /*
+                 * Send the values in the form of a GPS reading to the active screen.
+                 */
+                GpsLocation loc = new GpsLocation ();
+                loc.altitude = altft / Lib.FtPerM;
+                loc.lat = newlat;
+                loc.lon = newlon;
+                loc.speed = spdkts / Lib.KtPerMPS;
+                loc.time = newnow;
+                loc.truecourse = hdgtru;
+                mainActivity.gpsLocationReceived (loc);
+            }
 
             /*
              * Start the timer to do next interval.
              */
             ptendTimerPend = true;
-            mainActivity.myHandler.postDelayed (this, dtms - System.currentTimeMillis () % dtms);
+            mainActivity.myHandler.postDelayed (this, dtms - (System.currentTimeMillis () - ptendTime) % dtms);
         }
+    }
+
+    // suspend simulator time while parameter page is open
+    private boolean isDisplayOpen ()
+    {
+        return mainActivity.currentMainPage == mainActivity.gpsPageView;
     }
 }

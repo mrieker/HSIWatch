@@ -28,19 +28,22 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.View;
+
+import java.util.ArrayList;
 
 import androidx.core.app.ActivityCompat;
 
 /**
  * Use internal GPS receiver to determine location.
  */
-public class InternalGps implements GpsReceiver, LocationListener {
+public class InternalGps extends GnssStatus.Callback implements GpsReceiver, LocationListener {
     private final static int rate_amb = 20000;
     private final static int rate_nor =  1000;
+    private final static View[] paramViews = new View[0];
 
-    private boolean running;
-    private GpsStatusView statusListener;
+    private boolean locationRunning;
+    private boolean statusRunning;
     private LocationManager locationManager;
     private MainActivity mainActivity;
 
@@ -57,24 +60,30 @@ public class InternalGps implements GpsReceiver, LocationListener {
     @Override  // GpsReceiver
     public void enterAmbient ()
     {
-        if (running) {
+        if (locationRunning) {
             locationManager.removeUpdates (this);
             locationManager.requestLocationUpdates (LocationManager.GPS_PROVIDER, rate_amb, 0.0F, this);
         }
+    }
+
+    @Override  // GpsReceiver
+    public View[] getParamViews ()
+    {
+        return paramViews;
     }
 
     @SuppressLint("MissingPermission")
     @Override  // GpsReceiver
     public void exitAmbient ()
     {
-        if (running) {
+        if (locationRunning) {
             locationManager.removeUpdates (this);
             locationManager.requestLocationUpdates (LocationManager.GPS_PROVIDER, rate_nor, 0.0F, this);
         }
     }
 
     @Override  // GpsReceiver
-    public boolean startSensor ()
+    public boolean startLocationSensor ()
     {
         if (ActivityCompat.checkSelfPermission (mainActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions (mainActivity,
@@ -85,37 +94,41 @@ public class InternalGps implements GpsReceiver, LocationListener {
 
         int rate = mainActivity.isAmbient () ? rate_amb : rate_nor;
         locationManager.requestLocationUpdates (LocationManager.GPS_PROVIDER, rate, 0.0F, this);
-        if (statusListener != null) {
-            Log.d (MainActivity.TAG, "InternalGps.startSensor*: turning on status listener");
-            locationManager.registerGnssStatusCallback (gnssStatusCallback);
-        }
-        running = true;
+        locationRunning = true;
         return true;
     }
 
     @Override  // GpsReceiver
-    public void stopSensor ()
+    public boolean startStatusSensor ()
     {
-        Log.d (MainActivity.TAG, "InternalGps.stopSensor*: turning off status listener");
-        running = false;
-        locationManager.removeUpdates (this);
-        locationManager.unregisterGnssStatusCallback (gnssStatusCallback);
-        if (statusListener != null) {
-            statusListener.onStatusReceived (null);
+        if (ActivityCompat.checkSelfPermission (mainActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions (mainActivity,
+                    new String[] { Manifest.permission.ACCESS_FINE_LOCATION },
+                    MainActivity.RC_INTGPS);
+            return false;
         }
+
+        locationManager.registerGnssStatusCallback (this);
+        statusRunning = true;
+        return true;
     }
 
-    @SuppressLint("MissingPermission")
-    public void setStatusListener (GpsStatusView gsl)
+    @Override  // GpsReceiver
+    public boolean stopLocationSensor ()
     {
-        statusListener = gsl;
-        if (gsl == null) {
-            Log.d (MainActivity.TAG, "InternalGps.setStatusListener*: turning off status listener");
-            locationManager.unregisterGnssStatusCallback (gnssStatusCallback);
-        } else if (running) {
-            Log.d (MainActivity.TAG, "InternalGps.setStatusListener*: turning on status listener");
-            locationManager.registerGnssStatusCallback (gnssStatusCallback);
-        }
+        boolean loc = locationRunning;
+        locationRunning = false;
+        locationManager.removeUpdates (this);
+        return loc;
+    }
+
+    @Override  // GpsReceiver
+    public boolean stopStatusSensor ()
+    {
+        boolean sts = statusRunning;
+        statusRunning = false;
+        locationManager.unregisterGnssStatusCallback (this);
+        return sts;
     }
 
     @Override  // LocationListener
@@ -143,11 +156,19 @@ public class InternalGps implements GpsReceiver, LocationListener {
     public void onProviderDisabled (String provider)
     { }
 
-    private final GnssStatus.Callback gnssStatusCallback = new GnssStatus.Callback () {
-        @Override
-        public void onSatelliteStatusChanged (GnssStatus status)
-        {
-            statusListener.onStatusReceived (status);
+    @Override  // GnssStatus.Callback
+    public void onSatelliteStatusChanged (GnssStatus status)
+    {
+        int n = status.getSatelliteCount ();
+        ArrayList<GpsStatus> statuses = new ArrayList<> (n);
+        for (int i = 0; i < n; i ++) {
+            GpsStatus gs = new GpsStatus ();
+            gs.prn  = status.getSvid (i);
+            gs.elev = status.getElevationDegrees (i);
+            gs.azim = status.getAzimuthDegrees (i);
+            gs.snr  = status.getCn0DbHz (i);
+            gs.used = status.usedInFix (i);
         }
-    };
+        mainActivity.gpsStatusReceived (statuses);
+    }
 }

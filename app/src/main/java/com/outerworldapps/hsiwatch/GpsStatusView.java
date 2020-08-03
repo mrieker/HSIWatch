@@ -28,9 +28,10 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.location.GnssStatus;
 import android.util.AttributeSet;
 import android.view.View;
+
+import java.util.Collection;
 
 /**
  * Display a GPS status panel.
@@ -43,18 +44,18 @@ public class GpsStatusView
     private final static boolean USECOMPASS = true;
     private final static String[] compDirs = new String[] { "N", "E", "S", "W" };
 
+    private char[] gpstimstr;
     private float compRotDeg;  // compass rotation
     private float[] geomag;
     private float[] gravity;
     private float[] orient = new float[3];
     private float[] rotmat = new float[9];
-    private GnssStatus satellites;
+    private MainActivity mainActivity;
     private Paint ignoredSpotsPaint = new Paint ();
     private Paint ringsPaint        = new Paint ();
     private Paint textPaint         = new Paint ();
     private Paint usedSpotsPaint    = new Paint ();
     private SensorManager instrSM;
-    private String gpstimstr;
 
     public GpsStatusView (Context ctx, AttributeSet attrs)
     {
@@ -70,6 +71,15 @@ public class GpsStatusView
 
     public void construct ()
     {
+        Context ctx = getContext ();
+        if (ctx instanceof MainActivity) {
+            mainActivity = (MainActivity) ctx;
+        }
+
+        gpstimstr = new char[8];
+        gpstimstr[2] = ':';
+        gpstimstr[5] = ':';
+
         ringsPaint.setColor (Color.YELLOW);
         ringsPaint.setStyle (Paint.Style.STROKE);
         ringsPaint.setStrokeWidth (2);
@@ -92,18 +102,20 @@ public class GpsStatusView
         compRotDeg = Float.NaN;
         textPaint.setTextSize (24.0F);
         instrSM    = getContext ().getSystemService (SensorManager.class);
-        gpstimstr  = "?";
         if (USECOMPASS) {
             Sensor smf = instrSM.getDefaultSensor (Sensor.TYPE_MAGNETIC_FIELD);
             Sensor sac = instrSM.getDefaultSensor (Sensor.TYPE_ACCELEROMETER);
             instrSM.registerListener (this, smf, SensorManager.SENSOR_DELAY_UI);
             instrSM.registerListener (this, sac, SensorManager.SENSOR_DELAY_UI);
         }
+        mainActivity.gpsStatuses = null;
+        mainActivity.gpsReceiver.startStatusSensor ();
     }
 
     public void Shutdown ()
     {
         instrSM.unregisterListener (this);
+        mainActivity.gpsReceiver.stopStatusSensor ();
     }
 
     /**
@@ -138,34 +150,6 @@ public class GpsStatusView
     { }
 
     /**
-     * Got a GPS satellite status reading.
-     */
-    public void onStatusReceived (GnssStatus gnssStatus)
-    {
-        satellites = gnssStatus;
-        invalidate ();
-    }
-
-    /**
-     * Got a GPS location reading.
-     */
-    public void gotGpsTime (long gpstime)
-    {
-        int gpssec = (int) (gpstime / 1000 % 86400);
-        gpstimstr = new String (new char[] {
-                (char) (gpssec / 36000 + '0'),
-                (char) (gpssec / 3600 % 10 + '0'),
-                ':',
-                (char) (gpssec / 600 % 6 + '0'),
-                (char) (gpssec / 60 % 10 + '0'),
-                ':',
-                (char) (gpssec / 10 % 6 + '0'),
-                (char) (gpssec % 10 + '0')
-        });
-        invalidate ();
-    }
-
-    /**
      * Callback to draw the instruments on the screen.
      */
     @Override
@@ -179,7 +163,16 @@ public class GpsStatusView
 
         canvas.save ();
         try {
-            canvas.drawText (gpstimstr, circleCenterX, circleCenterY + circleRadius + textHeight * 1.75F, textPaint);
+            if (mainActivity != null) {
+                int gpssec = (int) (mainActivity.curLoc.time / 1000 % 86400);
+                gpstimstr[0] = (char) (gpssec / 36000 + '0');
+                gpstimstr[1] = (char) (gpssec / 3600 % 10 + '0');
+                gpstimstr[3] = (char) (gpssec / 600 % 6 + '0');
+                gpstimstr[4] = (char) (gpssec / 60 % 10 + '0');
+                gpstimstr[6] = (char) (gpssec / 10 % 6 + '0');
+                gpstimstr[7] = (char) (gpssec % 10 + '0');
+                canvas.drawText (gpstimstr, 0, 8, circleCenterX, circleCenterY + circleRadius + textHeight * 1.75F, textPaint);
+            }
 
             if (! Float.isNaN (compRotDeg)) {
                 String cmphdgstr = Integer.toString (1360 - (int) Math.round (compRotDeg + 360.0) % 360).substring (1) + '\u00B0';
@@ -192,24 +185,24 @@ public class GpsStatusView
                 canvas.rotate (90.0F, circleCenterX, circleCenterY);
             }
 
-            if (satellites != null) {
-                canvas.drawCircle (circleCenterX, circleCenterY, circleRadius * 30 / 90, ringsPaint);
-                canvas.drawCircle (circleCenterX, circleCenterY, circleRadius * 60 / 90, ringsPaint);
-            }
-            canvas.drawCircle (circleCenterX, circleCenterY, circleRadius * 90 / 90, ringsPaint);
+            if (mainActivity != null) {
+                canvas.drawCircle (circleCenterX, circleCenterY, circleRadius * 90 / 90, ringsPaint);
+                Collection<GpsStatus> satellites = mainActivity.gpsStatuses;
+                if (satellites != null) {
+                    canvas.drawCircle (circleCenterX, circleCenterY, circleRadius * 30 / 90, ringsPaint);
+                    canvas.drawCircle (circleCenterX, circleCenterY, circleRadius * 60 / 90, ringsPaint);
 
-            if (satellites != null) {
-                int n = satellites.getSatelliteCount ();
-                for (int i = 0; i < n; i ++) {
-                    // hasAlmanac() and hasEphemeris() seem to always return false
-                    // getSnr() in range 0..30 approx
-                    double size = satellites.getCn0DbHz (i) / 3;
-                    double radius = (90 - satellites.getElevationDegrees (i)) * circleRadius / 90;
-                    double azirad = Math.toRadians (satellites.getAzimuthDegrees (i));
-                    double deltax = radius * Math.sin (azirad);
-                    double deltay = radius * Math.cos (azirad);
-                    Paint paint = satellites.usedInFix (i) ? usedSpotsPaint : ignoredSpotsPaint;
-                    canvas.drawCircle ((float) (circleCenterX + deltax), (float) (circleCenterY - deltay), (float) size, paint);
+                    for (GpsStatus status : satellites) {
+                        // hasAlmanac() and hasEphemeris() seem to always return false
+                        // getSnr() in range 0..30 approx
+                        double size   = status.snr / 3;
+                        double radius = (90 - status.elev) * circleRadius / 90;
+                        double azirad = Math.toRadians (status.azim);
+                        double deltax = radius * Math.sin (azirad);
+                        double deltay = radius * Math.cos (azirad);
+                        Paint paint = status.used ? usedSpotsPaint : ignoredSpotsPaint;
+                        canvas.drawCircle ((float) (circleCenterX + deltax), (float) (circleCenterY - deltay), (float) size, paint);
+                    }
                 }
             }
         } finally {

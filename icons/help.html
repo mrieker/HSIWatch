@@ -241,8 +241,29 @@
                 <TD><IMG SRC="menu-page.png" WIDTH=320 HEIGHT=320></TD>
                 <TD>
                     <UL>
-                        <LI><B>BACK</B> - goes back to nav dial or moving map page
+                        <LI><B>&#9664;BACK</B> - goes back to nav dial or moving map page
                         <LI><B>SATS</B> - show GPS satellite status (also has a magnetic compass)
+                        <LI><B>GPS</B> - selects GPS source
+                            <UL>
+                                <LI><B>Internal</B> - uses watch's internal GPS receiver
+                                <LI><B>Bluetooth</B> - uses external device's GPS connected via Bluetooth
+                                    <UL>
+                                        <LI>select paired device.  if not listed, use watch's
+                                            settings to pair the device, then re-select
+                                            <B>Bluetooth</B> from this menu.
+                                        <LI>select UUID.  usually the one beginning with 00001101
+                                            works, but the app on the external device may be using
+                                            a different one.
+                                    </UL>
+                                    For example, <A HREF="https://play.google.com/store/apps/details?id=com.outerworldapps.gpsblue">GPSBlue</A>
+                                    can be used on a phone to relay GPS from the phone to the watch using Bluetooth.
+                                <LI><B>WiFi UDP</B> - uses external device's GPS connected via WiFi using UDP
+                                    <UL>
+                                        <LI><B>port</B> - UDP port number the external device sends packets on
+                                    </UL>
+                                    Can be used with Stratux-like devices that relay GPS over WiFi in UDP packets.
+                                <LI><B>Simulator</B> - generates GPS locations for testing
+                            </UL>
                         <LI><B>UPDDB</B> - download database update (requires Internet access)
                             <UL>
                                 <LI><FONT COLOR=GREEN>GREEN</FONT> - database is up to date and will remain so for a few days
@@ -271,7 +292,7 @@
                 <TD><IMG SRC="menu2-page.png" WIDTH=320 HEIGHT=320></TD>
                 <TD>
                     <UL>
-                        <LI><B>BACK</B> - goes back a page
+                        <LI><B>&#9664;BACK</B> - goes back a page
                         <LI><B>Fill Chin</B> - has nav dial fill chin on devices with a chin
                             (only present on devices with a chin)
                             <TABLE>
@@ -279,7 +300,6 @@
                                 <TR><TD><IMG SRC="filled-chin.png" WIDTH=107 HEIGHT=107></TD><TD><IMG SRC="empty-chin.png" WIDTH=107 HEIGHT=107></TD></TR>
                             </TABLE>
                         <LI><B>ABOUT</B> - display version and database expiration information
-                        <LI><B>SIM</B> - display simulator parameter page
                         <LI><B>EXIT</B> - close app
                         <LI><B>RESET</B> - reset settings to factory defaults and purge database
                     </UL>
@@ -362,8 +382,6 @@
             <LI><B>off</B> clear waypoint and turn GPS off
         </UL>
         <HR>
-        <H3> Simulator </H3>
-        <P>Generates GPS positions for a given track to use for testing.  Blocks real GPS reception while active.</P>
         <H3> COMM </H3>
         <P>Transmits GPS positions (either real or simluated) on Bluetooth and/or UDP (Internet)
             to such as a tablet or phone based EFB app.  Uses NMEA GPGGA,GPRMC messages to send

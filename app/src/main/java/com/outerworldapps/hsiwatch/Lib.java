@@ -20,6 +20,9 @@
 
 package com.outerworldapps.hsiwatch;
 
+import android.content.DialogInterface;
+import android.util.Log;
+
 public class Lib {
 
     // fine-tuned constants
@@ -374,6 +377,22 @@ public class Lib {
     {
         if (str.equalsIgnoreCase ("NaN")) return Double.NaN;
         return Double.parseDouble (str);
+    }
+
+    /**
+     * Dismiss a dialog box.
+     */
+    public static void dismiss (DialogInterface dialog)
+    {
+        if (dialog != null) {
+            try {
+                dialog.dismiss ();
+            } catch (Exception e) {
+                // got IllegalArgumentException in PhoneWindow$DecorView
+                // ... not attached to window manager
+                Log.w (MainActivity.TAG, "exception dismissing dialog", e);
+            }
+        }
     }
 
     /**
