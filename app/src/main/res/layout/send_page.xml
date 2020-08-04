@@ -16,14 +16,14 @@
         android:orientation="vertical">
 
         <Button
-            android:id="@+id/commBack"
+            android:id="@+id/sendBack"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="\u25C0BACK"
             tools:ignore="HardcodedText" />
 
         <ScrollView
-            android:id="@+id/commScroll"
+            android:id="@+id/sendScroll"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:padding="@dimen/inner_frame_layout_padding"

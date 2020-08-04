@@ -49,7 +49,7 @@ import java.util.UUID;
 /**
  * Transmit our GPS location over UDP and/or Bluetooth
  */
-public class CommMainPage implements GpsTransmitter {
+public class SendMainPage implements GpsTransmitter {
     private final static int numsats = 12;
     private final static String btServerUUIDPrefixDef = "00001101";
     private final static String btServerUUIDSuffix = "-0000-1000-8000-00805f9b34fb";
@@ -68,9 +68,9 @@ public class CommMainPage implements GpsTransmitter {
     private SimpleDateFormat sdfdmy;
     private UUID btServerUUID;
     private TextView conCountView;
-    public  View commPageView;
+    public  View sendPageView;
 
-    public CommMainPage (MainActivity ma)
+    public SendMainPage (MainActivity ma)
     {
         mainActivity = ma;
         prefs = mainActivity.getPreferences (Context.MODE_PRIVATE);
@@ -79,15 +79,15 @@ public class CommMainPage implements GpsTransmitter {
     @SuppressLint("InflateParams")
     public void show ()
     {
-        if (commPageView == null) {
+        if (sendPageView == null) {
             LayoutInflater layoutInflater = mainActivity.getLayoutInflater ();
-            commPageView = layoutInflater.inflate (R.layout.comm_page, null);
-            Button udpBack = commPageView.findViewById (R.id.commBack);
+            sendPageView = layoutInflater.inflate (R.layout.send_page, null);
+            Button udpBack = sendPageView.findViewById (R.id.sendBack);
             udpBack.setOnClickListener (mainActivity.backButtonListener);
-            ScrollView commScroll = commPageView.findViewById (R.id.commScroll);
-            commScroll.addView (Initialize ());
+            ScrollView sendScroll = sendPageView.findViewById (R.id.sendScroll);
+            sendScroll.addView (Initialize ());
         }
-        mainActivity.showMainPage (commPageView);
+        mainActivity.showMainPage (sendPageView);
     }
 
     @SuppressLint("SetTextI18n")
@@ -355,7 +355,7 @@ public class CommMainPage implements GpsTransmitter {
         buf[--i] = '$';
         NMEAChecksum (buf, i);
 
-        //Log.d (MainActivity.TAG, "CommMainPage.sendLocation*: " + new String (buf, i, buf.length - i));
+        //Log.d (MainActivity.TAG, "SendMainPage.sendLocation*: " + new String (buf, i, buf.length - i));
         TransmitBytes (buf, i, buf.length - i);
     }
 

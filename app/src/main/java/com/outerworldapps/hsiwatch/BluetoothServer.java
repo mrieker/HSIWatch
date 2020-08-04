@@ -46,10 +46,10 @@ public class BluetoothServer {
     private HashSet<ReceiveThread> rtlist;
     private final Object connectionLock;
     private ReceiveThread[] rtarray;
-    private CommMainPage udpMainPage;
+    private SendMainPage udpMainPage;
     private UUID sppUUID;
 
-    public BluetoothServer (CommMainPage ump)
+    public BluetoothServer (SendMainPage ump)
     {
         udpMainPage = ump;
         connectionLock = new Object ();
@@ -133,7 +133,7 @@ public class BluetoothServer {
                 BluetoothManager bm = udpMainPage.mainActivity.getSystemService (BluetoothManager.class);
                 BluetoothAdapter ba = bm.getAdapter ();
                 if (ba == null) throw new Exception ("no bluetooth on this device");
-                serverSocket = ba.listenUsingInsecureRfcommWithServiceRecord ("GPSBlue", sppUUID);
+                serverSocket = ba.listenUsingInsecureRfcommWithServiceRecord ("HSIWatch", sppUUID);
                 synchronized (connectionLock) {
                     rtlist = new HashSet<> ();
                     rtarray = nullrtarray;

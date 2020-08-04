@@ -132,8 +132,8 @@ public class DecodeNMEA {
                         decodeNMEAhhmmss (parts[1]);
                         gpsloc.lat = decodeNMEALatLon (parts[2], parts[3], 'N', 'S');
                         gpsloc.lon = decodeNMEALatLon (parts[4], parts[5], 'E', 'W');
-                        gpsloc.altitude = Double.parseDouble (parts[10]);
-                        if (! parts[11].equals ("M")) throw new Exception ("altitude not in metres");
+                        gpsloc.altitude = Double.parseDouble (parts[9]);
+                        if (! parts[10].equals ("M")) throw new Exception ("altitude not in metres");
                         gotgga = true;
                         if (gotrmc) gotLocation ();
                     }

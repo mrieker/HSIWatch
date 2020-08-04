@@ -243,27 +243,7 @@
                     <UL>
                         <LI><B>&#9664;BACK</B> - goes back to nav dial or moving map page
                         <LI><B>SATS</B> - show GPS satellite status (also has a magnetic compass)
-                        <LI><B>GPS</B> - selects GPS source
-                            <UL>
-                                <LI><B>Internal</B> - uses watch's internal GPS receiver
-                                <LI><B>Bluetooth</B> - uses external device's GPS connected via Bluetooth
-                                    <UL>
-                                        <LI>select paired device.  if not listed, use watch's
-                                            settings to pair the device, then re-select
-                                            <B>Bluetooth</B> from this menu.
-                                        <LI>select UUID.  usually the one beginning with 00001101
-                                            works, but the app on the external device may be using
-                                            a different one.
-                                    </UL>
-                                    For example, <A HREF="https://play.google.com/store/apps/details?id=com.outerworldapps.gpsblue">GPSBlue</A>
-                                    can be used on a phone to relay GPS from the phone to the watch using Bluetooth.
-                                <LI><B>WiFi UDP</B> - uses external device's GPS connected via WiFi using UDP
-                                    <UL>
-                                        <LI><B>port</B> - UDP port number the external device sends packets on
-                                    </UL>
-                                    Can be used with Stratux-like devices that relay GPS over WiFi in UDP packets.
-                                <LI><B>Simulator</B> - generates GPS locations for testing
-                            </UL>
+                        <LI><B>GPS</B> - selects GPS source (see below)
                         <LI><B>UPDDB</B> - download database update (requires Internet access)
                             <UL>
                                 <LI><FONT COLOR=GREEN>GREEN</FONT> - database is up to date and will remain so for a few days
@@ -283,7 +263,7 @@
                                 <LI><FONT COLOR=GREEN>GREEN</FONT> dot indicates MINUTES
                                 <LI><FONT COLOR=BLUE>BLUE</FONT> dot indicates SECONDS
                             </UL>
-                        <LI><B>COMM</B> - access bluetooth and UDP parameters
+                        <LI><B>SEND</B> - send location to another device using bluetooth and/or UDP
                         <LI><B>MORE&#9654;</B> - goes to next menu page
                     </UL>
                 </TD>
@@ -382,8 +362,38 @@
             <LI><B>off</B> clear waypoint and turn GPS off
         </UL>
         <HR>
-        <H3> COMM </H3>
-        <P>Transmits GPS positions (either real or simluated) on Bluetooth and/or UDP (Internet)
+        <H3> GPS </H3>
+        <P>Selects which GPS device is used.</P>
+        <UL>
+            <LI><B>Internal</B> - uses watch's internal GPS receiver
+            <LI><B>Bluetooth</B> - uses external device's GPS connected via Bluetooth
+                <UL>
+                    <LI>select paired device.  if not listed, use watch's
+                        settings to pair the device, then re-select
+                        <B>Bluetooth</B> from this menu.
+                    <LI>select UUID.  usually the one beginning with 00001101
+                        works, but the app on the external device may be using
+                        a different one.  if the UUID being used by the device
+                        does not appear in the selection list:
+                        <OL>
+                            <LI>close the HSIWatch app (BACK BACK BACK ... as needed)
+                            <LI>make sure the device is on
+                            <LI>start the GPS app on the device (if any)
+                            <LI>un-pair and re-pair the watch with the device
+                            <LI>restart the HSIWatch app
+                        </OL>
+                </UL>
+                For example, <A HREF="https://play.google.com/store/apps/details?id=com.outerworldapps.gpsblue">GPSBlue</A>
+                can be used on a phone to relay GPS from the phone to the watch using Bluetooth.
+            <LI><B>WiFi UDP</B> - uses external device's GPS connected via WiFi using UDP
+                <UL>
+                    <LI><B>port</B> - UDP port number the external device sends packets on
+                </UL>
+                Can be used with Stratux-like devices that relay GPS over WiFi in UDP packets.
+            <LI><B>Simulator</B> - generates GPS locations for testing
+        </UL>
+        <H3> SEND </H3>
+        <P>Transmits GPS positions (either real or simluated) on Bluetooth and/or UDP (WiFi)
             to such as a tablet or phone based EFB app.  Uses NMEA GPGGA,GPRMC messages to send
             GPS position reports.</P>
         <UL>

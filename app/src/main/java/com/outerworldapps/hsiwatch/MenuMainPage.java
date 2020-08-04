@@ -43,7 +43,7 @@ public class MenuMainPage {
     public  CheckBox hsiModeCkBox;
     public  CheckBox simplifyCkBox;
     public  CheckBox timeDotsCkBox;
-    private CommMainPage commMainPage;
+    private SendMainPage sendMainPage;
     private int numResetClicks;
     private long lastExitClick;
     private long lastResetClick;
@@ -148,13 +148,13 @@ public class MenuMainPage {
             }
         });
 
-        commMainPage = new CommMainPage (mainActivity);
-        Button commButton = menuPageView.findViewById (R.id.commButton);
-        commButton.setOnClickListener (new View.OnClickListener () {
+        sendMainPage = new SendMainPage (mainActivity);
+        Button sendButton = menuPageView.findViewById (R.id.sendButton);
+        sendButton.setOnClickListener (new View.OnClickListener () {
             @Override
             public void onClick (View v)
             {
-                commMainPage.show ();
+                sendMainPage.show ();
             }
         });
 

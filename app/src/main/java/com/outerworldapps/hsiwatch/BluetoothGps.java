@@ -35,6 +35,7 @@ import android.widget.TextView;
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
 
@@ -42,8 +43,9 @@ import java.util.UUID;
  * Use Bluetooth to receive GPS location and status information.
  */
 public class BluetoothGps extends ExternalGps {
-    private final static String SPPUUID = "00001101-0000-1000-8000-00805f9b34fb";
+    private final static String SPPUUID = "00001101-0000-1000-8000-00805F9B34FB";
 
+    private BluetoothDevice btdevSelected;
     private BufferedReader btReader;
     private CheckBox btsecureCkBox;
     private SharedPreferences prefs;
@@ -93,11 +95,13 @@ public class BluetoothGps extends ExternalGps {
         capable = true;
 
         // try to select previously selected device, uuid, secure
+        btdevSelected = null;
         String btdevidstr = prefs.getString ("bluetoothgps.devident", "");
         try {
             BluetoothDevice btdev = getBtDev (btdevidstr);
             if (btdevidView.setText (btdevidstr)) {
-                populateBtUUIDSelector (btdev);
+                btdevSelected = btdev;
+                populateBtUUIDSelector ();
                 String btuuidstr = prefs.getString ("bluetoothgps." + btdevidstr + ".uuid", SPPUUID);
                 boolean btsecure = prefs.getBoolean ("bluetoothgps." + btdevidstr + ".secure", false);
                 btuuidView.setText (btuuidstr);
@@ -111,7 +115,7 @@ public class BluetoothGps extends ExternalGps {
     // populate the bluetooth device name spinner with paired device names
     private String populateBtDevSelector ()
     {
-        btdevidView.setTitle ("bluetooth device");
+        btdevidView.setTitle ("Select Device");
         String[] labels;
         try {
             labels = getBtDevIdents ();
@@ -120,6 +124,7 @@ public class BluetoothGps extends ExternalGps {
         }
         btdevidView.setLabels (labels, null, "(select)", null);
         btdevidView.setIndex (TextArraySpinner.NOTHING);
+        btdevSelected = null;
         return null;
     }
 
@@ -130,7 +135,7 @@ public class BluetoothGps extends ExternalGps {
         public boolean onItemSelected (View view, int index, String btdevidstr)
         {
             try {
-                populateBtUUIDSelector (getBtDev (btdevidstr));
+                btdevSelected = getBtDev (btdevidstr);
             } catch (Exception e) {
                 Log.w (MainActivity.TAG, "error looking up " + btdevidstr, e);
                 mainActivity.showToast (btdevidstr + ": " + e.getMessage());
@@ -140,6 +145,8 @@ public class BluetoothGps extends ExternalGps {
             SharedPreferences.Editor editr = prefs.edit ();
             editr.putString ("bluetoothgps.devident", btdevidstr);
             editr.apply ();
+
+            populateBtUUIDSelector ();
 
             String btuuidstr = prefs.getString ("bluetoothgps." + btdevidstr + ".uuid", SPPUUID);
             boolean btsecure = prefs.getBoolean ("bluetoothgps." + btdevidstr + ".secure", false);
@@ -164,16 +171,16 @@ public class BluetoothGps extends ExternalGps {
         }
     };
 
-    // populate uuid spinner with UUIDs for the given device
-    private void populateBtUUIDSelector (BluetoothDevice btdev)
+    // populate uuid spinner with UUIDs for the currently selected device
+    private void populateBtUUIDSelector ()
     {
         /*
          * Get cached list of UUIDs known for the device.
          * This works if the device is currently paired,
          * it does not matter if it is in radio range or not.
          */
-        String btdevname = btIdentString (btdev);
-        ParcelUuid[] uuidArray = btdev.getUuids ();
+        String btdevname = btIdentString (btdevSelected);
+        ParcelUuid[] uuidArray = btdevSelected.getUuids ();
 
         /*
          * If no cache, use the default SPPUUID.
@@ -189,14 +196,18 @@ public class BluetoothGps extends ExternalGps {
         int nuuids = uuidArray.length;
         String[] uuidsWithDef = new String[nuuids];
         int i = 0;
-        int defi = TextArraySpinner.NOTHING;
         for (ParcelUuid uuid : uuidArray) {
-            String uuidstr = uuid.toString ();
-            if (uuidstr.equals (SPPUUID)) {
+            uuidsWithDef[i++] = uuid.toString ().toUpperCase ();
+        }
+        Arrays.sort (uuidsWithDef);
+
+        // look for default entry
+        int defi = TextArraySpinner.NOTHING;
+        for (i = 0; i < nuuids; i ++) {
+            if (uuidsWithDef[i].equals (SPPUUID)) {
                 defi = i;
+                break;
             }
-            uuidsWithDef[i] = uuidstr;
-            i ++;
         }
 
         /*
@@ -213,8 +224,7 @@ public class BluetoothGps extends ExternalGps {
         @Override
         public boolean onItemSelected (View view, int index, String btuuidstr)
         {
-            String btdevidstr = btdevidView.getText ();
-
+            String btdevidstr = btIdentString (btdevSelected);
             SharedPreferences.Editor editr = prefs.edit ();
             editr.putString ("bluetoothgps." + btdevidstr + ".uuid", btuuidstr);
             editr.apply ();
@@ -243,10 +253,9 @@ public class BluetoothGps extends ExternalGps {
         @Override
         public void onClick (View v)
         {
-            String btdevidstr = btdevidView.getText ();
-
             boolean btsecure = btsecureCkBox.isChecked ();
             SharedPreferences.Editor editr = prefs.edit ();
+            String btdevidstr = btIdentString (btdevSelected);
             editr.putBoolean ("bluetoothgps." + btdevidstr + ".secure", btsecure);
             editr.apply ();
 
@@ -260,7 +269,7 @@ public class BluetoothGps extends ExternalGps {
     @Override  // ExternalGps
     protected String getPeerName ()
     {
-        return btdevidView.getText () + " " + btuuidView.getText () +
+        return btIdentString (btdevSelected) + " " + btuuidView.getText () +
                 (btsecureCkBox.isChecked () ? " secure" : " insec");
     }
 
@@ -271,7 +280,6 @@ public class BluetoothGps extends ExternalGps {
     protected Closeable openSocket ()
             throws Exception
     {
-        BluetoothDevice btDevice = getBtDev (btdevidView.getText ());
         UUID btUUID = UUID.fromString (btuuidView.getText ());
         boolean btSecure = btsecureCkBox.isChecked ();
 
@@ -280,9 +288,9 @@ public class BluetoothGps extends ExternalGps {
          */
         BluetoothSocket socket;
         if (btSecure) {
-            socket = btDevice.createRfcommSocketToServiceRecord (btUUID);
+            socket = btdevSelected.createRfcommSocketToServiceRecord (btUUID);
         } else {
-            socket = btDevice.createInsecureRfcommSocketToServiceRecord (btUUID);
+            socket = btdevSelected.createInsecureRfcommSocketToServiceRecord (btUUID);
         }
 
         /*

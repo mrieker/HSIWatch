@@ -108,13 +108,13 @@
                 tools:ignore="HardcodedText" />
 
             <Button
-                android:id="@+id/commButton"
+                android:id="@+id/sendButton"
                 android:layout_width="51dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="53dp"
                 android:layout_marginTop="100dp"
                 android:padding="3dp"
-                android:text="COMM"
+                android:text="SEND"
                 android:textSize="12sp"
                 tools:ignore="HardcodedText" />
 
