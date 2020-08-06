@@ -35,8 +35,8 @@ import android.widget.TextView;
 public class MyEditText extends EditText implements TextView.OnEditorActionListener {
 
     public interface Listener {
-        boolean onEnterKey (TextView v);  // true: stay in keypad; false: return to page with text box
-        void onBackKey (TextView v);      // always goes back to page with text box
+        void onEnterKey (TextView v);
+        void onBackKey (TextView v);
     }
 
     public Listener listener;
@@ -55,10 +55,22 @@ public class MyEditText extends EditText implements TextView.OnEditorActionListe
 
     // detect the ENTER key
     @Override
-    public boolean onEditorAction (TextView v, int actionId, KeyEvent event)
+    public boolean onEditorAction (final TextView v, int actionId, KeyEvent event)
     {
         if ((actionId == EditorInfo.IME_ACTION_DONE) || (actionId == EditorInfo.IME_ACTION_NEXT)) {
-            if (listener != null) return listener.onEnterKey (this);
+            // delay calling onEnterKey() so handwriting input works
+            // ...otherwise handwriting seems to leave the box empty
+            // test with dest waypoint entry, sim altitude entry
+            final String txt = v.getText ().toString ();
+            MainActivity ma = (MainActivity) getContext ();
+            ma.myHandler.postDelayed (new Runnable () {
+                @Override
+                public void run ()
+                {
+                    v.setText (txt);
+                    listener.onEnterKey (v);
+                }
+            }, 500);
         }
         return false;
     }

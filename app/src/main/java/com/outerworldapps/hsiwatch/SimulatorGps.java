@@ -69,8 +69,10 @@ public class SimulatorGps implements GpsReceiver, Runnable {
     {
         locationRunning = true;
         if (! ptendTimerPend) {
-            ptendTime = System.currentTimeMillis () / dtms * dtms;
-            PretendStep ();
+            ptendTimerPend = true;
+            long now = System.currentTimeMillis ();
+            ptendTime = now / dtms * dtms;
+            mainActivity.myHandler.postDelayed (this, dtms - now % dtms);
         }
         return true;
     }
@@ -105,15 +107,6 @@ public class SimulatorGps implements GpsReceiver, Runnable {
     @Override
     public void exitAmbient () { }
 
-    // pretendInterval timer expired
-    // runs in GUI thread
-    @Override  // Runnable
-    public void run ()
-    {
-        ptendTimerPend = false;
-        PretendStep ();
-    }
-
     @SuppressLint("SetTextI18n")
     private View[] initialize ()
     {
@@ -125,11 +118,16 @@ public class SimulatorGps implements GpsReceiver, Runnable {
             @Override
             public void wayptChanged (Waypt waypt)
             {
-                ptendLat.setText (Lib.DoubleNTZ (waypt.lat, 6));
-                ptendLon.setText (Lib.DoubleNTZ (waypt.lon, 6));
-
                 SharedPreferences.Editor editr = prefs.edit ();
-                editr.putString ("simWaypoint", waypt.ident);
+                if (waypt == null) {
+                    editr.putString ("simWaypoint", "");
+                    ptendLat.setText ("");
+                    ptendLon.setText ("");
+                } else {
+                    editr.putString ("simWaypoint", waypt.ident);
+                    ptendLat.setText (Lib.DoubleNTZ (waypt.lat, 6));
+                    ptendLon.setText (Lib.DoubleNTZ (waypt.lon, 6));
+                }
                 editr.putString ("simLatitude", ptendLat.getText ().toString ());
                 editr.putString ("simLongitude", ptendLon.getText ().toString ());
                 editr.apply ();
@@ -222,12 +220,11 @@ public class SimulatorGps implements GpsReceiver, Runnable {
         met.setEms (ems);
         met.listener = new MyEditText.Listener () {
             @Override
-            public boolean onEnterKey (TextView v)
+            public void onEnterKey (TextView v)
             {
                 SharedPreferences.Editor editr = prefs.edit ();
                 editr.putString (prefName, v.getText ().toString ());
                 editr.apply ();
-                return false;
             }
             @Override
             public void onBackKey (TextView v) { }
@@ -247,12 +244,13 @@ public class SimulatorGps implements GpsReceiver, Runnable {
         editr.commit ();
     }
 
-    /**
-     * Called every dtms milliseconds to step simulation.
-     */
-    @SuppressLint("SetTextI18n")
-    private void PretendStep ()
+    // Called every dtms milliseconds to step simulation
+    // dtms timer expired
+    // runs in GUI thread
+    @Override  // Runnable
+    public void run ()
     {
+        ptendTimerPend = false;
         if (locationRunning) {
             if (! isDisplayOpen ()) {
 
@@ -315,7 +313,8 @@ public class SimulatorGps implements GpsReceiver, Runnable {
              * Start the timer to do next interval.
              */
             ptendTimerPend = true;
-            mainActivity.myHandler.postDelayed (this, dtms - (System.currentTimeMillis () - ptendTime) % dtms);
+            long now = System.currentTimeMillis ();
+            mainActivity.myHandler.postDelayed (this, dtms - now % dtms);
         }
     }
 

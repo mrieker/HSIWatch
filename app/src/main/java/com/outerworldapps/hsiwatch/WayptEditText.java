@@ -78,7 +78,7 @@ public class WayptEditText extends MyEditText implements MyEditText.Listener, Vi
 
     // enter key pressed
     @Override  // Listener
-    public boolean onEnterKey (TextView v)
+    public void onEnterKey (TextView v)
     {
         String idstr = v.getText ().toString ().replace (" ", "").toUpperCase (Locale.US);
         if (! idstr.equals ("")) {
@@ -90,18 +90,19 @@ public class WayptEditText extends MyEditText implements MyEditText.Listener, Vi
                 // database download in progress
                 // displays toast when download started
                 // displays toast when download completes or errors out
-                return true;  // remain in text box
+                return;
             }
 
             // find waypoint in database
             MainActivity ma = (MainActivity) getContext ();
-            Waypt waypt = Waypt.find (sqldb, idstr, ma.curLoc);
+            final Waypt waypt = Waypt.find (sqldb, idstr, ma.curLoc);
             if (waypt == null) {
                 wcl.showToast ("unknown " + idstr);
-                return true;  // remain in text box
+                return;
             }
 
             // tell mainActivity it is changed
+            // need a delay so handwritten input works
             setText (waypt.ident);
             wcl.wayptChanged (waypt);
         } else {
@@ -110,9 +111,6 @@ public class WayptEditText extends MyEditText implements MyEditText.Listener, Vi
             setText ("");
             wcl.wayptChanged (null);
         }
-
-        // return false - returns to main screen
-        return false;
     }
 
     // restore original ident when BACK key pressed

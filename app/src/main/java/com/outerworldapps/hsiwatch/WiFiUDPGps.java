@@ -76,7 +76,7 @@ public class WiFiUDPGps extends ExternalGps {
     // validate, write to preferences, restart receiver thread
     private final MyEditText.Listener portnoEntered = new MyEditText.Listener () {
         @Override
-        public boolean onEnterKey (TextView v)
+        public void onEnterKey (TextView v)
         {
             SharedPreferences.Editor editr = prefs.edit ();
             try {
@@ -84,14 +84,12 @@ public class WiFiUDPGps extends ExternalGps {
                 if ((portno < 1024) || (portno > 65535)) {
                     throw new NumberFormatException ("out of range");
                 }
+                editr.putInt ("wifiudpgps.portno", portno);
+                editr.apply ();
+                restartThread ();
             } catch (NumberFormatException nfe) {
                 mainActivity.showToast ("must be integer 1024..65535");
-                return true;
             }
-            editr.putInt ("wifiudpgps.portno", portno);
-            editr.apply ();
-            restartThread ();
-            return false;
         }
 
         @Override

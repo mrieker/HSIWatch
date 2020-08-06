@@ -119,11 +119,13 @@ public class SendMainPage implements GpsTransmitter {
         ipAddrBox.setEms (6);
         ipAddrBox.listener = new MyEditText.Listener () {
             @Override
-            public boolean onEnterKey (TextView v) {
-                return setIpAddr (v.getText ().toString ().trim ());
+            public void onEnterKey (TextView v)
+            {
+                setIpAddr (v.getText ().toString ().trim ());
             }
             @Override
-            public void onBackKey (TextView v) {
+            public void onBackKey (TextView v)
+            {
                 v.setText (prefs.getString ("udpSendIpAddr", ""));
             }
         };
@@ -139,9 +141,9 @@ public class SendMainPage implements GpsTransmitter {
         portNoBox.setEms (6);
         portNoBox.listener = new MyEditText.Listener () {
             @Override
-            public boolean onEnterKey (TextView v)
+            public void onEnterKey (TextView v)
             {
-                return setPortNo (v.getText ().toString ().trim ());
+                setPortNo (v.getText ().toString ().trim ());
             }
             @Override
             public void onBackKey (TextView v)
@@ -186,14 +188,14 @@ public class SendMainPage implements GpsTransmitter {
         uuidPfxBox.setEms (4);
         uuidPfxBox.listener = new MyEditText.Listener () {
             @Override
-            public boolean onEnterKey (TextView v)
+            public void onEnterKey (TextView v)
             {
                 btEnabCkBox.setChecked (false);
                 bluetoothServer.shutdown ();
                 SharedPreferences.Editor editr = prefs.edit ();
                 editr.putBoolean ("btLisEnable", false);
                 editr.apply ();
-                return setBtUUIDPfx (v.getText ().toString ().trim ());
+                setBtUUIDPfx (v.getText ().toString ().trim ());
             }
             @Override
             public void onBackKey (TextView v)
@@ -444,7 +446,7 @@ public class SendMainPage implements GpsTransmitter {
      *  Transmit GPS data in the blind to given ipaddr/portno  *
     \***********************************************************/
 
-    private boolean setIpAddr (String text)
+    private void setIpAddr (String text)
     {
         try {
             servipaddr = InetAddress.getByName (text);
@@ -454,12 +456,10 @@ public class SendMainPage implements GpsTransmitter {
             editr.apply ();
         } catch (Exception e) {
             mainActivity.showToast (e.getMessage ());
-            return true;
         }
-        return false;
     }
 
-    private boolean setPortNo (String text)
+    private void setPortNo (String text)
     {
         try {
             int pn = Integer.parseInt (text);
@@ -473,9 +473,7 @@ public class SendMainPage implements GpsTransmitter {
             editr.apply ();
         } catch (Exception e) {
             mainActivity.showToast (e.getMessage ());
-            return true;
         }
-        return false;
     }
 
     // set up local UDP socket if everything is set up
@@ -493,7 +491,7 @@ public class SendMainPage implements GpsTransmitter {
      *  Bluetooth processing  *
     \**************************/
 
-    private boolean setBtUUIDPfx (String text)
+    private void setBtUUIDPfx (String text)
     {
         try {
             if (text.length () != 8) throw new Exception ("uuid prefix must be 8 hexadecimal digits");
@@ -503,9 +501,7 @@ public class SendMainPage implements GpsTransmitter {
             editr.apply ();
         } catch (Exception e) {
             mainActivity.showToast (e.getMessage ());
-            return true;
         }
-        return false;
     }
 
     @SuppressLint("SetTextI18n")

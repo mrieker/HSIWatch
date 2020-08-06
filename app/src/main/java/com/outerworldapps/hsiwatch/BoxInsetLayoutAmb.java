@@ -41,7 +41,7 @@ import java.util.HashSet;
 import androidx.wear.widget.BoxInsetLayout;
 
 // wraps BoxInsetLayout changing all the contents to grayscale when in ambient mode
-public class BoxInsetLayoutAmb extends BoxInsetLayout implements KeepGpsOn {
+public class BoxInsetLayoutAmb extends BoxInsetLayout {
     private Bitmap backButtonImage;
     private ColorStateList backgroundColor;
     private ColorStateList foregroundColor;

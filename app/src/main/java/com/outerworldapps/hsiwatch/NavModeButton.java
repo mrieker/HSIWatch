@@ -297,12 +297,7 @@ public class NavModeButton {
 
                 // pretend like those letters and numbers were typed in waypoint ident box
                 identEntry.setText (sb);
-                if (identEntry.onEnterKey (identEntry)) {
-
-                    // failed to look it up in database, restore text box and re-open speech input
-                    identEntry.setText ((mainActivity.navWaypt == null) ? "" : mainActivity.navWaypt.ident);
-                    displaySpeechRecognizer ();
-                }
+                identEntry.onEnterKey (identEntry);
             }
         }
     }
