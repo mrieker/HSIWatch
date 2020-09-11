@@ -22,13 +22,14 @@ package com.outerworldapps.hsiwatch;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.pm.PackageManager;
 import android.location.GnssStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 
@@ -37,23 +38,25 @@ import androidx.core.app.ActivityCompat;
 /**
  * Use internal GPS receiver to determine location.
  */
+@SuppressLint("SetTextI18n")
 public class InternalGps extends GnssStatus.Callback implements GpsReceiver, LocationListener {
     private final static int rate_amb = 20000;
     private final static int rate_nor =  1000;
-    private final static View[] paramViews = new View[0];
 
+    private boolean haveAskedPerm;
+    private boolean haveShownNoGps;
     private boolean locationRunning;
     private boolean statusRunning;
     private LocationManager locationManager;
     private MainActivity mainActivity;
+    private TextView statusTextView;
 
     public InternalGps (MainActivity ma)
     {
         mainActivity = ma;
         locationManager = mainActivity.getSystemService (LocationManager.class);
-        if (locationManager == null) {
-            mainActivity.showToastLong ("no location manager");
-        }
+        statusTextView = new TextView (mainActivity);
+        statusTextView.setText ("off");
     }
 
     @SuppressLint("MissingPermission")
@@ -69,7 +72,10 @@ public class InternalGps extends GnssStatus.Callback implements GpsReceiver, Loc
     @Override  // GpsReceiver
     public View[] getParamViews ()
     {
-        return paramViews;
+        TextView tv = new TextView (mainActivity);
+        tv.setText (statusTextView.getText ());
+        statusTextView = tv;
+        return new View[] { statusTextView };
     }
 
     @SuppressLint("MissingPermission")
@@ -85,37 +91,38 @@ public class InternalGps extends GnssStatus.Callback implements GpsReceiver, Loc
     @Override  // GpsReceiver
     public boolean startLocationSensor ()
     {
-        if (ActivityCompat.checkSelfPermission (mainActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions (mainActivity,
-                    new String[] { Manifest.permission.ACCESS_FINE_LOCATION },
-                    MainActivity.RC_INTGPS);
-            return false;
-        }
-
-        int rate = mainActivity.isAmbient () ? rate_amb : rate_nor;
-        locationManager.requestLocationUpdates (LocationManager.GPS_PROVIDER, rate, 0.0F, this);
-        locationRunning = true;
-        return true;
+        boolean ok = startGpsGoing (new Runnable () {
+            @Override
+            public void run ()
+                    throws IllegalArgumentException, NullPointerException, SecurityException
+            {
+                int rate = mainActivity.isAmbient () ? rate_amb : rate_nor;
+                locationManager.requestLocationUpdates (LocationManager.GPS_PROVIDER, rate, 0.0F, InternalGps.this);
+            }
+        });
+        locationRunning = ok;
+        return ok;
     }
 
     @Override  // GpsReceiver
     public boolean startStatusSensor ()
     {
-        if (ActivityCompat.checkSelfPermission (mainActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions (mainActivity,
-                    new String[] { Manifest.permission.ACCESS_FINE_LOCATION },
-                    MainActivity.RC_INTGPS);
-            return false;
-        }
-
-        locationManager.registerGnssStatusCallback (this);
-        statusRunning = true;
-        return true;
+        boolean ok = startGpsGoing (new Runnable () {
+            @Override
+            public void run ()
+                    throws IllegalArgumentException, NullPointerException, SecurityException
+            {
+                locationManager.registerGnssStatusCallback (InternalGps.this);
+            }
+        });
+        statusRunning = ok;
+        return ok;
     }
 
     @Override  // GpsReceiver
     public boolean stopLocationSensor ()
     {
+        if (locationManager == null) return false;
         boolean loc = locationRunning;
         locationRunning = false;
         locationManager.removeUpdates (this);
@@ -125,6 +132,7 @@ public class InternalGps extends GnssStatus.Callback implements GpsReceiver, Loc
     @Override  // GpsReceiver
     public boolean stopStatusSensor ()
     {
+        if (locationManager == null) return false;
         boolean sts = statusRunning;
         statusRunning = false;
         locationManager.unregisterGnssStatusCallback (this);
@@ -170,5 +178,40 @@ public class InternalGps extends GnssStatus.Callback implements GpsReceiver, Loc
             gs.used = status.usedInFix (i);
         }
         mainActivity.gpsStatusReceived (statuses);
+    }
+
+    // start GPS location or status updates
+    // checks for no internal GPS receiver present
+    // checks for no GPS permission granted, requesting if needed
+    private boolean startGpsGoing (Runnable r)
+    {
+        try {
+            r.run ();
+            statusTextView.setText ("enabled");
+            return true;
+        } catch (IllegalArgumentException | NullPointerException iaenpe) {
+            // java.lang.IllegalArgumentException: provider doesn't exist: gps
+            Log.w (MainActivity.TAG, "exception enabling internal gps", iaenpe);
+            locationManager = null;
+            statusTextView.setText ("no internal GPS");
+            if (! haveShownNoGps) {
+                haveShownNoGps = true;
+                mainActivity.showToast ("no internal GPS");
+                mainActivity.showToast ("select alternative");
+                mainActivity.showMainPage (mainActivity.gpsPageView);
+            }
+            return false;
+        } catch (SecurityException se) {
+            // java.lang.SecurityException: "gps" location provider requires ACCESS_FINE_LOCATION permission.
+            Log.w (MainActivity.TAG, "exception enabling internal gps", se);
+            if (! haveAskedPerm) {
+                haveAskedPerm = true;
+                statusTextView.setText ("permission denied");
+                ActivityCompat.requestPermissions (mainActivity,
+                        new String[] { Manifest.permission.ACCESS_FINE_LOCATION },
+                        MainActivity.RC_INTGPS);
+            }
+            return false;
+        }
     }
 }

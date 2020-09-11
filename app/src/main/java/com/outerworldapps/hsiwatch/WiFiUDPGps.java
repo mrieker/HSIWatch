@@ -58,7 +58,7 @@ public class WiFiUDPGps extends ExternalGps {
             TextView portnoLabel = new TextView (mainActivity);
             portnoLabel.setText ("port");
             portnoView = new MyEditText (mainActivity);
-            portno = prefs.getInt ("wifiudpgps.portno", 1269);
+            portno = prefs.getInt ("wifiudpgps.portno", 4000);
             portnoView.setInputType (InputType.TYPE_CLASS_NUMBER);
             portnoView.listener = portnoEntered;
             LinearLayout portnoLine = new LinearLayout (mainActivity);
