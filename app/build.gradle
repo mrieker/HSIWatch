@@ -20,14 +20,14 @@ def getGitStatus = { ->
 }
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
 
     defaultConfig {
         applicationId "com.outerworldapps.hsiwatch"
         minSdkVersion 25
-        targetSdkVersion 28
-        versionCode 10703
-        versionName "1.7.3"
+        targetSdkVersion 29
+        versionCode 10704
+        versionName "1.7.4"
         buildConfigField "String", "GitHash", "\"${getGitHash()}\""
         buildConfigField "String", "GitStatus", "\"${getGitStatus()}\""
     }

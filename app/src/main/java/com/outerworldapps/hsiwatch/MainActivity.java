@@ -93,12 +93,14 @@ public class MainActivity extends WearableActivity {
     public  Paint airplanePaint;
     public  Path airplanePath;
     private RadioGroup gpsSource;
+    public  RwyDiagView rwyDiagView;
     private SimulatorGps simulatorGps;
     private Stack<View> mainPageStack;
     public  View currentMainPage;
     public  View gpsPageView;
     public  View mapPageView;
     private View navMainPage;
+    public  View rwyPageView;
     public  Waypt navWaypt;
     public  WiFiUDPGps wiFiUDPGps;
 
@@ -166,6 +168,9 @@ public class MainActivity extends WearableActivity {
         mapPageView = layoutInflater.inflate (R.layout.map_page, null);
         mapDialView = mapPageView.findViewById (R.id.mapDialView);
 
+        rwyPageView = layoutInflater.inflate (R.layout.rwy_page, null);
+        rwyDiagView = rwyPageView.findViewById (R.id.rwyDiagView);
+
         // top button zooms out
         mapTopButton = mapPageView.findViewById (R.id.mapZoomOutButton);
         mapTopButton.setChar ('+');
@@ -231,6 +236,11 @@ public class MainActivity extends WearableActivity {
         mapPageView.setScaleY (scale);
         mapPageView.setTranslationX (xt);
         mapPageView.setTranslationY (yt);
+
+        rwyPageView.setScaleX (scale);
+        rwyPageView.setScaleY (scale);
+        rwyPageView.setTranslationX (xt);
+        rwyPageView.setTranslationY (yt);
     }
 
     @Override
@@ -276,6 +286,7 @@ public class MainActivity extends WearableActivity {
             gpsReceiver.enterAmbient ();
             navDialView.setAmbient ();
             mapDialView.setAmbient ();
+            rwyDiagView.setAmbient ();
             mapBotButton.setAmbient ();
             mapTopButton.setAmbient ();
         }
@@ -296,6 +307,7 @@ public class MainActivity extends WearableActivity {
             airplanePaint.setColor (Color.RED);
             navDialView.setAmbient ();
             mapDialView.setAmbient ();
+            rwyDiagView.setAmbient ();
             mapBotButton.setAmbient ();
             mapTopButton.setAmbient ();
             gpsReceiver.exitAmbient ();
@@ -779,9 +791,7 @@ public class MainActivity extends WearableActivity {
         mapDialView.invalidate ();
 
         // update runway diagram
-        if (mapDialView.rwyDiagView != null) {
-            mapDialView.rwyDiagView.invalidate ();
-        }
+        rwyDiagView.invalidate ();
     }
 
     /**

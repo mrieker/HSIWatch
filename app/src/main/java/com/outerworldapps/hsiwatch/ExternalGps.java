@@ -35,9 +35,9 @@ public abstract class ExternalGps implements GpsReceiver {
     private ReceiverThread receiverThread;
     protected StatusTextView statusView;
 
-    protected abstract String getPeerName ();
     protected abstract Closeable openSocket () throws Exception;
     protected abstract String readSocket () throws Exception;
+    protected abstract String receiveException (Exception e);
 
     public ExternalGps (MainActivity ma)
     {
@@ -100,13 +100,14 @@ public abstract class ExternalGps implements GpsReceiver {
         return sts;
     }
 
-    // restart thread after a change of something like port number
+    // restart thread after a change of something like device or UUID
     protected void restartThread ()
     {
         if (receiverThread != null) {
             receiverThread.kill ();
-            receiverThread = new ReceiverThread ();
+            receiverThread = null;
         }
+        receiverThread = new ReceiverThread ();
     }
 
     // read NMEA messages from bluetooth device, call processIncomingNMEA() for each received
@@ -116,19 +117,26 @@ public abstract class ExternalGps implements GpsReceiver {
         private boolean killed;
         private Closeable socket;
         private Exception exception;
-        private String peerName;
 
         public ReceiverThread ()
         {
-            peerName = getPeerName ();
             start ();
         }
 
         public void kill ()
         {
-            killed = true;
-            try { socket.close (); } catch (Exception ignored) { }
-            try { join (); } catch (InterruptedException ignored) { }
+            synchronized (this) {
+                if (! killed) {
+                    killed = true;
+                    new Thread () {
+                        @Override
+                        public void run ()
+                        {
+                            try { socket.close (); } catch (Exception ignored) { }
+                        }
+                    }.start ();
+                }
+            }
         }
 
         @SuppressLint("SetTextI18n")
@@ -137,16 +145,16 @@ public abstract class ExternalGps implements GpsReceiver {
         {
             setName ("ExternalGps Receiver");
             try {
-                statusView.setText ("[" + peerName + "] connecting");
+                statusView.setText ("connecting");
                 socket = openSocket ();
 
                 /*
                  * Process incoming messages.
                  */
-                statusView.setText ("[" + peerName + "] listening");
+                statusView.setText ("listening");
                 int n = 0;
                 for (String line; ! killed && (line = readSocket ()) != null;) {
-                    statusView.setText ("[" + peerName + "] received " + ++ n);
+                    statusView.setText ("received " + ++ n);
                     decodeNMEA.gotLine (line);
                 }
             } catch (Exception e) {
@@ -162,13 +170,13 @@ public abstract class ExternalGps implements GpsReceiver {
                         @Override
                         public void run ()
                         {
-                            statusView.setText ("[" + peerName + "] error " + exception.getMessage ());
-                            mainActivity.showToastLong ("error receiving packet " +
-                                    exception.getMessage ());
+                            String msg = receiveException (exception);
+                            statusView.setText (msg);
+                            mainActivity.showToastLong ("error receiving\n" + msg);
                         }
                     });
                 } else {
-                    statusView.setText ("[" + peerName + "] disconnected");
+                    statusView.setText ("disconnected");
                 }
             }
         }

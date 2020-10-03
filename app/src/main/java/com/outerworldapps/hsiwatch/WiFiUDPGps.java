@@ -98,15 +98,6 @@ public class WiFiUDPGps extends ExternalGps {
     };
 
     /**
-     * Get peer name for messages.
-     */
-    @Override  // ExternalGps
-    protected String getPeerName ()
-    {
-        return Integer.toString (portno);
-    }
-
-    /**
      * Enable receiving NMEA packets from GPS device via WiFi.
      */
     @Override  // ExternalGps
@@ -129,5 +120,11 @@ public class WiFiUDPGps extends ExternalGps {
     {
         socket.receive (packet);
         return new String (buffer, 0, packet.getLength ());
+    }
+
+    @Override  // ExternalGps
+    protected String receiveException (Exception e)
+    {
+        return e.getMessage ();
     }
 }

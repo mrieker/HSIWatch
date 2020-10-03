@@ -53,6 +53,7 @@ public class SendMainPage implements GpsTransmitter {
     private final static int numsats = 12;
     private final static String btServerUUIDPrefixDef = "00001101";
     private final static String btServerUUIDSuffix = "-0000-1000-8000-00805f9b34fb";
+    private final static String btServerUUIDSuffixSplit = "-0000-1000-8000\n-00805f9b34fb";
 
     private final static byte[] hexbytes = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' };
 
@@ -225,8 +226,10 @@ public class SendMainPage implements GpsTransmitter {
         linearLayout.addView (llon, llpwc);
         linearLayout.addView (lp2, llpwc);
         linearLayout.addView (llbt, llpwc);
-        linearLayout.addView (TextString (btServerUUIDSuffix));
+        linearLayout.addView (TextString (btServerUUIDSuffixSplit), llpwc);
         linearLayout.addView (conCountView, llpwc);
+        linearLayout.addView (TextString (" "), llpwc);
+        linearLayout.addView (TextString (" "), llpwc);
 
         // allow network IO from GUI thread
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();

@@ -33,6 +33,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -111,7 +112,6 @@ public class MapDialView extends OBSDialView {
     private Paint rangeRingPaint;
     private Paint wayptPaint;
     private RadioGroup nearRadioGroup;
-    public  RwyDiagView rwyDiagView;
     private UpdateThread updateThread;
     private View nearPageView;
 
@@ -191,8 +191,7 @@ public class MapDialView extends OBSDialView {
     @Override
     public View getRightView ()
     {
-        if (rwyDiagView == null) rwyDiagView = new RwyDiagView (mainActivity);
-        return rwyDiagView;
+        return mainActivity.rwyPageView;
     }
 
     // go UP: open nearby airport selection page
@@ -276,10 +275,19 @@ public class MapDialView extends OBSDialView {
                 rb.setText (mapwpt.rbString ());
                 nearRadioGroup.addView (rb);
             }
+            nearRadioGroup.addView (makeTextSpacer ());
+            nearRadioGroup.addView (makeTextSpacer ());
         }
 
         // display back button and radio buttons
         return nearPageView;
+    }
+
+    private View makeTextSpacer ()
+    {
+        TextView tv = new TextView (mainActivity);
+        tv.setText (" ");
+        return tv;
     }
 
     // zoom-{in,out} was clicked, change radius
@@ -311,7 +319,6 @@ public class MapDialView extends OBSDialView {
             outerRingPaint.setColor (redRing ? Color.RED : Color.GRAY);
             rangeRingPaint.setColor (Color.YELLOW);
         }
-        if (rwyDiagView != null) rwyDiagView.setAmbient ();
         invalidate ();
     }
 
