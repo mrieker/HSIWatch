@@ -21,5 +21,5 @@
 package com.outerworldapps.hsiwatch;
 
 public interface Invalidatable {
-    public void postInvalidate ();
+    void postInvalidate ();
 }

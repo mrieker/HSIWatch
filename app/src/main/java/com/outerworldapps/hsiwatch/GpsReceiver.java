@@ -30,6 +30,7 @@ import android.view.View;
 public interface GpsReceiver {
     View[] getParamViews ();
     boolean startLocationSensor ();
+    @SuppressWarnings("UnusedReturnValue")
     boolean startStatusSensor ();
     boolean stopLocationSensor ();
     boolean stopStatusSensor ();

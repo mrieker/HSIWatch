@@ -106,7 +106,6 @@ public class BluetoothGps extends ExternalGps {
         // try to select previously selected device, uuid, secure
         btdevSelected = null;
         String btdevidstr = prefs.getString ("bluetoothgps.devident", "");
-        assert btdevidstr != null;
         if (btdevidstr.equals ("")) {
             btdevidView.setText ("select...");
         } else {

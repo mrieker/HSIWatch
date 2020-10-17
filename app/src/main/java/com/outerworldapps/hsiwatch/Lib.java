@@ -380,22 +380,6 @@ public class Lib {
     }
 
     /**
-     * Dismiss a dialog box.
-     */
-    public static void dismiss (DialogInterface dialog)
-    {
-        if (dialog != null) {
-            try {
-                dialog.dismiss ();
-            } catch (Exception e) {
-                // got IllegalArgumentException in PhoneWindow$DecorView
-                // ... not attached to window manager
-                Log.w (MainActivity.TAG, "exception dismissing dialog", e);
-            }
-        }
-    }
-
-    /**
      * Various compiler warnings.
      */
     public static void Ignored (@SuppressWarnings("UnusedParameters") boolean x) { }

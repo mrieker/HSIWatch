@@ -269,7 +269,7 @@ public class NavModeButton {
             StringBuilder sb = new StringBuilder ();
             List<String> results = data.getStringArrayListExtra (RecognizerIntent.EXTRA_RESULTS);
             boolean turnedOff = false;
-            for (String result : results) {
+            if (results != null) for (String result : results) {
                 Log.d (MainActivity.TAG, "speech result='" + result + "'");
                 for (String word : result.replace ("/", " ").split (" ")) {
                     Character ch = letters.get (word.toLowerCase (Locale.US));

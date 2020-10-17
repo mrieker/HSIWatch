@@ -606,6 +606,7 @@ public class OpenStreetMap {
                      * Read stream into temp file.
                      */
                     try (InputStream is = httpCon.getInputStream ()) {
+                        //noinspection ConstantConditions
                         Lib.Ignored (permfile.getParentFile ().mkdirs ());
                         try (OutputStream os = new FileOutputStream (tempfile)) {
                             byte[] buff = new byte[4096];

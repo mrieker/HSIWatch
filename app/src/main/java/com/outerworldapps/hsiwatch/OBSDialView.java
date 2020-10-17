@@ -39,7 +39,6 @@ public abstract class OBSDialView extends DialFlickView {
 
     protected final static int INNARDSRADIUS = 630;
     protected abstract double getDispMagVar ();
-    protected abstract boolean getSimplify ();
     protected abstract void onDrawInnards (Canvas canvas, double trueup, double scale);
 
     private boolean firstTime;
@@ -54,10 +53,7 @@ public abstract class OBSDialView extends DialFlickView {
     private MainActivity mainActivity;
     private Paint adfNeedlePaint;
     private Paint dialBackPaint;
-    private Paint dialFatPaint;
-    private Paint dialMidPaint;
     private Paint dialTextPaint;
-    private Paint dialThinPaint;
     private Paint dirArrowPaint;
     private Paint dmeDistPaint;
     private Paint dmeTimePaint;
@@ -99,23 +95,11 @@ public abstract class OBSDialView extends DialFlickView {
         dialBackPaint.setStrokeWidth (175);
         dialBackPaint.setStyle (Paint.Style.STROKE);
 
-        dialFatPaint = new Paint ();
-        dialFatPaint.setColor (Color.WHITE);
-        dialFatPaint.setStrokeWidth (25);
-
-        dialMidPaint = new Paint ();
-        dialMidPaint.setColor (Color.WHITE);
-        dialMidPaint.setStrokeWidth (15);
-
         dialTextPaint = new Paint ();
         dialTextPaint.setColor (Color.WHITE);
         dialTextPaint.setStrokeWidth (10);
         dialTextPaint.setTextAlign (Paint.Align.CENTER);
         dialTextPaint.setTextSize (140);
-
-        dialThinPaint = new Paint ();
-        dialThinPaint.setColor (Color.WHITE);
-        dialThinPaint.setStrokeWidth (10);
 
         dirArrowPaint = new Paint ();
         dirArrowPaint.setStyle (Paint.Style.FILL_AND_STROKE);
@@ -321,9 +305,6 @@ public abstract class OBSDialView extends DialFlickView {
         canvas.save ();
         try {
 
-            // simplified format
-            boolean simplify = getSimplify ();
-
             // set up translation/scaling so that outer ring is radius 1000 centered at 0,0
             float width = getWidth ();
             float height = getHeight ();
@@ -395,53 +376,27 @@ public abstract class OBSDialView extends DialFlickView {
             canvas.save ();
             try {
                 canvas.clipPath (circleClipPath);
-                if (simplify) {
-                    canvas.scale (SIMPLESCALE, SIMPLESCALE);
-                    scale *= SIMPLESCALE;
-                }
+                canvas.scale (SIMPLESCALE, SIMPLESCALE);
+                scale *= SIMPLESCALE;
                 onDrawInnards (canvas, trueup, scale);
             } finally {
                 canvas.restore ();
             }
-
-            // draw backing for tickmarks
-            if (!simplify) canvas.drawCircle (0, 0, 718, dialBackPaint);
 
             // everything below drawn assuming magnetic north is up
             canvas.rotate ((float) -magvar);
 
             // draw OBS dial with "0" at top
             canvas.drawCircle (0, 0, 890, obsBackPaint);
-            int step = simplify ? 30 : 5;
-            for (int deg = 0; deg < 360; deg += step) {
-                switch ((deg / 5) % 6) {
-                    case 0: {
-                        // number and a thick line
-                        canvas.drawText (Integer.toString (deg), 0, -823, dialTextPaint);
-                        if (!simplify) canvas.drawLine (0, -647, 0, -788, dialFatPaint);
-                        break;
-                    }
-                    case 2:
-                    case 4: {
-                        // a medium line
-                        canvas.drawLine (0, -647, 0, -788, dialMidPaint);
-                        break;
-                    }
-                    case 1:
-                    case 3:
-                    case 5: {
-                        // a small thin line
-                        canvas.drawLine (0, -647, 0, -718, dialThinPaint);
-                        break;
-                    }
-                }
-                canvas.rotate (step);
+            for (int deg = 0; deg < 360; deg += 30) {
+                canvas.drawText (Integer.toString (deg), 0, -823, dialTextPaint);
+                canvas.rotate (30);
             }
 
             // draw obs triangle
             canvas.save ();
             try {
-                if (simplify) canvas.scale (SIMPLESCALE, SIMPLESCALE);
+                canvas.scale (SIMPLESCALE, SIMPLESCALE);
                 canvas.rotate ((float) mainActivity.obsSetting);
                 canvas.drawPath (obsArrowPath, obsArrowPaint);
             } finally {

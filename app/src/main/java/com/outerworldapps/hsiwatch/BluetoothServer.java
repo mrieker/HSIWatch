@@ -131,6 +131,7 @@ public class BluetoothServer {
         {
             try {
                 BluetoothManager bm = udpMainPage.mainActivity.getSystemService (BluetoothManager.class);
+                @SuppressWarnings("ConstantConditions")
                 BluetoothAdapter ba = bm.getAdapter ();
                 if (ba == null) throw new Exception ("no bluetooth on this device");
                 serverSocket = ba.listenUsingInsecureRfcommWithServiceRecord ("HSIWatch", sppUUID);

@@ -246,9 +246,11 @@ public class MainActivity extends WearableActivity {
     @Override
     public void onDestroy ()
     {
-        navModeButton.setMode (NavDialView.Mode.OFF);
-        currentMainPage = null;
-        activateGPS ();
+        if (navModeButton != null) {
+            navModeButton.setMode (NavDialView.Mode.OFF);
+            currentMainPage = null;
+            activateGPS ();
+        }
 
         super.onDestroy ();
     }
@@ -394,21 +396,17 @@ public class MainActivity extends WearableActivity {
         // maybe load up waypoint from preferences
         SharedPreferences prefs = getPreferences (MODE_PRIVATE);
         String navWayptId = prefs.getString ("navWayptId", "");
-        if ((navWayptId != null) && ! navWayptId.equals ("")) {
+        if (! navWayptId.equals ("")) {
             navModeButton.identEntry.setText (navWayptId);
             SQLiteDatabase sqldb = downloadThread.getSqlDB ();
             if (sqldb != null) {
                 LatLon refll = new LatLon ();
-                //noinspection ConstantConditions
                 refll.lat = Double.parseDouble (prefs.getString ("navWayptLat", "0.0"));
-                //noinspection ConstantConditions
                 refll.lon = Double.parseDouble (prefs.getString ("navWayptLon", "0.0"));
                 setNavWaypt (Waypt.find (sqldb, navWayptId, refll));
             }
         }
-        //noinspection ConstantConditions
         startlat = Lib.parseDouble (prefs.getString ("startlat", "NaN"));
-        //noinspection ConstantConditions
         startlon = Lib.parseDouble (prefs.getString ("startlon", "NaN"));
     }
 

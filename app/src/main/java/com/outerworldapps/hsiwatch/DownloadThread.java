@@ -40,12 +40,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.zip.GZIPInputStream;
+
+import androidx.annotation.NonNull;
 
 /**
  * Thread what downloads latest database.
@@ -79,7 +80,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
     public void deleteAll ()
     {
         File[] files = new File (dbdir).listFiles ();
-        for (File file : files) {
+        if (files != null) for (File file : files) {
             Lib.Ignored (file.delete ());
         }
     }
@@ -101,6 +102,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
             latestdb = 0;
             SimpleDateFormat sdf = new SimpleDateFormat ("yyyyMMdd", Locale.US);
             sdf.setTimeZone (TimeZone.getTimeZone ("UTC"));
+            //noinspection ConstantConditions
             for (File oldfile : new File (dbdir).listFiles ()) {
                 String oldname = oldfile.getName ();
                 if (oldname.startsWith ("wayptabbs_") && oldname.endsWith (".db")) {
@@ -112,6 +114,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
                     }
                     try {
                         String expstr = oldname.substring (10, oldname.length () - 3);
+                        @SuppressWarnings("ConstantConditions")
                         long dbexp = sdf.parse (expstr).getTime ();
                         if (latestdb < dbexp) {
                             latestdb = dbexp;
@@ -245,6 +248,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
                 }
 
                 // delete any old files (including temps)
+                //noinspection ConstantConditions
                 for (File oldfile : new File (dbdir).listFiles ()) {
                     if (oldfile.getName ().startsWith ("wayptabbs_") && ! oldfile.equals (permfile)) {
                         //noinspection ResultOfMethodCallIgnored
@@ -386,7 +390,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
 
         // read next block, either from old temp file or from network
         @Override
-        public int read (byte[] buf, int ofs, int len)
+        public int read (@NonNull byte[] buf, int ofs, int len)
                 throws IOException
         {
             if (len > filesize - bytesread) len = (int) (filesize - bytesread);
@@ -498,9 +502,10 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
         SimpleDateFormat sdf = new SimpleDateFormat ("yyyyMMdd", Locale.US);
         sdf.setTimeZone (TimeZone.getTimeZone ("UTC"));
         try {
+            //noinspection ConstantConditions
             latestdb = sdf.parse (dbpath.substring (i + 11, i + 19)).getTime ();
-        } catch (ParseException pe) {
-            throw new IllegalArgumentException ("bad dbpath " + dbpath, pe);
+        } catch (Exception e) {
+            throw new IllegalArgumentException ("bad dbpath " + dbpath, e);
         }
 
         dbexp = dbpath.substring (i + 11, i + 15) + "-" +

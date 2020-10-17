@@ -88,21 +88,11 @@
                 android:text="Ambient" />
 
             <CheckBox
-                android:id="@+id/simplifyCkBox"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="58dp"
-                android:layout_marginTop="48dp"
-                android:text="Simplify"
-                android:textSize="12sp"
-                tools:ignore="HardcodedText" />
-
-            <CheckBox
                 android:id="@+id/timeDotsCkBox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="58dp"
-                android:layout_marginTop="72dp"
+                android:layout_marginTop="48dp"
                 android:text="Time Dots"
                 android:textSize="12sp"
                 tools:ignore="HardcodedText" />

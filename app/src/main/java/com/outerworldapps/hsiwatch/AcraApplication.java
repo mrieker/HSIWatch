@@ -95,7 +95,7 @@ public class AcraApplication extends Application {
                  * Loop through all files in the data directory.
                  */
                 File[] filelist = dir.listFiles ();
-                for (File file : filelist) {
+                if (filelist != null) for (File file : filelist) {
 
                     /*
                      * Delete any files ending in .acra.gz.tmp cuz they weren't finished.

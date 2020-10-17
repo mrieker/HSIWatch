@@ -226,13 +226,6 @@ public class RwyDiagView extends OBSDialView implements Invalidatable {
         return (airport == null) ? 0.0 : airport.getMagVar (0.0);
     }
 
-    // always use simplified display
-    @Override
-    protected boolean getSimplify ()
-    {
-        return true;
-    }
-
     // draw diagram assuming true north is up
     @Override
     protected void onDrawInnards (Canvas canvas, double trueup, double scale)

@@ -101,8 +101,8 @@ public class GpsStatusView
         gravity    = null;
         compRotDeg = Float.NaN;
         textPaint.setTextSize (24.0F);
-        instrSM    = getContext ().getSystemService (SensorManager.class);
-        if (USECOMPASS) {
+        if (USECOMPASS) instrSM = getContext ().getSystemService (SensorManager.class);
+        if (instrSM != null) {
             Sensor smf = instrSM.getDefaultSensor (Sensor.TYPE_MAGNETIC_FIELD);
             Sensor sac = instrSM.getDefaultSensor (Sensor.TYPE_ACCELEROMETER);
             instrSM.registerListener (this, smf, SensorManager.SENSOR_DELAY_UI);
@@ -114,7 +114,7 @@ public class GpsStatusView
 
     public void Shutdown ()
     {
-        instrSM.unregisterListener (this);
+        if (instrSM != null) instrSM.unregisterListener (this);
         mainActivity.gpsReceiver.stopStatusSensor ();
     }
 

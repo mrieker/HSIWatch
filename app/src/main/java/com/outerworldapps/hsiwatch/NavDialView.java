@@ -322,15 +322,6 @@ public class NavDialView extends OBSDialView {
     }
 
     /**
-     * See if user wants simplified format.
-     */
-    @Override
-    protected boolean getSimplify ()
-    {
-        return (mainActivity != null) && mainActivity.menuMainPage.simplifyCkBox.isChecked ();
-    }
-
-    /**
      * Draw the nav widget innards.
      */
     @Override

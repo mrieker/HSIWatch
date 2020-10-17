@@ -446,13 +446,6 @@ public class MapDialView extends OBSDialView {
         return mainActivity.curLoc.magvar;
     }
 
-    // always use simplified display
-    @Override
-    protected boolean getSimplify ()
-    {
-        return true;
-    }
-
     // draw moving map assuming true north is up
     @Override
     protected void onDrawInnards (Canvas canvas, double trueup, double scale)

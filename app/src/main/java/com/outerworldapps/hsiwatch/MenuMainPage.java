@@ -41,7 +41,6 @@ public class MenuMainPage {
     public  CheckBox ambEnabCkBox;
     public  CheckBox fillChinCkBox;
     public  CheckBox hsiModeCkBox;
-    public  CheckBox simplifyCkBox;
     public  CheckBox timeDotsCkBox;
     private SendMainPage sendMainPage;
     private int numResetClicks;
@@ -120,18 +119,6 @@ public class MenuMainPage {
                 boolean checked = ambEnabCkBox.isChecked ();
                 SharedPreferences.Editor editr = prefs.edit ();
                 editr.putBoolean ("ambModeEnab", checked);
-                editr.apply ();
-            }
-        });
-
-        simplifyCkBox = menuPageView.findViewById (R.id.simplifyCkBox);
-        simplifyCkBox.setChecked (prefs.getBoolean ("simplify", false));
-        simplifyCkBox.setOnClickListener (new View.OnClickListener () {
-            @Override
-            public void onClick (View v)
-            {
-                SharedPreferences.Editor editr = prefs.edit ();
-                editr.putBoolean ("simplify", simplifyCkBox.isChecked ());
                 editr.apply ();
             }
         });
