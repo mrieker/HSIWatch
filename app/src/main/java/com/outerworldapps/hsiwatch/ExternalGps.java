@@ -25,6 +25,8 @@ import android.util.Log;
 
 import java.io.Closeable;
 
+import androidx.annotation.NonNull;
+
 /**
  * Use Bluetooth or WiFi UDP to receive GPS location and status information.
  */
@@ -35,7 +37,7 @@ public abstract class ExternalGps implements GpsReceiver {
     private ReceiverThread receiverThread;
     protected StatusTextView statusView;
 
-    protected abstract Closeable openSocket () throws Exception;
+    protected abstract @NonNull Closeable openSocket () throws Exception;
     protected abstract String readSocket () throws Exception;
     protected abstract String receiveException (Exception e);
 
@@ -107,7 +109,9 @@ public abstract class ExternalGps implements GpsReceiver {
             receiverThread.kill ();
             receiverThread = null;
         }
-        receiverThread = new ReceiverThread ();
+        if (capable) {
+            receiverThread = new ReceiverThread ();
+        }
     }
 
     // read NMEA messages from bluetooth device, call processIncomingNMEA() for each received
@@ -147,10 +151,6 @@ public abstract class ExternalGps implements GpsReceiver {
             try {
                 statusView.setText ("connecting");
                 socket = openSocket ();
-
-                /*
-                 * Process incoming messages.
-                 */
                 statusView.setText ("listening");
                 int n = 0;
                 for (String line; ! killed && (line = readSocket ()) != null;) {
@@ -164,6 +164,7 @@ public abstract class ExternalGps implements GpsReceiver {
                 }
             } finally {
                 try { socket.close (); } catch (Exception ignored) { }
+                statusView.setText ("disconnected");
                 if (exception != null) {
                     mainActivity.runOnUiThread (new Runnable () {
                         @SuppressLint("SetTextI18n")
@@ -171,12 +172,9 @@ public abstract class ExternalGps implements GpsReceiver {
                         public void run ()
                         {
                             String msg = receiveException (exception);
-                            statusView.setText (msg);
                             mainActivity.showToastLong ("error receiving\n" + msg);
                         }
                     });
-                } else {
-                    statusView.setText ("disconnected");
                 }
             }
         }

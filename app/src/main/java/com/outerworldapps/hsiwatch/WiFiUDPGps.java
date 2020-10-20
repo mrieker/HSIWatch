@@ -32,6 +32,8 @@ import java.io.Closeable;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
+import androidx.annotation.NonNull;
+
 /**
  * Use WiFi UDP to receive GPS location and status information.
  */
@@ -101,7 +103,7 @@ public class WiFiUDPGps extends ExternalGps {
      * Enable receiving NMEA packets from GPS device via WiFi.
      */
     @Override  // ExternalGps
-    protected Closeable openSocket ()
+    protected @NonNull Closeable openSocket ()
             throws Exception
     {
         socket = new DatagramSocket (portno);

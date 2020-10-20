@@ -176,6 +176,7 @@ public class InternalGps extends GnssStatus.Callback implements GpsReceiver, Loc
             gs.azim = status.getAzimuthDegrees (i);
             gs.snr  = status.getCn0DbHz (i);
             gs.used = status.usedInFix (i);
+            statuses.add (gs);
         }
         mainActivity.gpsStatusReceived (statuses);
     }

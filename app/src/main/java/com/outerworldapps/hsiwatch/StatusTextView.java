@@ -36,6 +36,7 @@ public class StatusTextView extends TextView implements Runnable {
     public StatusTextView (MainActivity ma)
     {
         super (ma);
+        setEms (10);  // don't take up too much width on round watch
         mainActivity = ma;
         statusLock = new Object ();
     }

@@ -76,9 +76,10 @@ public class GpsStatusView
             mainActivity = (MainActivity) ctx;
         }
 
-        gpstimstr = new char[8];
+        gpstimstr = new char[9];
         gpstimstr[2] = ':';
         gpstimstr[5] = ':';
+        gpstimstr[8] = 'z';
 
         ringsPaint.setColor (Color.YELLOW);
         ringsPaint.setStyle (Paint.Style.STROKE);
@@ -171,7 +172,7 @@ public class GpsStatusView
                 gpstimstr[4] = (char) (gpssec / 60 % 10 + '0');
                 gpstimstr[6] = (char) (gpssec / 10 % 6 + '0');
                 gpstimstr[7] = (char) (gpssec % 10 + '0');
-                canvas.drawText (gpstimstr, 0, 8, circleCenterX, circleCenterY + circleRadius + textHeight * 1.75F, textPaint);
+                canvas.drawText (gpstimstr, 0, 9, circleCenterX, circleCenterY + circleRadius + textHeight * 1.75F, textPaint);
             }
 
             if (! Float.isNaN (compRotDeg)) {

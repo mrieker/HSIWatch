@@ -715,14 +715,12 @@ public class MainActivity extends WearableActivity {
         if ((navModeButton.getMode () != NavDialView.Mode.OFF) || (currentMainPage instanceof KeepGpsOn)) {
             if (!gpsEnabled) {
                 if (!gpsReceiver.startLocationSensor ()) return;
-                showToast ("turned GPS on");
                 gpsEnabled = true;
                 flashRedRing.run ();
             }
         } else {
             if (gpsEnabled) {
                 gpsReceiver.stopLocationSensor ();
-                showToast ("turned GPS off");
                 gpsEnabled = false;
             }
         }
