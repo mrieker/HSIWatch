@@ -99,6 +99,9 @@ public class WiFiUDPGps extends ExternalGps {
         { }
     };
 
+    @Override  // ExternalGps
+    protected @NonNull String typestr () { return "WiFi"; }
+
     /**
      * Enable receiving NMEA packets from GPS device via WiFi.
      */

@@ -271,6 +271,9 @@ public class BluetoothGps extends ExternalGps {
         return uuid.replace ("\n ", "-");
     }
 
+    @Override  // ExternalGps
+    protected @NonNull String typestr () { return "Bluetooth"; }
+
     /**
      * Connect to GPS receiver device using Bluetooth.
      */

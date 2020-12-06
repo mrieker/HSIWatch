@@ -66,14 +66,12 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
     private final MainActivity mainActivity;
     private SQLiteDatabase sqldb;       // gui thread only
     private final String dbdir;
-    public  String dbexp;               // gui thread only; yyyy-mm-dd
     private String dbpath;              // gui thread only
 
     public DownloadThread (MainActivity ma)
     {
         mainActivity = ma;
         dbdir = mainActivity.getNoBackupFilesDir ().getAbsolutePath ();
-        dbexp = "(none)";
     }
 
     // delete all files from the database directory
@@ -85,11 +83,79 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
         }
     }
 
+    // user selected a different database, switch
+    public void dbSelected ()
+    {
+        // just close currently opened database
+        // next time database access is attempted, it will open new one
+        if (sqldb != null) {
+            sqldb.close ();
+            sqldb = null;
+        }
+
+        // set up expiration date so buttonColor() works
+        latestdb = 0;
+        String dbexp = getDbExp (mainActivity.menuMainPage.updDBMainPage.dbselected);
+        if (dbexp != null) {
+            SimpleDateFormat sdf = new SimpleDateFormat ("yyyy-MM-dd", Locale.US);
+            sdf.setTimeZone (TimeZone.getTimeZone ("UTC"));
+            try {
+                //noinspection ConstantConditions
+                latestdb = sdf.parse (dbexp).getTime ();
+            } catch (Exception e) {
+                throw new IllegalStateException ("bad exp date " + dbexp, e);
+            }
+        }
+
+        // maybe UPDDB button color has changed
+        int bc = buttonColor ();
+        mainActivity.menuMainPage.upddbButton.setTextColor (bc);
+    }
+
+    // see which database is selected on the UPDDB page
+    private boolean getUseOAdb ()
+    {
+        return mainActivity.menuMainPage.updDBMainPage.dbselected.equals ("oa");
+    }
+    private String getDbPrefix ()
+    {
+        return getUseOAdb () ? "wayptabbsoa_" : "wayptabbs_";
+    }
+
+    // get expiration date of the given database
+    //  input:
+    //   dbsel = "faa": faa database
+    //           "oa" : ourairports.com database
+    //  output:
+    //   returns null: no database
+    //           else: expiration "yyyy-mm-dd"
+    public String getDbExp (String dbsel)
+    {
+        String dbprefix;
+        switch (dbsel) {
+            case "faa": dbprefix = "wayptabbs_";   break;
+            case "oa":  dbprefix = "wayptabbsoa_"; break;
+            default: throw new IllegalArgumentException ("bad dbsel " + dbsel);
+        }
+
+        int latest = 0;
+        //noinspection ConstantConditions
+        for (File oldfile : new File (dbdir).listFiles ()) {
+            String oldname = oldfile.getName ();
+            if (oldname.startsWith (dbprefix) && oldname.endsWith (".db")) {
+                int date = Integer.parseInt (oldname.substring (dbprefix.length (), oldname.length () - 3));
+                if (latest < date) latest = date;
+            }
+        }
+        if (latest == 0) return null;
+        String r = Integer.toString (latest);
+        return r.substring (0, 4) + "-" + r.substring (4, 6) + "-" + r.substring (6, 8);
+    }
+
     /**
      * Open database
      * If not downloaded,
      *   display message
-     *   start downloading in background
      *   return null
      * Called in GUI thread only.
      */
@@ -100,12 +166,13 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
             // find latest database we have, if any
             dbpath = null;
             latestdb = 0;
+            String dbprefix = getDbPrefix ();
             SimpleDateFormat sdf = new SimpleDateFormat ("yyyyMMdd", Locale.US);
             sdf.setTimeZone (TimeZone.getTimeZone ("UTC"));
             //noinspection ConstantConditions
             for (File oldfile : new File (dbdir).listFiles ()) {
                 String oldname = oldfile.getName ();
-                if (oldname.startsWith ("wayptabbs_") && oldname.endsWith (".db")) {
+                if (oldname.startsWith (dbprefix) && oldname.endsWith (".db")) {
                     if (oldfile.lastModified () < oldversiontime) {
                         // delete database that doesn't have rwy_length,rwy_width
                         //noinspection ResultOfMethodCallIgnored
@@ -113,7 +180,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
                         continue;
                     }
                     try {
-                        String expstr = oldname.substring (10, oldname.length () - 3);
+                        String expstr = oldname.substring (dbprefix.length (), oldname.length () - 3);
                         @SuppressWarnings("ConstantConditions")
                         long dbexp = sdf.parse (expstr).getTime ();
                         if (latestdb < dbexp) {
@@ -126,11 +193,8 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
                 }
             }
 
-            // if first time, start downloading
-            if (dbpath == null) upddb ();
-
-            // otherwise, go with what we got
-            else openDatabase ();
+            // open what we found and/or display message saying to download/update it
+            openDatabase ();
         }
         return sqldb;
     }
@@ -187,6 +251,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
             if (! wpgzname.startsWith ("datums/wayptabbs_") || ! wpgzname.endsWith (".db.gz")) {
                 throw new IOException ("bad wayptabbs database name " + wpgzname);
             }
+            if (getUseOAdb ()) wpgzname = wpgzname.replace ("abbs_", "abbsoa_");
             String wpdbname = wpgzname.substring (7, wpgzname.length () - 3);
             final File permfile = new File (dbdir + "/" + wpdbname);
             if (permfile.exists ()) {
@@ -248,9 +313,10 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
                 }
 
                 // delete any old files (including temps)
+                String dbprefix = getDbPrefix ();
                 //noinspection ConstantConditions
                 for (File oldfile : new File (dbdir).listFiles ()) {
-                    if (oldfile.getName ().startsWith ("wayptabbs_") && ! oldfile.equals (permfile)) {
+                    if (oldfile.getName ().startsWith (dbprefix) && ! oldfile.equals (permfile)) {
                         //noinspection ResultOfMethodCallIgnored
                         oldfile.delete ();
                     }
@@ -278,6 +344,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
                         }
                         dbpath = permfile.getPath ();
                         openDatabase ();
+                        mainActivity.menuMainPage.updDBMainPage.updateExpirations ();
                     }
                 });
             }
@@ -291,7 +358,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
                     threadFinished ();
                     mainActivity.showToastLong ("error downloading database\n" +
                             e.getMessage ());
-                    mainActivity.showToastLong ("do MENU\u25B7UPDDB to try again");
+                    mainActivity.showToastLong ("do MENU\u25B7UPDDB\u25B7DOWNLOAD to try again");
                 }
             });
         }
@@ -309,7 +376,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
         }
     }
 
-    // download file via bulkdownload method so we get a filesize up front
+    // download file via bulkdownload method so we get a filesize up front and checksum
     private static class BulkDownload extends InputStream {
         private File tempFile;
         private InputStream inputStream;
@@ -481,10 +548,10 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
     /**
      * Open latest database.
      *  Input:
-     *   dbpath = database file to open
+     *   dbpath = database file to open (null if no database)
      *  Output:
-     *   dbexp = latestdb = database expiration
-     *   sqldb = database handle
+     *   latestdb = database expiration (or 0 if none)
+     *   sqldb = database handle (or null if none)
      * Called in GUI thread only
      */
     private void openDatabase ()
@@ -494,23 +561,30 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
             sqldb = null;
         }
 
-        int i = dbpath.indexOf ("/wayptabbs_");
-        if ((i < 0) || ! dbpath.substring (i + 19).equals (".db")) {
+        if (dbpath == null) {
+            latestdb = 0;
+            mainActivity.showToastLong ("no database selected/downloaded");
+            mainActivity.showToastLong ("use MENU\u25B7UPDDB to select & download");
+            return;
+        }
+
+        String dbprefix = getDbPrefix ();
+        int dbpfxlen = dbprefix.length ();
+        int i = dbpath.indexOf ("/" + dbprefix);
+        if ((i < 0) || ! dbpath.substring (i + 9 + dbpfxlen).equals (".db")) {
             throw new IllegalArgumentException ("bad dbpath " + dbpath);
         }
+        i += 1 + dbpfxlen;
 
         SimpleDateFormat sdf = new SimpleDateFormat ("yyyyMMdd", Locale.US);
         sdf.setTimeZone (TimeZone.getTimeZone ("UTC"));
         try {
             //noinspection ConstantConditions
-            latestdb = sdf.parse (dbpath.substring (i + 11, i + 19)).getTime ();
+            latestdb = sdf.parse (dbpath.substring (i, i + 8)).getTime ();
         } catch (Exception e) {
             throw new IllegalArgumentException ("bad dbpath " + dbpath, e);
         }
 
-        dbexp = dbpath.substring (i + 11, i + 15) + "-" +
-                dbpath.substring (i + 15, i + 17) + "-" +
-                dbpath.substring (i + 17, i + 19);
         sqldb = SQLiteDatabase.openDatabase (dbpath, null,
                     SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS,
                     this);
@@ -521,6 +595,9 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
         }
 
         // we have a database, maybe warn about expiration
+        String dbexp = dbpath.substring (i,     i + 4) + "-" +
+                       dbpath.substring (i + 4, i + 6) + "-" +
+                       dbpath.substring (i + 6, i + 8);
         switch (bc) {
             case Color.RED: {
                 mainActivity.showToastLong ("database expired " + dbexp);

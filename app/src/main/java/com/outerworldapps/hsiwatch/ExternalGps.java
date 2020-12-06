@@ -37,6 +37,7 @@ public abstract class ExternalGps implements GpsReceiver {
     private ReceiverThread receiverThread;
     protected StatusTextView statusView;
 
+    protected abstract @NonNull String typestr ();
     protected abstract @NonNull Closeable openSocket () throws Exception;
     protected abstract String readSocket () throws Exception;
     protected abstract String receiveException (Exception e);
@@ -172,7 +173,7 @@ public abstract class ExternalGps implements GpsReceiver {
                         public void run ()
                         {
                             String msg = receiveException (exception);
-                            mainActivity.showToastLong ("error receiving\n" + msg);
+                            mainActivity.showToastLong ("error receiving GPS from " + typestr () + ": " + msg);
                         }
                     });
                 }

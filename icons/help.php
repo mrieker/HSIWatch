@@ -1,11 +1,19 @@
 <HTML>
     <HEAD>
         <TITLE> HSIWatch App for Android Watches </TITLE>
+        <SCRIPT LANGUAGE=JAVASCRIPT>
+            function showinstall ()
+            {
+                var ol = document.getElementById ('installinstrs');
+                ol.hidden = ! ol.hidden;
+                var cs = document.getElementById ('inscolon');
+                cs.innerHTML = ol.hidden ? '.' : ':';
+            }
+        </SCRIPT>
     </HEAD>
     <BODY>
         <H3> HSIWatch App for Android Watches </H3>
         <UL>
-            <LI><A HREF="market://details?id=com.outerworldapps.hsiwatch">Download it from Google Play</A>
             <LI><A HREF="https://play.google.com/store/apps/details?id=com.outerworldapps.hsiwatch">Download it from Google Play</A>
             <LI><A HREF="https://github.com/mrieker/HSIWatch">Source Code Download</A>
         </UL>
@@ -15,34 +23,92 @@
             FAA approved electronic navigation systems.
             EXPECT it to FAIL when someone's HeALTh or PROpeRTy is at RISk.</FONT></B></P>
         <P><B><FONT COLOR=RED>Do not use this app in IMC!</FONT></B></P>
-        <P>Privacy policy:  The only personal information used by HSIWatch is location, which
+        <P><B>Privacy policy:</B>  The only personal information used by HSIWatch is location, which
             is used only for updating the display and optionally forwarding it to other
             devices, all at the user's explicit direction.</P>
-        <P>Contact us at <SCRIPT LANGUAGE=JAVASCRIPT>
-          document.write('i')
-          document.write('n')
-          document.write('f')
-          document.write('o')
-          document.write('@')
-          document.write('o')
-          document.write('u')
-          document.write('t')
-          document.write('e')
-          document.write('r')
-          document.write('w')
-          document.write('o')
-          document.write('r')
-          document.write('l')
-          document.write('d')
-          document.write('a')
-          document.write('p')
-          document.write('p')
-          document.write('s')
-          document.write('.')
-          document.write('c')
-          document.write('o')
-          document.write('m')
-        </SCRIPT></P>
+        <UL>
+            <LI>Contact us at <SCRIPT LANGUAGE=JAVASCRIPT>
+              document.write('i')
+              document.write('n')
+              document.write('f')
+              document.write('o')
+              document.write('@')
+              document.write('o')
+              document.write('u')
+              document.write('t')
+              document.write('e')
+              document.write('r')
+              document.write('w')
+              document.write('o')
+              document.write('r')
+              document.write('l')
+              document.write('d')
+              document.write('a')
+              document.write('p')
+              document.write('p')
+              document.write('s')
+              document.write('.')
+              document.write('c')
+              document.write('o')
+              document.write('m')
+            </SCRIPT>
+            <LI><A HREF="https://www.github.com/mrieker/HSIWatch">Source Code</A>
+            <LI>Latest version: <?php
+                $remhost = trim (file_get_contents ("remhost.dat"));
+                @unlink ("x.tmp");
+                if ((system ("scp -pq $remhost/output.json x.tmp", $rc) !== FALSE) && ($rc == 0)) {
+                    rename ("x.tmp", "output.json");
+                }
+                $outjson = file_get_contents ("output.json");
+                $outobj  = json_decode ($outjson, FALSE);
+                $version = $outobj[0]->apkData->versionName;
+                if (! file_exists ("hsiwatch-$version.apk")) {
+                    @unlink ("x.tmp");
+                    if ((system ("scp -pq $remhost/app-release.apk x.tmp", $rc) !== FALSE) && ($rc == 0)) {
+                        rename ("x.tmp", "hsiwatch-$version.apk");
+                    }
+                }
+                echo $version;
+            ?>
+        </UL>
+        <HR>
+        <H3> How To Install </H3>
+        <P>The easiest way to install is by opening the
+            <A HREF="https://play.google.com/store/apps/details?id=com.outerworldapps.hsiwatch">play store web page</A>
+            on your phone then click the <B>INSTALL</B> button, then select your watch when prompted.
+            <B>Do not use the Play Store App</B> as it will not allow selection of your watch for installation. 
+        </P>
+        <P>If that does not work, <A HREF="javascript:showinstall()">this procedure</A> can be used to install it on the watch via a
+            PC connected to same WiFi network as the watch<SPAN ID=inscolon>.</SPAN></P>
+        <OL ID=installinstrs HIDDEN>
+            <LI>On watch:
+                <OL>
+                    <LI>Open <B>Settings</B><BR><IMG WIDTH=80 HEIGHT=80 SRC="install-1.png">
+                    <LI>Open <B>System</B><BR><IMG WIDTH=80 HEIGHT=80 SRC="install-2.png">
+                    <LI>Open <B>About</B><BR><IMG WIDTH=80 HEIGHT=80 SRC="install-3.png">
+                    <LI>Click on <B>Build number</B> 7 times to enable developer options<BR><IMG WIDTH=80 HEIGHT=80 SRC="install-4.png">
+                    <LI>Back/Back/Back to get to <B>Settings</B> page
+                    <LI>Open <B>Developer options</B><BR><IMG WIDTH=80 HEIGHT=80 SRC="install-5.png">
+                    <LI>Turn on <B>ADB debugging</B><BR><IMG WIDTH=80 HEIGHT=80 SRC="install-6.png">
+                    <LI>Turn on <B>Debug over Wi-Fi</B><BR><IMG WIDTH=80 HEIGHT=80 SRC="install-7.png">
+                    <LI>Note the ipaddress:port, eg, 192.168.1.102:5555
+                </OL>
+            <LI>On computer:
+                <OL>
+                    <LI>Install <A HREF="minimal_adb_fastboot_v1.4.3_setup.exe">Minimal ADB and Fastboot</A>
+                    <LI>Open command prompt screen then <B><TT>cd</TT></B> to the folder it was installed into
+                    <LI>Download <A HREF="hsiwatch-<?php echo $version;?>.apk">HSIWatch APK</A> into same folder
+                    <LI>Type command: <B><TT>adb connect <I>ipaddress:port</I></TT></B><BR>
+                        eg <B><TT>adb connect 192.168.1.102:5555</TT></B><BR>
+                        (click <B>OK</B> on watch to <B>Allow Debugging?</B>)
+                    <LI>Type command: <B><TT>adb install hsiwatch-<?php echo $version;?>.apk</TT></B><BR>
+                </OL>
+            <LI>On watch:
+                <OL>
+                    <LI>Turn off <B>ADB debugging</B>
+                    <LI>Go back to main menu and launch HSIWatch app<BR><IMG WIDTH=80 HEIGHT=80 SRC="install-8.png">
+                </OL>
+        </OL>
         <HR>
         <H3> Page Map </H3>
         <TABLE>
@@ -92,7 +158,7 @@
         </TABLE>
         <HR>
         <H3> Nav Dial Page </H3>
-        <TABLE>
+        <TABLE ALIGN=CENTER>
             <TR>
                 <TD>
                     <TABLE>
@@ -130,90 +196,38 @@
                         <LI><B>OBS setting</B> - where the yellow triangle is,
                             indicating selected course or radial.
                             <UL>
-                                <LI>drag finger around number dial to change OBS
+                                <LI>Drag finger around number dial to change OBS
                                     when in GCT,VOR,ADF modes
                                 <LI>LOC,LOCBC,ILS modes lock the OBS in place
                             </UL>
                         <LI><B>course to/from waypoint</B> - indicates the
                             OBS setting needed to center the needle
                         <LI><B>distance to waypoint</B> - indicates nautical
-                            miles to the selected waypoint.  <I>italics</I>
+                            miles to the selected waypoint.  <I>Italics</I>
                             indicate slant-range distance (when elevation
                             of waypoint is known), normal text indicates
                             over-the-ground distance.
                         <LI><B>time to waypoint</B> - distance / ground speed,
                             ie, time to waypoint if headed directly to waypoint.
-                            --:--:-- indicates time in excess of 100 hours.
+                            <SPAN STYLE="white-space: nowrap;">--:--:--</SPAN>
+                            indicates time in excess of 100 hours.
                     </UL>
                 </TD>
                 <TD VALIGN=TOP>
                     <UL>
                         <LI><B>ground track</B> - course line currently following
                             over the ground as measured from GPS, same as red airplane icon.
-                            ---&#176; indicates ground speed too low to determine track.
-                        <LI><B>altitude</B> -
-                            feet MSL as measured from GPS
+                            <SPAN STYLE="white-space: nowrap;">---&#176;</SPAN>
+                            indicates ground speed too low to determine track.
+                        <LI><B>altitude</B> - feet MSL as measured from GPS
                         <LI><B>ground speed</B> - indicates ground speed in knots
                             as measured from GPS
                         <LI><B>waypoint ident</B> - waypoint being navigated to
-                            <UL>
-                                <LI>case-insensitive, and spaces are ignored
-                                <LI>accepts airport ICAO id (eg, KBOS or 2B2), VOR or ADF id (eg, BOS), fix id (eg, BOSOX).
-                                    airport FAA ID accepted (eg, BVY) if not same as VOR.
-                                <LI>accepts localizer IDs (eg, IBVY or I-BVY).
-                                <LI>accepts aptid.rwyno (BOS.4R, BOS.04R, KBVY.27, 2B2.10)
-                                    for runway provided the runway lat/lon data is in the FAA database.
-                                    the . is optional and the leading 0 for runway numbers is optional, ie,
-                                    7B3.02, 7B3.2, 7B302, 7B32 are all the same.  when selected, you are
-                                    presented with a dial of a generic ILS lined up on the runway.
-                                    <UL>
-                                        <LI><FONT COLOR=RED><B>WARNING:</B> this generic ILS may very well indicate a course that
-                                            is obstructed, therefore it is usable only when the pilot
-                                            is able to verify that the path is clear.</FONT>
-                                    </UL>
-                            </UL>
                             <P>To select a waypoint, swipe downward on the nav dial page to
                                 open the waypoint entry page.</P>
                         <LI><B>navigation mode</B> - indicates current navigation mode<BR>
-                            Valid for all waypoints:
-                            <UL>
-                                <LI><B>OFF</B> - stops GPS reception
-                                <LI><B>GCT</B> - track great-circle course to waypoint
-                                    <UL>
-                                        <LI>start of course is what current position was when waypoint
-                                            was entered or app was started (whichever was later)
-                                        <LI>end of course is the entered waypoint
-                                        <LI>OBS initially set to great-circle course from starting position to entered waypoint
-                                        <LI>OBS automatically updates as flight progresses along course to track great-circle course
-                                        <LI>needle indicates off-course (crosstrack) distance in degrees similar to VOR
-                                        <LI>to re-center needle, either:
-                                            <UL>
-                                                <LI>manually rotate OBS dial
-                                                <LI>tap on waypoint id which opens keyboard,
-                                                    then tap enter to reset course from current position to the same waypoint
-                                            </UL>
-                                    </UL>
-                                <LI><B>VOR</B> - standard HSI/OBS dial nav to/from waypoint.
-                                    treats all waypoints as if they were a VOR,
-                                    even localizers.
-                                <LI><B>ADF</B> - ADF-style needle points to waypoint.
-                                    treats all waypoints as if they were an NDB.
-                            </UL>
-                            Valid only for localizer waypoints:
-                            <UL>
-                                <LI><B>LOC</B> - standard HSI/OBS dial nav on localizer course line
-                                <LI><B>LOCBC</B> - standard HSI/OBS dial nav on localizer back-course line
-                            </UL>
-                            Valid only for localizer waypoints with glideslope:
-                            <UL>
-                                <LI><B>ILS</B> - standard HSI/OBS dial nav on localizer course line
-                                                including glide slope
-                                    <UL>
-                                        <LI><FONT COLOR=RED><B>WARNING:</B> altitude is notoriously inaccurate in these
-                                            devices so be doubly cautious when using the glide slope indication
-                                            provided by this app.</FONT>
-                                    </UL>
-                            </UL>
+                            <P>To change navigation mode, swipe downward on the nav dial page to
+                                open the waypoint entry page.</P>
                     </UL>
                 </TD>
             </TR>
@@ -238,6 +252,67 @@
             </TR>
         </TABLE>
         <HR>
+        <H3> Waypoint Input </H3>
+        <P><IMG SRC="waypt-input.png"></P>
+        <UL>
+            <LI>Case-insensitive, and spaces are ignored.
+            <LI>Accepts airport ICAO id (eg, KBOS or 2B2), VOR or ADF id (eg, BOS), fix id (eg, BOSOX).
+                airport FAA ID accepted (eg, BVY) if not same as VOR.
+            <LI>Accepts localizer IDs (eg, IBVY or I-BVY).
+            <LI>Accepts aptid.rwyno (BOS.4R, BOS.04R, KBVY.27, 2B2.10)
+                for runway provided the runway lat/lon data is in the FAA database.
+                The . is optional and the leading 0 for runway numbers is optional, ie,
+                7B3.02, 7B3.2, 7B302, 7B32 are all the same.  When selected, you are
+                presented with a dial of a generic ILS lined up on the runway.
+                <UL>
+                    <LI><FONT COLOR=RED><B>WARNING:</B>  This generic ILS may very well indicate a course that
+                        is obstructed, therefore it is usable only when the pilot
+                        is able to verify that the path is clear.</FONT>
+                </UL>
+            <LI>See <A HREF="#voice"><B>Voice Recognition</B></A> section below for use of the <B>VOICE</B> button.
+        </UL>
+
+        <P>Navigation mode is selected with the radio buttons below the waypoint description text.</P>
+        Valid for all waypoints:
+        <UL>
+            <LI><B>OFF</B> - stops GPS reception
+            <LI><B>GCT</B> - track great-circle course to waypoint
+                <UL>
+                    <LI>start of course is what current position was when waypoint
+                        was entered or app was started (whichever was later)
+                    <LI>end of course is the entered waypoint
+                    <LI>OBS initially set to great-circle course from starting position to entered waypoint
+                    <LI>OBS automatically updates as flight progresses along course to track great-circle course
+                    <LI>needle indicates off-course (crosstrack) distance in degrees similar to VOR
+                    <LI>to re-center needle, either:
+                        <UL>
+                            <LI>manually rotate OBS dial
+                            <LI>swipe down to access waypoint entry page, then tap on waypoint id which opens keyboard,
+                                then tap enter to reset course from current position to the same waypoint
+                        </UL>
+                </UL>
+            <LI><B>VOR</B> - standard HSI/OBS dial nav to/from waypoint.
+                Treats all waypoints as if they were a VOR,
+                even localizers.
+            <LI><B>ADF</B> - ADF-style needle points to waypoint.
+                Treats all waypoints as if they were an NDB.
+        </UL>
+        Valid only for localizer waypoints:
+        <UL>
+            <LI><B>LOC</B> - standard HSI/OBS dial nav on localizer course line
+            <LI><B>LOCBC</B> - standard HSI/OBS dial nav on localizer back-course line
+        </UL>
+        Valid only for localizer waypoints with glideslope:
+        <UL>
+            <LI><B>ILS</B> - standard HSI/OBS dial nav on localizer course line
+                            including glide slope
+                <UL>
+                    <LI><FONT COLOR=RED><B>WARNING:</B>  Altitude is notoriously inaccurate in these
+                        devices so be doubly cautious when using the glide slope indication
+                        provided by this app.</FONT>
+                </UL>
+        </UL>
+        <HR>
         <H3> Menu Pages </H3>
         <TABLE>
             <TR>
@@ -246,22 +321,32 @@
                     <UL>
                         <LI><B>&#9664;BACK</B> - goes back to nav dial or moving map page
                         <LI><B>SATS</B> - show GPS satellite status (also has a magnetic compass)
-                        <LI><B>GPS</B> - selects GPS source (see below)
-                        <LI><B>UPDDB</B> - download database update (requires Internet access)
+                        <LI><B>GPS</B> - selects GPS source (<A HREF="#gps">see below</A>)
+                        <LI><B>UPDDB</B> - select database and download updates (requires Internet access)
                             <UL>
                                 <LI><FONT COLOR=GREEN>GREEN</FONT> - database is up to date and will remain so for a few days
                                 <LI><FONT COLOR=YELLOW>YELLOW</FONT> - database is up to date but will expire soon
                                 <LI><FONT COLOR=RED>RED</FONT> - database is expired
                             </UL>
+                            <UL>
+                                <LI>FAA (US only) - selects the FAA database, updated to current 28-day cycle
+                                <LI>ourairports.com - selects the <A HREF="https://ourairports.com">ourairports.com</A> database.
+                                    <FONT COLOR=RED>Be especially cautious when using this database.  As a crowd sourced database,
+                                        it may contain badly outdated information!</FONT>  If you find inaccuracies, please inform
+                                        <A HREF="https://ourairports.com">ourairports.com</A> so the database can be updated.
+                                    <B>In any case, please support <A HREF="https://ourairports.com">ourairports.com</A> if you use this database.</B>
+                            </UL>
                         <LI><B>HSI</B> - select HSI mode for nav dial (airplane always at top); else OBS with yellow triangle always at top
-                        <LI><B>Ambient</B> - slow to 20 seconds per GPS sample in ambient mode; else maintain 1 second per sample
+                        <LI><B>Ambient</B> - slow to 20 seconds per GPS sample in ambient mode; else maintain 1 second per sample<BR>
+                                Note:  Only applies when using internal GPS source.  Retains same rate when using external GPS
+                                received over Bluetooth or WiFi.
                         <LI><B>Time Dots</B> - display time received from GPS as dots around the perimeter of displays
                             <UL>
                                 <LI><FONT COLOR=RED>RED</FONT> dot indicates HOURS
                                 <LI><FONT COLOR=GREEN>GREEN</FONT> dot indicates MINUTES
                                 <LI><FONT COLOR=BLUE>BLUE</FONT> dot indicates SECONDS
                             </UL>
-                        <LI><B>SEND</B> - send location to another device using bluetooth and/or UDP
+                        <LI><B>SEND</B> - send location to another device using Bluetooth and/or WiFi (<A HREF="#send">see below</A>)
                         <LI><B>MORE&#9654;</B> - goes to next menu page
                     </UL>
                 </TD>
@@ -294,7 +379,7 @@
                     <LI><FONT COLOR=CYAN>CYAN</FONT> - VORs (if not 20 airports)
                     <LI><FONT COLOR=YELLOW>YELLOW</FONT> - range ring at half radius
                     <LI><FONT COLOR=MAGENTA>MAGENTA</FONT> - course line and destination waypoint<BR>
-                        course line shown is always great circle regardless of mode selected for nav dial page
+                        Course line shown is always great circle regardless of mode selected for nav dial page.
                 </UL></TD>
             </TR>
             <TR><TD ALIGN=CENTER>zoom in</TD></TR>
@@ -317,6 +402,7 @@
             </TR>
         </TABLE>
         <HR>
+        <A NAME="voice"></A>
         <H3> Voice Recognition </H3>
         <P>Voice can be used to input the waypoint identifier being navigated to on the 
             waypoint input page.
@@ -360,18 +446,19 @@
             <LI><B>off</B> clear waypoint and turn GPS off
         </UL>
         <HR>
+        <A NAME="gps"></A>
         <H3> GPS </H3>
         <P>Selects which GPS device is used.</P>
         <UL>
             <LI><B>Internal</B> - uses watch's internal GPS receiver
             <LI><B>Bluetooth</B> - uses external device's GPS connected via Bluetooth
-                <UL>
-                    <LI>select paired device.  if not listed, use watch's
+                <OL>
+                    <LI>Select paired device.  If not listed, use watch's
                         settings to pair the device, then re-select
                         <B>Bluetooth</B> from this menu.
-                    <LI>select UUID.  usually the one beginning with 00001101
+                    <LI>Select UUID.  Usually the one beginning with 00001101
                         works, but the app on the external device may be using
-                        a different one.  if the UUID being used by the device
+                        a different one.  If the UUID being used by the device
                         does not appear in the selection list:
                         <OL>
                             <LI>close the HSIWatch app (BACK BACK BACK ... as needed)
@@ -380,9 +467,10 @@
                             <LI>un-pair and re-pair the watch with the device
                             <LI>restart the HSIWatch app
                         </OL>
-                </UL>
+                </OL>
                 For example, <A HREF="https://play.google.com/store/apps/details?id=com.outerworldapps.gpsblue">GPSBlue</A>
-                can be used on a phone to relay GPS from the phone to the watch using Bluetooth.
+                can be used on a phone to relay GPS from the phone to the watch using Bluetooth.  It has also been tested
+                with a DUAL XGPS150A.
             <LI><B>WiFi UDP</B> - uses external device's GPS connected via WiFi using UDP
                 <UL>
                     <LI><B>port</B> - UDP port number the external device sends packets on (Stratux uses port 4000)
@@ -390,12 +478,13 @@
                 Can be used with Stratux-like devices that relay GPS over WiFi in UDP packets.
             <LI><B>Simulator</B> - generates GPS locations for testing
         </UL>
+        <A NAME="send"></A>
         <H3> SEND </H3>
-        <P>Transmits GPS positions (either real or simluated) on Bluetooth and/or UDP (WiFi)
+        <P>Transmits GPS positions (either real or simluated) on Bluetooth and/or WiFi UDP
             to such as a tablet or phone based EFB app.  Uses NMEA GPGGA,GPRMC messages to send
             GPS position reports.</P>
         <UL>
-            <LI><B>UDP</B> - fill in IP address of EFB device and the port number the EFB app is listening on
+            <LI><B>UDP</B> - fill in ip address of EFB device and the port number the EFB app is listening on
             <LI><B>Bluetooth</B> - normally the 00001101 UUID prefix works, but if it fails try something
                     else like 00001102.  Make sure the EFB app is connecting to the same UUID and that the
                     EFB device is paired to the watch.

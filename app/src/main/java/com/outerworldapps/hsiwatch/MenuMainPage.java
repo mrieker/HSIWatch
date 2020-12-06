@@ -48,6 +48,7 @@ public class MenuMainPage {
     private long lastResetClick;
     private MainActivity mainActivity;
     public  SatsMainPage satsMainPage;
+    public  UpdDBMainPage updDBMainPage;
     private View menuPageView;
     private View menu2PageView;
 
@@ -83,12 +84,13 @@ public class MenuMainPage {
             }
         });
 
+        updDBMainPage = new UpdDBMainPage (mainActivity);
         upddbButton = menuPageView.findViewById (R.id.upddbButton);
         upddbButton.setOnClickListener (new View.OnClickListener () {
             @Override
             public void onClick (View v)
             {
-                mainActivity.downloadThread.upddb ();
+                updDBMainPage.show ();
             }
         });
 
@@ -189,8 +191,6 @@ public class MenuMainPage {
                 sb.append (" - ");
                 sb.append (getGitHash ());
                 if (getGitDirtyFlag ()) sb.append ('+');
-                sb.append ("\ndb exp: ");
-                sb.append (mainActivity.downloadThread.dbexp);
                 sb.append ("\n\nhelp available at https://www.outerworldapps.com/HSIWatch");
                 textView.setText (sb);
 
