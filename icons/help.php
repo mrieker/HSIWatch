@@ -2,6 +2,11 @@
     <HEAD>
         <TITLE> HSIWatch App for Android Watches </TITLE>
         <SCRIPT LANGUAGE=JAVASCRIPT>
+            function showinstallviaplay ()
+            {
+                var ol = document.getElementById ('installviaplay');
+                ol.hidden = ! ol.hidden;
+            }
             function showinstall ()
             {
                 var ol = document.getElementById ('installinstrs');
@@ -10,6 +15,25 @@
                 cs.innerHTML = ol.hidden ? '.' : ':';
             }
         </SCRIPT>
+        <STYLE>
+            img {
+                border: 5px solid #555;
+            }
+            .insbut {
+                background-color: green;
+                border: 5px;
+                color: white;
+                font-weight: bold;
+                padding: 5px;
+            }
+            .zoombut {
+                background-color: black;
+                border: 5px;
+                color: yellow;
+                font-weight: bold;
+                padding: 5px;
+            }
+        </STYLE>
     </HEAD>
     <BODY>
         <H3> HSIWatch App for Android Watches </H3>
@@ -23,6 +47,16 @@
             FAA approved electronic navigation systems.
             EXPECT it to FAIL when someone's HeALTh or PROpeRTy is at RISk.</FONT></B></P>
         <P><B><FONT COLOR=RED>Do not use this app in IMC!</FONT></B></P>
+        <UL>
+            <LI><A HREF="#install">How To Install</A>
+            <LI><A HREF="#pagemap">Page Map</A>
+            <LI><A HREF="#navdialpage">Nav Dial Page</A>
+            <LI><A HREF="#waypointinput">Waypoint Input</A>
+            <LI><A HREF="#menupages">Menu Pages</A>
+            <LI><A HREF="#movingmappage">Moving Map Page</A>
+            <LI><A HREF="#voice">Voice Recognition</A>
+            <LI><A HREF="#communications">Communications</A>
+        </UL>
         <P><B>Privacy policy:</B>  The only personal information used by HSIWatch is location, which
             is used only for updating the display and optionally forwarding it to other
             devices, all at the user's explicit direction.</P>
@@ -72,12 +106,43 @@
             ?>
         </UL>
         <HR>
+        <A NAME="install"></A>
         <H3> How To Install </H3>
         <P>The easiest way to install is by opening the
-            <A HREF="https://play.google.com/store/apps/details?id=com.outerworldapps.hsiwatch">play store web page</A>
-            on your phone then click the <B>INSTALL</B> button, then select your watch when prompted.
-            <B>Do not use the Play Store App</B> as it will not allow selection of your watch for installation. 
+            <A HREF="https://play.google.com/store/apps/details?id=com.outerworldapps.hsiwatch"><B>installation web page</B></A>
+            on your phone then click the <SPAN CLASS=insbut>Install</SPAN> button, then select your watch when prompted.
+            <B>Do not use the Google Play Store App</B> as it will not allow selection of your watch for installation.
+            <A HREF="javascript:showinstallviaplay()"><B>Show&nbsp;Details</B></A>
         </P>
+        <UL ID=installviaplay HIDDEN>
+            <LI>Opening the install page in the <B>Google Play Store App</B> on the phone
+                usually results in <B><FONT COLOR=RED>Your device isn't compatible with this version</FONT></B>:<BR>
+                <IMG WIDTH=180 HEIGHT=320 SRC="playstore-bad.png"><BR>
+                &nbsp;<BR>
+            <LI>Opening the <A HREF="https://play.google.com/store/apps/details?id=com.outerworldapps.hsiwatch"><B>installation web page</B></A>
+                on the phone <B>in a web browser</B> should show an <SPAN CLASS=insbut>Install</SPAN> button:<BR>
+                <IMG WIDTH=180 HEIGHT=320 SRC="firefox-install.png"><BR>
+                &nbsp;<BR>
+                If you still get <B><FONT COLOR=RED>Your device isn't compatible with this version</FONT></B>,
+                most likely the Google Play Store App is opening when you try to open the web page.  In that case, on the phone,
+                go to <B>Settings &#8680; Apps &#8680; Google Play Store &#8680; Open supported links &#8680; Ask Every Time</B>, then
+                try opening the <A HREF="https://play.google.com/store/apps/details?id=com.outerworldapps.hsiwatch"><B>installation web page</B></A> again.
+                It should ask if you want to open the Google Play Store App or a web browser, so choose a web browser.<BR>
+                &nbsp;<BR>
+            <LI>After clicking <SPAN CLASS=insbut>Install</SPAN> you should be able to
+                select your watch and click <SPAN CLASS=insbut>INSTALL</SPAN> again:<BR>
+                <IMG WIDTH=180 HEIGHT=320 SRC="firefox-selectwatch.png"><BR>
+                &nbsp;<BR>
+            <LI>After install completes:<BR>
+                <IMG WIDTH=180 HEIGHT=320 SRC="firefox-installedsoon.png"><BR>
+                &nbsp;<BR>
+            <LI>Then on the watch (a minute or so later) you should see:<BR>
+                <IMG WIDTH=160 HEIGHT=160 SRC="watch-starticon.png"><BR>
+                &nbsp;<BR>
+            <LI>The first page when opening app:<BR>
+                <IMG WIDTH=160 HEIGHT=160 SRC="watch-firstpage.png"><BR>
+                &nbsp;<BR>
+        </UL>
         <P>If that does not work, <A HREF="javascript:showinstall()">this procedure</A> can be used to install it on the watch via a
             PC connected to same WiFi network as the watch<SPAN ID=inscolon>.</SPAN></P>
         <OL ID=installinstrs HIDDEN>
@@ -110,6 +175,7 @@
                 </OL>
         </OL>
         <HR>
+        <A NAME="pagemap"></A>
         <H3> Page Map </H3>
         <TABLE>
             <TR>
@@ -157,6 +223,7 @@
             </TR>
         </TABLE>
         <HR>
+        <A NAME="navdialpage"></A>
         <H3> Nav Dial Page </H3>
         <TABLE ALIGN=CENTER>
             <TR>
@@ -252,6 +319,7 @@
             </TR>
         </TABLE>
         <HR>
+        <A NAME="waypointinput"></A>
         <H3> Waypoint Input </H3>
         <P><IMG SRC="waypt-input.png"></P>
         <UL>
@@ -313,6 +381,7 @@
                 </UL>
         </UL>
         <HR>
+        <A NAME="menupages"></A>
         <H3> Menu Pages </H3>
         <TABLE>
             <TR>
@@ -332,7 +401,7 @@
                                 <LI>FAA (US only) - selects the FAA database, updated to current 28-day cycle
                                 <LI>ourairports.com - selects the <A HREF="https://ourairports.com">ourairports.com</A> database.
                                     <FONT COLOR=RED>Be especially cautious when using this database.  As a crowd sourced database,
-                                        it may contain badly outdated information!</FONT>  If you find inaccuracies, please inform
+                                        even a current version may contain outdated information!</FONT>  If you find inaccuracies, please inform
                                         <A HREF="https://ourairports.com">ourairports.com</A> so the database can be updated.
                                     <B>In any case, please support <A HREF="https://ourairports.com">ourairports.com</A> if you use this database.</B>
                             </UL>
@@ -370,9 +439,10 @@
             </TR>
         </TABLE>
         <HR>
+        <A NAME="movingmappage"></A>
         <H3> Moving Map Page </H3>
         <TABLE>
-            <TR><TD ALIGN=CENTER>zoom out</TD></TR>
+            <TR><TD ALIGN=CENTER><SPAN CLASS=zoombut>+</SPAN> zoom out</TD></TR>
             <TR><TD><IMG SRC="map-page.png"></TD>
                 <TD><UL>
                     <LI><FONT COLOR=GREEN>GREEN</FONT> - airports (up to 20 with longest runways)
@@ -382,7 +452,7 @@
                         Course line shown is always great circle regardless of mode selected for nav dial page.
                 </UL></TD>
             </TR>
-            <TR><TD ALIGN=CENTER>zoom in</TD></TR>
+            <TR><TD ALIGN=CENTER><SPAN CLASS=zoombut>-</SPAN> zoom in</TD></TR>
         </TABLE>
         <P>The moving map page can be accessed by swiping right-to-left on the
             nav dial page.</P>
@@ -446,6 +516,7 @@
             <LI><B>off</B> clear waypoint and turn GPS off
         </UL>
         <HR>
+        <A NAME="communications"></A>
         <A NAME="gps"></A>
         <H3> GPS </H3>
         <P>Selects which GPS device is used.</P>

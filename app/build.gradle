@@ -26,8 +26,8 @@ android {
         applicationId "com.outerworldapps.hsiwatch"
         minSdkVersion 25
         targetSdkVersion 29
-        versionCode 10900
-        versionName "1.9"
+        versionCode 10901
+        versionName "1.9.1"
         buildConfigField "String", "GitHash", "\"${getGitHash()}\""
         buildConfigField "String", "GitStatus", "\"${getGitStatus()}\""
     }

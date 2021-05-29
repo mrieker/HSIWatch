@@ -227,7 +227,9 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
                         "progress shown on MENU\u25B7UPDDB button\n" +
                         "or just wait...");
             } else {
-                mainActivity.showToast ("updating database");
+                mainActivity.showToast (
+                        "updating database\n" +
+                        "takes a few minutes");
             }
             lastdownloadmsgat = System.currentTimeMillis ();
             new Thread (this).start ();
@@ -261,8 +263,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
                     {
                         threadrunning = false;
                         mainActivity.showToast ("database up to date");
-                        dbpath = permfile.getPath ();
-                        openDatabase ();
+                        getSqlDB ();
                     }
                 });
             } else {
@@ -342,9 +343,8 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
                         } else {
                             mainActivity.showToast ("database updated");
                         }
-                        dbpath = permfile.getPath ();
-                        openDatabase ();
                         mainActivity.menuMainPage.updDBMainPage.updateExpirations ();
+                        getSqlDB ();
                     }
                 });
             }
@@ -572,7 +572,7 @@ public class DownloadThread implements DatabaseErrorHandler, Runnable {
         int dbpfxlen = dbprefix.length ();
         int i = dbpath.indexOf ("/" + dbprefix);
         if ((i < 0) || ! dbpath.substring (i + 9 + dbpfxlen).equals (".db")) {
-            throw new IllegalArgumentException ("bad dbpath " + dbpath);
+            throw new IllegalArgumentException ("bad dbpath=" + dbpath + " dbprefix=" + dbprefix);
         }
         i += 1 + dbpfxlen;
 
