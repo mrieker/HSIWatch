@@ -119,6 +119,7 @@ public class MainActivity extends WearableActivity {
         isScreenRound = getResources ().getConfiguration ().isScreenRound ();
         myHandler = new Handler ();
         newll = new LatLon ();
+        mainPageStack = new Stack<> ();
 
         // make sure they have agreed to little agreement
         final SharedPreferences prefs = getPreferences (MODE_PRIVATE);
@@ -158,8 +159,6 @@ public class MainActivity extends WearableActivity {
         getWindowManager ().getDefaultDisplay ().getMetrics (metrics);
         widthPixels  = metrics.widthPixels;
         heightPixels = metrics.heightPixels;
-
-        mainPageStack = new Stack<> ();
 
         LayoutInflater layoutInflater = getLayoutInflater ();
         currentMainPage = navMainPage = layoutInflater.inflate (R.layout.main_page, null);
