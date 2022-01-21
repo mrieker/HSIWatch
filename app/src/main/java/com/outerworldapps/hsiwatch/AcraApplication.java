@@ -66,7 +66,39 @@ public class AcraApplication extends Application {
         super.attachBaseContext(base);
 
         // The following line triggers the initialization of ACRA
-        ACRA.init (this);
+        try {
+            ACRA.init (this);
+        } catch (Exception e) {
+            /*
+12-05 17:05:20.303 E/ACRA    (18903): ACRA caught a RuntimeException for com.outerworldapps.hsiwatch
+12-05 17:05:20.303 E/ACRA    (18903): java.lang.RuntimeException: Unable to instantiate application com.outerworldapps.hsiwatch.AcraApplication: java.lang.IllegalStateException: Not allowed to start service Intent { cmp=com.outerworldapps.hsiwatch/org.acra.sender.SenderService (has extras) }: app is in background uid UidRecord{a8c00b6 u0a70 TPSL idle procs:1 seq(0,0,0)}
+12-05 17:05:20.303 E/ACRA    (18903):   at android.app.LoadedApk.makeApplication(LoadedApk.java:1069)
+12-05 17:05:20.303 E/ACRA    (18903):   at android.app.ActivityThread.handleBindApplication(ActivityThread.java:5853)
+12-05 17:05:20.303 E/ACRA    (18903):   at android.app.ActivityThread.access$1100(ActivityThread.java:200)
+12-05 17:05:20.303 E/ACRA    (18903):   at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1651)
+12-05 17:05:20.303 E/ACRA    (18903):   at android.os.Handler.dispatchMessage(Handler.java:106)
+12-05 17:05:20.303 E/ACRA    (18903):   at android.os.Looper.loop(Looper.java:193)
+12-05 17:05:20.303 E/ACRA    (18903):   at android.app.ActivityThread.main(ActivityThread.java:6680)
+12-05 17:05:20.303 E/ACRA    (18903):   at java.lang.reflect.Method.invoke(Native Method)
+12-05 17:05:20.303 E/ACRA    (18903):   at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:493)
+12-05 17:05:20.303 E/ACRA    (18903):   at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:858)
+12-05 17:05:20.303 E/ACRA    (18903): Caused by: java.lang.IllegalStateException: Not allowed to start service Intent { cmp=com.outerworldapps.hsiwatch/org.acra.sender.SenderService (has extras) }: app is in background uid UidRecord{a8c00b6 u0a70 TPSL idle procs:1 seq(0,0,0)}
+12-05 17:05:20.303 E/ACRA    (18903):   at android.app.ContextImpl.startServiceCommon(ContextImpl.java:1577)
+12-05 17:05:20.303 E/ACRA    (18903):   at android.app.ContextImpl.startService(ContextImpl.java:1532)
+12-05 17:05:20.303 E/ACRA    (18903):   at android.content.ContextWrapper.startService(ContextWrapper.java:664)
+12-05 17:05:20.303 E/ACRA    (18903):   at org.acra.sender.SenderServiceStarter.startService(SenderServiceStarter.java:43)
+12-05 17:05:20.303 E/ACRA    (18903):   at org.acra.util.ApplicationStartupProcessor.sendApprovedReports(ApplicationStartupProcessor.java:75)
+12-05 17:05:20.303 E/ACRA    (18903):   at org.acra.ACRA.init(ACRA.java:230)
+12-05 17:05:20.303 E/ACRA    (18903):   at org.acra.ACRA.init(ACRA.java:156)
+12-05 17:05:20.303 E/ACRA    (18903):   at org.acra.ACRA.init(ACRA.java:139)
+12-05 17:05:20.303 E/ACRA    (18903):   at com.outerworldapps.hsiwatch.AcraApplication.attachBaseContext(AcraApplication.java:69)
+12-05 17:05:20.303 E/ACRA    (18903):   at android.app.Application.attach(Application.java:212)
+12-05 17:05:20.303 E/ACRA    (18903):   at android.app.Instrumentation.newApplication(Instrumentation.java:1121)
+12-05 17:05:20.303 E/ACRA    (18903):   at android.app.LoadedApk.makeApplication(LoadedApk.java:1061)
+12-05 17:05:20.303 E/ACRA    (18903):   ... 9 more
+             */
+            Log.e (MainActivity.TAG, "error initializing acra", e);
+        }
     }
 
     /**
