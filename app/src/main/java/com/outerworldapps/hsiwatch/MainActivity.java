@@ -661,7 +661,8 @@ public class MainActivity extends WearableActivity {
             navWaypt.autoTune (this);
         }
 
-        if (currentMainPage == menuMainPage.satsMainPage.satsPageView) {
+        if ((currentMainPage == menuMainPage.satsMainPage.satsPageView) &&
+                (menuMainPage.satsMainPage.gpsStatusView != null)) {
             menuMainPage.satsMainPage.gpsStatusView.invalidate ();
         }
 
@@ -672,7 +673,8 @@ public class MainActivity extends WearableActivity {
     public void gpsStatusReceived (Collection<GpsStatus> statuses)
     {
         gpsStatuses = statuses;
-        if (currentMainPage == menuMainPage.satsMainPage.satsPageView) {
+        if ((currentMainPage == menuMainPage.satsMainPage.satsPageView) &&
+                (menuMainPage.satsMainPage.gpsStatusView != null)) {
             menuMainPage.satsMainPage.gpsStatusView.invalidate ();
         }
     }
