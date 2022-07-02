@@ -389,7 +389,7 @@ public class RwyDiagView extends OBSDialView implements Invalidatable {
             final LinkedList<RwyPair> rps = new LinkedList<> ();
             double radiusnm = 0.25;
             try (Cursor cursor = sqldb.query ("runways", rwycols,
-                    "rwy_faaid='" + aptwp.faaid + "'",
+                    "rwy_icaoid='" + aptwp.ident + "'",
                     null, null, null, null, null)) {
                 if (cursor.moveToFirst ()) do {
                     String numa = cursor.getString (0);
