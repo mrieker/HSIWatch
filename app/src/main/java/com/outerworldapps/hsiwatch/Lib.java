@@ -20,9 +20,6 @@
 
 package com.outerworldapps.hsiwatch;
 
-import android.content.DialogInterface;
-import android.util.Log;
-
 public class Lib {
 
     // fine-tuned constants

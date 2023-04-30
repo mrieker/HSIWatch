@@ -137,13 +137,17 @@ public class MenuMainPage {
             }
         });
 
-        sendMainPage = new SendMainPage (mainActivity);
-        Button sendButton = menuPageView.findViewById (R.id.sendButton);
-        sendButton.setOnClickListener (new View.OnClickListener () {
+        Button userwpButton = menuPageView.findViewById (R.id.usrwpButton);
+        userwpButton.setOnClickListener (new View.OnClickListener () {
+            private UserWPPage usrwpPage;
+
             @Override
             public void onClick (View v)
             {
-                sendMainPage.show ();
+                if (usrwpPage == null) {
+                    usrwpPage = new UserWPPage (mainActivity);
+                }
+                usrwpPage.show ();
             }
         });
 
@@ -164,6 +168,16 @@ public class MenuMainPage {
 
         Button back2Button = menu2PageView.findViewById (R.id.back2Button);
         back2Button.setOnClickListener (mainActivity.backButtonListener);
+
+        sendMainPage = new SendMainPage (mainActivity);
+        Button sendButton = menu2PageView.findViewById (R.id.sendButton);
+        sendButton.setOnClickListener (new View.OnClickListener () {
+            @Override
+            public void onClick (View v)
+            {
+                sendMainPage.show ();
+            }
+        });
 
         Button aboutButton = menu2PageView.findViewById (R.id.aboutButton);
         aboutButton.setOnClickListener (new View.OnClickListener () {

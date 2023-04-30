@@ -20,9 +20,21 @@
 
 package com.outerworldapps.hsiwatch;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.hardware.GeomagneticField;
+import android.util.Log;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.TreeMap;
+
+import static com.outerworldapps.hsiwatch.MainActivity.TAG;
 
 /**
  * Waypoint database and nav dial updating.
@@ -45,9 +57,10 @@ public abstract class Waypt {
 
     protected double magvar;  // at waypoint (NaN until computed)
 
-    public static Waypt find (SQLiteDatabase sqldb, String ident, LatLon refll)
+    public static Waypt find (Context ctx, SQLiteDatabase sqldb, String ident, LatLon refll)
     {
-        Waypt waypt = AptWaypt.find (sqldb, ident, true);
+        Waypt waypt = UserWaypt.find (ctx, ident);
+        if (waypt == null) waypt = AptWaypt.find (sqldb, ident, true);
         if (waypt == null) waypt = FixWaypt.find (sqldb, ident);
         if (waypt == null) waypt = LocWaypt.find (sqldb, ident);
         if (waypt == null) waypt = NavWaypt.find (sqldb, ident, refll);
@@ -196,6 +209,147 @@ public abstract class Waypt {
             magvar = - gmf.getDeclination ();
         }
         return magvar;
+    }
+
+    /********************\
+     *  User Waypoints  *
+    \********************/
+
+    public static class UserWaypt extends Waypt {
+        private static String csvpathname;
+        private static TreeMap<String,UserWaypt> userwaypoints;
+
+        // read user waypoints into TreeMap if not already
+        public static TreeMap<String,UserWaypt> getUserWaypoints (Context ctx)
+        {
+            if (userwaypoints == null) {
+                userwaypoints = new TreeMap<> ();
+                csvpathname = ctx.getFilesDir () + "/hsiwatch_userwp.csv";
+                if (new File (csvpathname).exists ()) {
+                    try {
+                        BufferedReader br = new BufferedReader (new FileReader (csvpathname));
+                        for (String line; (line = br.readLine ()) != null; ) {
+                            String[] parts = line.split (",");
+                            UserWaypt waypt = new UserWaypt (parts[0], parts[1], parts[2]);
+                            userwaypoints.put (waypt.ident, waypt);
+                        }
+                        br.close ();
+                    } catch (IOException ioe) {
+                        Log.e (TAG, "exception reading " + csvpathname, ioe);
+                    }
+                }
+            }
+            return userwaypoints;
+        }
+
+        // write user waypoint TreeMap to file
+        public static boolean saveUserWaypoints (MainActivity mainActivity)
+        {
+            try {
+                BufferedWriter bw = new BufferedWriter (new FileWriter (csvpathname + ".tmp"));
+                for (UserWaypt uwp : userwaypoints.values ()) {
+                    bw.write (uwp.ident + "," + uwp.latstr + "," + uwp.lonstr + "\n");
+                }
+                bw.close ();
+                if (!new File (csvpathname + ".tmp").renameTo (new File (csvpathname))) {
+                    throw new IOException ("rename failed");
+                }
+                return true;
+            } catch (IOException ioe) {
+                Log.e (TAG, "exception writing " + csvpathname, ioe);
+                mainActivity.showToastLong ("error writing " + csvpathname + ": " + ioe.getMessage ());
+                return false;
+            }
+        }
+
+        // look for user waypoint in TreeMap (return null if not found)
+        public static UserWaypt find (Context ctx, String ident)
+        {
+            TreeMap<String,UserWaypt> uwps = getUserWaypoints (ctx);
+            return uwps.get (ident);
+        }
+
+        // parse a user waypoint lat/lon string
+        //  NSEW deg min sec.ss
+        //  NSEW deg min.mm
+        //  NSEW deg.ddd
+        // returns NaN on parse failure
+        public static double parseLatLon (String str, char pos, char neg)
+        {
+            try {
+                // strip out apostrophes, quotes and make upper case
+                str = str.toUpperCase ().replace ('\'', ' ').replace ('"', ' ');
+
+                // check for embedded N, S, E, W, decode and strip it out
+                boolean negate = false;
+                int i = str.indexOf (pos);
+                if (i >= 0) {
+                    str = str.substring (0, i) + str.substring (i + 1);
+                } else if ((i = str.indexOf (neg)) >= 0) {
+                    negate = true;
+                    str = str.substring (0, i) + str.substring (i + 1);
+                }
+
+                // parse degrees up to blank or end of string
+                str = str.trim ();
+                int len = str.length ();
+                int j = 0;
+                while (j < len) {
+                    char c = str.charAt (j);
+                    if (c <= ' ') break;
+                    j++;
+                }
+                double degs = Double.parseDouble (str.substring (0, j));
+                if (negate) degs = -degs;
+
+                // parse minutes up to next blank or end of string
+                str = str.substring (j).trim ();
+                len = str.length ();
+                if (len > 0) {
+                    j = 0;
+                    do {
+                        char c = str.charAt (j);
+                        if (c <= ' ') break;
+                        j++;
+                    } while (j < len);
+                    double mins = Double.parseDouble (str.substring (0, j));
+
+                    // parse seconds up to end of string
+                    str = str.substring (j).trim ();
+                    len = str.length ();
+                    if (len > 0) {
+                        double secs = Double.parseDouble (str);
+                        mins += secs / 60;
+                    }
+
+                    // smash it all into degrees and return
+                    if (degs < 0) {
+                        degs -= mins / 60;
+                    } else {
+                        degs += mins / 60;
+                    }
+                }
+                return degs;
+            } catch (Exception e) {
+                return Double.NaN;
+            }
+        }
+
+        public String latstr;
+        public String lonstr;
+
+        public UserWaypt (String ident, String latstr, String lonstr)
+        {
+            this.ident   = ident;
+            this.latstr  = latstr;
+            this.lonstr  = lonstr;
+            this.dme_lat = this.lat = parseLatLon (latstr, 'N', 'S');
+            this.dme_lon = this.lon = parseLatLon (lonstr, 'E', 'W');
+            this.name    = "user waypoint" + "\n" + ident;
+            this.elev    = Double.NaN;
+            this.magvar  = Double.NaN;
+            this.validModes = valgen;
+        }
     }
 
     /**************\

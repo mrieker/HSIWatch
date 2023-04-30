@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.outerworldapps.hsiwatch.BoxInsetLayoutAmb
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black"
+    android:padding="@dimen/box_inset_layout_padding"
+    tools:context=".MainActivity"
+    tools:deviceIds="wear">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:text="Confirm delete user waypoint"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/uwpdelynIdent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/uwpdelynNuke"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="YES-NUKE"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/uwpdelynKeep"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="NO-KEEP"
+            tools:ignore="HardcodedText" />
+
+    </LinearLayout>
+</com.outerworldapps.hsiwatch.BoxInsetLayoutAmb>

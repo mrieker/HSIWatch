@@ -99,7 +99,7 @@ public class MainActivity extends WearableActivity {
     public  View currentMainPage;
     public  View gpsPageView;
     public  View mapPageView;
-    private View navMainPage;
+    public  View navMainPage;
     public  View rwyPageView;
     public  Waypt navWaypt;
     public  WiFiUDPGps wiFiUDPGps;
@@ -402,7 +402,7 @@ public class MainActivity extends WearableActivity {
                 LatLon refll = new LatLon ();
                 refll.lat = Double.parseDouble (prefs.getString ("navWayptLat", "0.0"));
                 refll.lon = Double.parseDouble (prefs.getString ("navWayptLon", "0.0"));
-                setNavWaypt (Waypt.find (sqldb, navWayptId, refll));
+                setNavWaypt (Waypt.find (this, sqldb, navWayptId, refll));
             }
         }
         startlat = Lib.parseDouble (prefs.getString ("startlat", "NaN"));

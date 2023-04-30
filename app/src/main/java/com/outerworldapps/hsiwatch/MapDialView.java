@@ -224,7 +224,7 @@ public class MapDialView extends OBSDialView {
 
                 // select the given waypoint as current
                 MapWpt mapwpt = (MapWpt) v.getTag ();
-                Waypt waypt = Waypt.find (mainActivity.downloadThread.getSqlDB (), mapwpt.id, mapwpt);
+                Waypt waypt = Waypt.find (mainActivity, mainActivity.downloadThread.getSqlDB (), mapwpt.id, mapwpt);
 
                 // fill long name (eg, BEVERLY RGNL) into radio button
                 if ((waypt != null) && (mapwpt.name == null)) {

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.outerworldapps.hsiwatch.BoxInsetLayoutAmb
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_grey"
+    android:padding="@dimen/box_inset_layout_padding"
+    tools:context=".MainActivity"
+    tools:deviceIds="wear">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/uwpedBack"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="\u25C0BACK"
+            tools:ignore="HardcodedText" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="@dimen/inner_frame_layout_padding"
+            app:boxedEdges="all"
+            tools:ignore="MissingPrefix">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/uwpedIdent"
+                        android:layout_width="170dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:autofillHints=""
+                        android:cursorVisible="false"
+                        android:hint="user wpt id"
+                        android:imeOptions="flagNoPersonalizedLearning|actionDone"
+                        android:inputType="textShortMessage|textNoSuggestions"
+                        android:textAlignment="center"
+                        android:textColor="#FFFFFF"
+                        tools:ignore="HardcodedText,LabelFor" />
+
+                    <Button
+                        android:id="@+id/uwpedSave"
+                        android:layout_width="70dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0"
+                        android:text="SAVE"
+                        tools:ignore="HardcodedText" />
+
+                    <Space
+                        android:layout_width="20dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/uwpedLat"
+                        android:layout_width="170dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:autofillHints=""
+                        android:cursorVisible="false"
+                        android:hint="latitude"
+                        android:imeOptions="flagNoPersonalizedLearning|actionDone"
+                        android:inputType="textShortMessage|textNoSuggestions"
+                        android:textAlignment="center"
+                        android:textColor="#FFFFFF"
+                        tools:ignore="HardcodedText,LabelFor" />
+
+                    <Button
+                        android:id="@+id/uwpedGPS"
+                        android:layout_width="70dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0"
+                        android:text="GPS"
+                        tools:ignore="HardcodedText" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/uwpedLon"
+                        android:layout_width="170dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:autofillHints=""
+                        android:cursorVisible="false"
+                        android:hint="longitude"
+                        android:imeOptions="flagNoPersonalizedLearning|actionDone"
+                        android:inputType="textShortMessage|textNoSuggestions"
+                        android:textAlignment="center"
+                        android:textColor="#FFFFFF"
+                        tools:ignore="HardcodedText,LabelFor" />
+
+                    <Button
+                        android:id="@+id/uwpedGo"
+                        android:layout_width="70dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0"
+                        android:text="GO"
+                        tools:ignore="HardcodedText" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/uwpedDel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:text="DEL"
+                    android:textAlignment="center"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+</com.outerworldapps.hsiwatch.BoxInsetLayoutAmb>

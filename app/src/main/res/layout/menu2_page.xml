@@ -33,11 +33,22 @@
             <!-- LEFT COLUMN -->
 
             <Button
-                android:id="@+id/aboutButton"
+                android:id="@+id/sendButton"
                 android:layout_width="51dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="3dp"
                 android:layout_marginTop="52dp"
+                android:padding="3dp"
+                android:text="SEND"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
+
+            <Button
+                android:id="@+id/aboutButton"
+                android:layout_width="51dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="3dp"
+                android:layout_marginTop="100dp"
                 android:padding="3dp"
                 android:text="ABOUT"
                 android:textSize="12sp"

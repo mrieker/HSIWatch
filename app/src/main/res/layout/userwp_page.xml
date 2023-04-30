@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.outerworldapps.hsiwatch.BoxInsetLayoutAmb
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_grey"
+    android:padding="@dimen/box_inset_layout_padding"
+    tools:context=".MainActivity"
+    tools:deviceIds="wear">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/userwpBack"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="\u25C0BACK"
+            tools:ignore="HardcodedText" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="@dimen/inner_frame_layout_padding"
+            app:boxedEdges="all"
+            tools:ignore="MissingPrefix">
+
+            <LinearLayout
+                android:id="@+id/userwpList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <Button
+                    android:id="@+id/userwpNew"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="new"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+</com.outerworldapps.hsiwatch.BoxInsetLayoutAmb>
