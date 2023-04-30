@@ -109,8 +109,6 @@ public class MainActivity extends WearableActivity {
     {
         super.onCreate (savedInstanceState);
 
-        AcraApplication.sendReports (this);
-
         DisplayMetrics metrics = new DisplayMetrics ();
         getWindowManager ().getDefaultDisplay ().getMetrics (metrics);
         dotsPerSqIn = metrics.xdpi * metrics.ydpi;
